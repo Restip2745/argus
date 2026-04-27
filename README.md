@@ -1,19 +1,6 @@
-# Terra Invicta Style: Adaptive Real-time Global Understanding System
+# ARGUS — Adaptive Real-time Global Understanding System
 
-這是一個仿造策略遊戲 《Terra Invicta》（地球不屈）UI/UX 風格的現實資訊查詢應用 (ARGUS)。
 以 **完整 3D 太陽系場景**為畫布，將 24 小時內的全球新聞、太空事件與社會經濟動態以情報標記的形式可視化呈現於對應天體上。搭配**協作畫布圖層**，讓使用者與 AI Agent 能共同在場景上標記、繪圖與推演。
-
-> 🎮 視覺風格參考：《Terra Invicta》— 從地球政治版圖到太陽系戰略視角的多層次地圖介面。
-
----
-
-## 🖼 視覺參考 (Visual Reference)
-
-| 地球政治圖層 | 太陽系全景視角 |
-|:---:|:---:|
-| ![Earth Political Layer](docs/screenshots/earth-political.png) | ![Solar System View](docs/screenshots/solar-system.png) |
-
-> *上方為《Terra Invicta》遊戲截圖，作為本專案 UI 風格目標參考。*
 
 ---
 
