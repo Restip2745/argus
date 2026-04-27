@@ -1,0 +1,26 @@
+{
+  "app": { "title": "全球情報監控系統" },
+  "panel": {
+    "close": "關閉",
+    "back": "返回",
+    "loading": "載入中…",
+    "noData": "目前無情報資料"
+  },
+  "event": {
+    "category": {
+      "politics":  "政治",
+      "military":  "軍事",
+      "economy":   "經濟",
+      "space":     "太空",
+      "disaster":  "災害",
+      "science":   "科學",
+      "other":     "其他"
+    }
+  },
+  "ui": {
+    "solarSystem": "太陽系",
+    "earth":       "地球",
+    "annotations": "標記畫布",
+    "settings":    "設定"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "app": { "title": "Global Intelligence Surveillance System" },
+  "panel": {
+    "close": "Close",
+    "back": "Back",
+    "loading": "Loading...",
+    "noData": "No intelligence data available"
+  },
+  "event": {
+    "category": {
+      "politics":  "Politics",
+      "military":  "Military",
+      "economy":   "Economy",
+      "space":     "Space",
+      "disaster":  "Disaster",
+      "science":   "Science",
+      "other":     "Other"
+    }
+  },
+  "ui": {
+    "solarSystem": "Solar System",
+    "earth":       "Earth",
+    "annotations": "Annotations",
+    "settings":    "Settings"
+  }
+}
