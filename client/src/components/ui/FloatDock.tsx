@@ -83,6 +83,8 @@ export function FloatDock() {
   const setShowAircraftLayer = useAppStore((s) => s.setShowAircraftLayer)
   const showSatellitesLayer    = useAppStore((s) => s.showSatellitesLayer)
   const setShowSatellitesLayer = useAppStore((s) => s.setShowSatellitesLayer)
+  const showShipsLayer    = useAppStore((s) => s.showShipsLayer)
+  const setShowShipsLayer = useAppStore((s) => s.setShowShipsLayer)
 
 
   const { alertCount, topCats } = useMemo(() => {
@@ -226,10 +228,10 @@ export function FloatDock() {
       />
       <DockBtn
         icon="🚢"
-        label="VESSELS (AIS) — not yet implemented"
-        color="#2a4060"
-        active={false}
-        onClick={() => {/* AIS feed not yet implemented */}}
+        label="VESSELS (AIS)"
+        color="#39ff8a"
+        active={showShipsLayer}
+        onClick={() => setShowShipsLayer(!showShipsLayer)}
       />
 
       {/* Annotation canvas toggle */}

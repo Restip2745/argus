@@ -170,7 +170,61 @@ app.post('/api/agent-vision', async (req, res) => {
 // ── Tracking layer proxy routes ──────────────────────────
 // In-memory cache: avoids hammering upstream APIs on every client refresh
 const _trackingCache = new Map<string, { data: unknown; ts: number }>()
-const TRACKING_TTL   = { aircraft: 45_000, tle: 600_000 } // ms
+const TRACKING_TTL   = { aircraft: 45_000, tle: 600_000, ships: 60_000 } // ms
+
+interface ShipState {
+  mmsi:    string
+  name:    string | null
+  lat:     number
+  lng:     number
+  heading: number | null
+  speed:   number | null
+}
+
+async function fetchAisSnapshot(apiKey: string): Promise<ShipState[]> {
+  return new Promise((resolve, reject) => {
+    const ships = new Map<string, ShipState>()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ws = new (globalThis as any).WebSocket('wss://stream.aisstream.io/v0/stream')
+    const timer = setTimeout(() => {
+      try { ws.close() } catch { /* ignore */ }
+      resolve([...ships.values()].slice(0, 500))
+    }, 5_000)
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        APIKey: apiKey,
+        BoundingBoxes: [[[-90, -180], [90, 180]]],
+        FilterMessageTypes: ['PositionReport'],
+      }))
+    }
+    ws.onmessage = (event: { data: string }) => {
+      try {
+        const data = JSON.parse(event.data) as {
+          MessageType?: string
+          Message?: { PositionReport?: { Latitude: number; Longitude: number; TrueHeading?: number; Sog?: number } }
+          MetaData?: { MMSI?: number; ShipName?: string }
+        }
+        if (data.MessageType === 'PositionReport' && data.Message?.PositionReport && data.MetaData) {
+          const pos  = data.Message.PositionReport
+          const meta = data.MetaData
+          const mmsi = String(meta.MMSI ?? '')
+          if (!mmsi || pos.Latitude == null || pos.Longitude == null) return
+          ships.set(mmsi, {
+            mmsi,
+            name:    meta.ShipName?.trim() || null,
+            lat:     pos.Latitude,
+            lng:     pos.Longitude,
+            heading: (pos.TrueHeading != null && pos.TrueHeading !== 511) ? pos.TrueHeading : null,
+            speed:   pos.Sog ?? null,
+          })
+        }
+      } catch { /* ignore parse errors */ }
+    }
+    ws.onerror = (err: unknown) => { clearTimeout(timer); reject(err) }
+    ws.onclose = () => clearTimeout(timer)
+  })
+}
 
 async function fetchCached<T>(
   key: string, ttl: number, fetcher: () => Promise<T>,
@@ -238,6 +292,22 @@ app.get('/api/tracking/tle', async (req, res) => {
     res.json(sats)
   } catch (err) {
     console.warn('[tracking] TLE fetch failed:', (err as Error).message)
+    res.json([])
+  }
+})
+
+// Ship positions (aisstream.io — requires AISSTREAM_API_KEY env var; returns [] if not set)
+app.get('/api/tracking/ships', async (_req, res) => {
+  const apiKey = process.env.AISSTREAM_API_KEY
+  if (!apiKey) {
+    res.json([])
+    return
+  }
+  try {
+    const ships = await fetchCached<ShipState[]>('ships', TRACKING_TTL.ships, () => fetchAisSnapshot(apiKey))
+    res.json(ships)
+  } catch (err) {
+    console.warn('[tracking] ships fetch failed:', (err as Error).message)
     res.json([])
   }
 })
