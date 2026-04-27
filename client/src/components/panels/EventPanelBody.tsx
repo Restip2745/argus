@@ -27,6 +27,29 @@ function relativeTime(iso: string | null): string {
   return new Date(iso).toLocaleDateString()
 }
 
+function heatColor(score: number): string {
+  if (score >= 1.5) return '#ff4d4d'
+  if (score >= 1.0) return '#ff9c2a'
+  if (score >= 0.5) return '#00d4ff'
+  if (score >= 0.3) return '#4a9eff'
+  return '#2a4060'
+}
+
+function expiryLabel(expiresAt: string | null, heatScore: number): string {
+  if (expiresAt) {
+    const msLeft = new Date(expiresAt).getTime() - Date.now()
+    if (msLeft <= 0) return 'EXPIRED'
+    const h = Math.floor(msLeft / 3_600_000)
+    if (h < 1) return `<1h`
+    if (h < 24) return `${h}h`
+    return `${Math.floor(h / 24)}d`
+  }
+  if (heatScore >= 1.5) return '7d'
+  if (heatScore >= 1.0) return '3d'
+  if (heatScore >= 0.5) return '48h'
+  return '24h'
+}
+
 // ── Props ──────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -133,6 +156,40 @@ export function EventPanelBody({
                 {a}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Heat Score */}
+        {event.heat_score != null && (
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">HEAT</span>
+            <div
+              className="flex-1 rounded-sm overflow-hidden"
+              style={{ height: '3px', background: 'rgba(0,180,255,0.08)', border: '1px solid rgba(0,180,255,0.1)' }}
+            >
+              <div
+                style={{
+                  width: `${Math.min(100, (event.heat_score / 2) * 100)}%`,
+                  height: '100%',
+                  background: heatColor(event.heat_score),
+                  boxShadow: `0 0 4px ${heatColor(event.heat_score)}88`,
+                  transition: 'width 0.4s ease',
+                }}
+              />
+            </div>
+            <span className="text-[8px] font-mono" style={{ color: heatColor(event.heat_score), minWidth: '24px', textAlign: 'right' }}>
+              {event.heat_score.toFixed(2)}
+            </span>
+            <span
+              className="text-[7px] tracking-wider px-1 rounded"
+              style={{
+                color: heatColor(event.heat_score),
+                border: `1px solid ${heatColor(event.heat_score)}30`,
+                background: `${heatColor(event.heat_score)}0a`,
+              }}
+            >
+              {expiryLabel(event.expires_at, event.heat_score)}
+            </span>
           </div>
         )}
 

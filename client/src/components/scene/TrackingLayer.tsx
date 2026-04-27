@@ -19,7 +19,7 @@ import * as THREE from 'three'
 import * as sat from 'satellite.js'
 
 import { useAppStore } from '../../store'
-import { useAircraftLayer, useSatelliteLayer } from '../../hooks/useTrackingLayers'
+import { useAircraftLayer, useSatelliteLayer, useShipsLayer } from '../../hooks/useTrackingLayers'
 import { latLngToWorld } from '../../lib/coordinates'
 import { EARTH_DETAIL_THRESHOLD } from '../../data/celestialBodies'
 import type { CelestialBodyName } from '../../types'
@@ -258,6 +258,7 @@ export function TrackingLayer({ positionsRef }: Props) {
   const showShipsLayer      = useAppStore((s) => s.showShipsLayer)
 
   const aircraft = useAircraftLayer(showAircraftLayer)
+  const ships    = useShipsLayer(showShipsLayer)
   const tleData  = useSatelliteLayer(showSatellitesLayer)
 
   // Shared refs updated every frame by DistanceTracker
@@ -294,7 +295,15 @@ export function TrackingLayer({ positionsRef }: Props) {
         />
       ))}
 
-      {/* Ship layer — AIS feed integration not yet implemented; button is disabled in FloatDock */}
+      {/* Ship layer — requires AISSTREAM_API_KEY on the server; returns [] if not configured */}
+      {showShipsLayer && ships.map((s) => (
+        <ShipMarker
+          key={s.mmsi}
+          lat={s.lat} lng={s.lng} name={s.name}
+          positionsRef={positionsRef}
+          distRef={distRef} camPosRef={camPosRef}
+        />
+      ))}
 
       {/* Satellite layer — visible from Earth focus distance */}
       {showSatellitesLayer && satrecsRef.current.map(({ name, satrec }, i) => (

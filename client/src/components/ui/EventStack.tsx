@@ -17,6 +17,14 @@ function relativeTime(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString()
 }
 
+function heatColor(score: number): string {
+  if (score >= 1.5) return '#ff4d4d'
+  if (score >= 1.0) return '#ff9c2a'
+  if (score >= 0.5) return '#00d4ff'
+  if (score >= 0.3) return '#4a9eff'
+  return '#2a4060'
+}
+
 interface IconItemProps {
   event: ArgusEvent
   animDelay: number
@@ -89,7 +97,7 @@ function IconItem({ event, animDelay, isNew, nudgeGen }: IconItemProps) {
             boxShadow: `0 2px 14px rgba(0,0,0,0.7), 0 0 0 1px ${color}18`,
             padding: '3px 8px',
             whiteSpace: 'nowrap',
-            maxWidth: '220px',
+            maxWidth: '240px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             zIndex: 60,
@@ -98,11 +106,26 @@ function IconItem({ event, animDelay, isNew, nudgeGen }: IconItemProps) {
         >
           <span style={{ color }}>{icon} </span>
           <span style={{ color: '#c8dde8' }}>{title}</span>
-          {event.published_at && (
-            <span style={{ color: '#2a4060', marginLeft: 6, fontSize: 8 }}>
-              {relativeTime(event.published_at)}
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
+            {event.published_at && (
+              <span style={{ color: '#2a4060', fontSize: 8 }}>
+                {relativeTime(event.published_at)}
+              </span>
+            )}
+            {event.heat_score != null && (
+              <>
+                <span style={{ color: '#1a3050', fontSize: 7 }}>·</span>
+                <span style={{ color: '#1a3050', fontSize: 7, letterSpacing: '0.12em' }}>HEAT</span>
+                <span style={{
+                  color: heatColor(event.heat_score),
+                  fontSize: 8,
+                  fontWeight: 600,
+                }}>
+                  {event.heat_score.toFixed(2)}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -23,6 +23,17 @@ export interface TleSatellite {
   tle2: string
 }
 
+// ── Ships ─────────────────────────────────────────────────────────────────────
+
+export interface ShipState {
+  mmsi:    string
+  name:    string | null
+  lat:     number
+  lng:     number
+  heading: number | null
+  speed:   number | null
+}
+
 // ── Polling hook helper ───────────────────────────────────────────────────────
 
 function usePoll<T>(url: string, intervalMs: number, enabled: boolean): T[] {
@@ -78,6 +89,16 @@ export function useSatelliteLayer(
   return usePoll<TleSatellite>(
     `${API}/api/tracking/tle?groups=${groups}`,
     600_000,
+    enabled,
+  )
+}
+
+/** Live vessel positions from aisstream.io (refreshes every 60 s).
+ *  Returns [] immediately if AISSTREAM_API_KEY is not set on the server. */
+export function useShipsLayer(enabled: boolean): ShipState[] {
+  return usePoll<ShipState>(
+    `${API}/api/tracking/ships`,
+    60_000,
     enabled,
   )
 }
