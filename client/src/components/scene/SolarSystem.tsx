@@ -345,7 +345,7 @@ export function SolarSystem() {
       {/* Keeps useGlobeProjection singleton up-to-date for DOM panels */}
       <GlobeProjectorSetup positionsRef={positionsRef} />
 
-      {/* OrbitControls — left=PAN, right=ROTATE (Terra Invicta-style) */}
+      {/* OrbitControls — left=PAN, right=ROTATE */}
       <OrbitControls
         ref={controlsRef}
         makeDefault

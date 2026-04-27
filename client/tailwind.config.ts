@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Terra Invicta dark UI palette
+        // Argus dark UI palette
         'argus-bg':      '#080c14',
         'argus-panel':   '#0d1520',
         'argus-border':  '#1e3a5f',
