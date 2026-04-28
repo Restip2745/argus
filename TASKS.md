@@ -37,13 +37,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Event Density Clustering
-  Description: EventMarkers currently renders one marker per event regardless of zoom level,
-    leading to overlapping icons when many events share a small geographic area. At low zoom
-    (solar / high-orbital distance), group markers within ~200 km radius into a single cluster
-    marker showing count. At surface zoom, show individual markers.
-  Success Criteria: Clustered markers appear at low zoom; expand to individual markers as user
-    zooms in. No visible regression to existing single-marker behaviour at surface zoom.
+[DONE][MEDIUM] Feature: Event Density Clustering
+  Description: Added 3-tier zoom system to EventMarkers (tier 0=solar/far >80 scene units,
+    tier 1=orbital 12-80, tier 2=surface <12). useFrame reads camera-to-earth distance and
+    updates zoomTier state via hysteresis. Greedy clustering algorithm (haversineKm) groups
+    events within CLUSTER_KM (1500km tier0, 600km tier1, 0=disabled tier2). ClusterMarker
+    component renders count badge with dominant-event color and pulse ring. Clicking cluster
+    opens highest-intensity event.
+  Success Criteria: Met — cluster markers at solar/orbital zoom; individual markers at surface;
+    no new TS errors; orbital markers unaffected.
   Retry Count: 0
   Source: ROADMAP
 
