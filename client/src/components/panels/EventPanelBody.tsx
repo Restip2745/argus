@@ -8,10 +8,12 @@
  * Receives all data as props so EventPanel can animate this whole block as
  * a unit (slide in/out) when the user navigates the timeline.
  */
+import { useTranslation } from 'react-i18next'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import type { AgentEntry } from '../../hooks/useAgentQuery'
+import { EventRelationGraph } from './EventRelationGraph'
 
 
 function relativeTime(iso: string | null): string {
@@ -69,7 +71,6 @@ interface Props {
   agentContext:     string
   agentAsk:         (q: string, ctx: string) => void
   agentScrollRef:   React.RefObject<HTMLDivElement>
-  t:                (key: string, fallback: string) => string
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -81,10 +82,17 @@ export function EventPanelBody({
   agentHistory, agentLoading, agentError,
   agentInput, setAgentInput,
   suggestedQueries, agentContext, agentAsk,
-  agentScrollRef, t,
+  agentScrollRef,
 }: Props) {
-  const title   = event.title
-  const summary = event.content || event.summary_zh
+  const { t, i18n } = useTranslation()
+  const isEN = i18n.language === 'en'
+
+  const title = event.title
+  // In EN mode: prefer original English content; fall back to title as last resort.
+  // In zh-TW mode: prefer the Chinese summary, fall back to content.
+  const summary = isEN
+    ? (event.content || null)
+    : (event.summary_zh || event.content)
 
   function resolveCountry() {
     const label = event.location_label
@@ -159,10 +167,39 @@ export function EventPanelBody({
           </div>
         )}
 
+        {/* Source Reliability Badge */}
+        {(() => {
+          const rel = event.reliability ?? 'UNVERIFIED'
+          const relColor: Record<string, string> = {
+            HIGH:       '#39ff8a',
+            MEDIUM:     '#ffd700',
+            LOW:        '#ff9c2a',
+            UNVERIFIED: '#2a4060',
+          }
+          const color = relColor[rel] ?? '#2a4060'
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.source', 'SOURCE')}</span>
+              <span
+                className="text-[7px] tracking-widest px-1.5 py-0.5 rounded"
+                style={{
+                  color,
+                  border: `1px solid ${color}30`,
+                  background: `${color}0a`,
+                  letterSpacing: '0.1em',
+                  fontWeight: 600,
+                }}
+              >
+                {rel}
+              </span>
+            </div>
+          )
+        })()}
+
         {/* Heat Score */}
         {event.heat_score != null && (
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">HEAT</span>
+            <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.heat', 'HEAT')}</span>
             <div
               className="flex-1 rounded-sm overflow-hidden"
               style={{ height: '3px', background: 'rgba(0,180,255,0.08)', border: '1px solid rgba(0,180,255,0.1)' }}
@@ -192,6 +229,9 @@ export function EventPanelBody({
             </span>
           </div>
         )}
+
+        {/* Relationship graph */}
+        <EventRelationGraph eventId={event.id} accentColor={accentColor} />
 
         {/* Meta row: source · location */}
         <div className="flex items-center justify-between text-[9px] text-[#2a4060] pt-2 border-t border-[rgba(0,180,255,0.07)]">
@@ -234,7 +274,7 @@ export function EventPanelBody({
         >
           <span style={{ fontSize: '11px', opacity: 0.7 }}>↗</span>
           <span className="truncate flex-1">{hostname()}</span>
-          <span style={{ opacity: 0.5, fontSize: '8px', letterSpacing: '0.12em' }}>VIEW SOURCE</span>
+          <span style={{ opacity: 0.5, fontSize: '8px', letterSpacing: '0.12em' }}>{t('event.labels.viewSource', 'VIEW SOURCE')}</span>
         </a>
 
         {/* Coordinates */}
@@ -277,7 +317,7 @@ export function EventPanelBody({
       {/* ── Suggested Queries ──────────────────────────────────────────────── */}
       {suggestedQueries.length > 0 && (
         <div className="relative px-3 pb-2 pt-2 border-t border-[rgba(0,180,255,0.07)]">
-          <div className="text-[7px] text-[#2a4060] tracking-widest mb-1.5">SUGGESTED QUERIES</div>
+          <div className="text-[7px] text-[#2a4060] tracking-widest mb-1.5">{t('event.labels.suggestedQueries', 'SUGGESTED QUERIES')}</div>
           <div className="flex flex-wrap gap-1">
             {suggestedQueries.map(q => (
               <button
@@ -301,7 +341,7 @@ export function EventPanelBody({
 
       {/* ── Agent Chat ─────────────────────────────────────────────────────── */}
       <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
-        <div className="text-[7px] text-[#2a4060] tracking-widest mb-2">◈ INTELLIGENCE AGENT</div>
+        <div className="text-[7px] text-[#2a4060] tracking-widest mb-2">{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</div>
 
         {agentHistory.length > 0 && (
           <div className="mb-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
@@ -328,7 +368,7 @@ export function EventPanelBody({
 
         {agentLoading && agentHistory.length > 0 && agentHistory[agentHistory.length - 1].html === '' && (
           <div className="mb-2 flex items-center gap-2">
-            <span className="text-[7px] text-[#2a4060] tracking-widest">ANALYZING</span>
+            <span className="text-[7px] text-[#2a4060] tracking-widest">{t('event.labels.analyzing', 'ANALYZING')}</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>
           </div>
         )}
@@ -347,7 +387,7 @@ export function EventPanelBody({
                 if (agentInput.trim()) { agentAsk(agentInput, agentContext); setAgentInput('') }
               }
             }}
-            placeholder="詢問情報分析..."
+            placeholder={t('event.labels.askAgent', '詢問情報分析...')}
             disabled={agentLoading}
             className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
             style={{

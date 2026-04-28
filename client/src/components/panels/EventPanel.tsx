@@ -8,9 +8,9 @@
  *  • Merges current event into the sorted timeline list
  *  • Delegates rendering to EventTimeline + EventPanelBody
  */
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useTranslation } from 'react-i18next'
+
 import { useAppStore } from '../../store'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
@@ -69,7 +69,7 @@ function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function EventPanel() {
-  const { t } = useTranslation()
+
   const activePanelId      = useAppStore(s => s.activePanelId)
   const events             = useAppStore(s => s.events)
   const setActivePanelId   = useAppStore(s => s.setActivePanelId)
@@ -153,6 +153,7 @@ export function EventPanel() {
   const [displayedEventId, setDisplayedEventId] = useState(activePanelId)
   const [slideDir,      setSlideDir]      = useState<'up' | 'down'>('down')
   const [outgoingEvent, setOutgoingEvent] = useState<ArgusEvent | null>(null)
+  const [copied, setCopied]               = useState(false)
   const displayedEventIdRef = useRef(displayedEventId)
   displayedEventIdRef.current = displayedEventId
   const isFirstNavRef = useRef(true)
@@ -198,6 +199,34 @@ export function EventPanel() {
   const suggestedQueries = useMemo(() => {
     if (!displayedEvent) return []
     return (CATEGORY_QUERIES[displayedEvent.category] ?? []).slice(0, 4)
+  }, [displayedEvent])
+
+  // ── Export ────────────────────────────────────────────────────────────────
+  const exportEvent = useCallback(() => {
+    if (!displayedEvent) return
+    const e = displayedEvent
+    const md = [
+      `# ${e.title}`,
+      '',
+      `**Category:** ${e.category.replace(/_/g, ' ')}  `,
+      `**Intensity:** ${e.intensity}  `,
+      `**Source:** ${e.source}  `,
+      `**Published:** ${e.published_at ?? '—'}  `,
+      e.location_label ? `**Location:** ${e.location_label}  ` : '',
+      e.heat_score != null ? `**Heat Score:** ${e.heat_score.toFixed(2)}  ` : '',
+      e.reliability ? `**Reliability:** ${e.reliability}  ` : '',
+      '',
+      e.summary_zh ? `## Summary\n\n${e.summary_zh}` : '',
+      e.actors?.length ? `\n## Actors\n\n${e.actors.join(', ')}` : '',
+      e.tags?.length   ? `\n## Tags\n\n${e.tags.join(', ')}` : '',
+      '',
+      `## Source\n\n[${e.source}](${e.url})`,
+    ].filter(l => l !== null).join('\n').trim()
+
+    navigator.clipboard.writeText(md).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
   }, [displayedEvent])
 
   // ── Focus ─────────────────────────────────────────────────────────────────
@@ -359,6 +388,19 @@ export function EventPanel() {
             </div>
             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               <button
+                onClick={exportEvent}
+                title="Export as Markdown"
+                style={{
+                  background: copied ? 'rgba(57,255,138,0.12)' : 'none',
+                  border: copied ? '1px solid rgba(57,255,138,0.4)' : '1px solid transparent',
+                  borderRadius: '2px',
+                  color: copied ? '#39ff8a' : '#4a6070',
+                  cursor: 'pointer', fontSize: '9px', lineHeight: 1,
+                  padding: '1px 5px', transition: 'all 0.15s',
+                  fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.06em',
+                }}
+              >{copied ? '✓' : '↓ MD'}</button>
+              <button
                 onClick={popoutOpen}
                 title="Open in new window"
                 style={{ background: 'none', border: 'none', color: isPopped ? '#00d4ff' : '#4a6070', cursor: 'pointer', fontSize: '10px', lineHeight: 1, padding: '1px 3px', transition: 'color 0.15s' }}
@@ -395,7 +437,6 @@ export function EventPanel() {
                   agentContext=""
                   agentAsk={() => {}}
                   agentScrollRef={agentScrollRef}
-                  t={t}
                 />
               </div>
             )}
@@ -421,7 +462,6 @@ export function EventPanel() {
                   agentContext={agentContext}
                   agentAsk={agentAsk}
                   agentScrollRef={agentScrollRef}
-                  t={t}
                 />
               )}
             </div>

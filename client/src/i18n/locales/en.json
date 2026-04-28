@@ -1,10 +1,13 @@
 {
   "app": { "title": "Global Intelligence Surveillance System" },
   "panel": {
-    "close": "Close",
-    "back": "Back",
-    "loading": "Loading...",
-    "noData": "No intelligence data available"
+    "close":         "Close",
+    "back":          "Back",
+    "loading":       "Loading...",
+    "noData":        "No intelligence data available",
+    "focus":         "FOCUS",
+    "focus_region":  "FOCUS REGION",
+    "region":        "REGION INTEL"
   },
   "event": {
     "category": {
@@ -15,12 +18,46 @@
       "disaster":  "Disaster",
       "science":   "Science",
       "other":     "Other"
+    },
+    "labels": {
+      "heat":            "HEAT",
+      "source":          "SOURCE",
+      "suggestedQueries":"SUGGESTED QUERIES",
+      "agent":           "◈ INTELLIGENCE AGENT",
+      "analyzing":       "ANALYZING",
+      "viewSource":      "VIEW SOURCE",
+      "askAgent":        "Ask intelligence analysis..."
+    },
+    "timeRange": {
+      "6h":   "6h",
+      "12h":  "12h",
+      "24h":  "24h",
+      "all":  "All"
     }
+  },
+  "region": {
+    "overview":    "OVERVIEW",
+    "events":      "RECENT EVENTS",
+    "agent":       "◈ REGION INTELLIGENCE",
+    "noEvents":    "No recent events"
+  },
+  "canvas": {
+    "toggle": "ANNOTATION CANVAS"
+  },
+  "celestialNav": {
+    "collapse": "Collapse",
+    "expand":   "Celestial Navigation"
   },
   "ui": {
     "solarSystem": "Solar System",
     "earth":       "Earth",
     "annotations": "Annotations",
-    "settings":    "Settings"
+    "settings":    "Settings",
+    "liteMode":    "Lite mode",
+    "normalMode":  "Normal mode",
+    "immersive":   "Immersive mode",
+    "aiAnalysis":  "AI Canvas Analysis",
+    "config":      "Configuration",
+    "compareMode": "COMPARE MODE"
   }
 }

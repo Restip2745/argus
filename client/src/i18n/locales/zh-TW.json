@@ -1,10 +1,13 @@
 {
   "app": { "title": "全球情報監控系統" },
   "panel": {
-    "close": "關閉",
-    "back": "返回",
-    "loading": "載入中…",
-    "noData": "目前無情報資料"
+    "close":         "關閉",
+    "back":          "返回",
+    "loading":       "載入中…",
+    "noData":        "目前無情報資料",
+    "focus":         "聚焦",
+    "focus_region":  "聚焦地區",
+    "region":        "地區情報"
   },
   "event": {
     "category": {
@@ -15,12 +18,46 @@
       "disaster":  "災害",
       "science":   "科學",
       "other":     "其他"
+    },
+    "labels": {
+      "heat":            "熱度",
+      "source":          "來源",
+      "suggestedQueries":"建議查詢",
+      "agent":           "◈ 情報代理",
+      "analyzing":       "分析中",
+      "viewSource":      "查看原文",
+      "askAgent":        "詢問情報分析…"
+    },
+    "timeRange": {
+      "6h":   "6小時",
+      "12h":  "12小時",
+      "24h":  "24小時",
+      "all":  "全部"
     }
+  },
+  "region": {
+    "overview":    "概覽",
+    "events":      "近期事件",
+    "agent":       "◈ 地區情報分析",
+    "noEvents":    "目前無近期事件"
+  },
+  "canvas": {
+    "toggle": "標記畫布"
+  },
+  "celestialNav": {
+    "collapse": "收起",
+    "expand":   "天體導航"
   },
   "ui": {
     "solarSystem": "太陽系",
     "earth":       "地球",
     "annotations": "標記畫布",
-    "settings":    "設定"
+    "settings":    "設定",
+    "liteMode":    "精簡模式",
+    "normalMode":  "標準模式",
+    "immersive":   "沉浸模式",
+    "aiAnalysis":  "AI 畫面分析",
+    "config":      "設定",
+    "compareMode": "比較模式"
   }
 }

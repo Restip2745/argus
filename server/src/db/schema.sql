@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS articles (
   actors         TEXT,                  -- JSON array: '["Ukraine","Russia"]'
   tags           TEXT,                  -- JSON array: '["artillery","frontline"]'
   sources_count  INTEGER,              -- Number of corroborating sources mentioned
+  reliability    TEXT,                 -- HIGH | MEDIUM | LOW | UNVERIFIED
 
   -- Heat Score System
   heat_score     REAL DEFAULT 0.0,     -- Dynamic heat score determining retention

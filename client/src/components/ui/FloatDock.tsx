@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useAppStore } from '../../store'
 import { useTranslation } from 'react-i18next'
 import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
@@ -44,7 +44,7 @@ function DockBtn({ icon, label, badge, color = '#4a6070', active, onClick }: Doc
         }}
       >
         {icon}
-        {badge != null && Number(badge) > 0 && (
+        {badge != null && (typeof badge === 'string' ? badge.length > 0 : Number(badge) > 0) && (
           <span style={{
             position: 'absolute', top: '2px', right: '2px',
             background: '#ff4d4d', color: '#fff',
@@ -52,7 +52,7 @@ function DockBtn({ icon, label, badge, color = '#4a6070', active, onClick }: Doc
             borderRadius: '2px', padding: '0 2px',
             lineHeight: '9px', minWidth: '9px', textAlign: 'center',
           }}>
-            {Number(badge) > 99 ? '99+' : badge}
+            {typeof badge === 'number' && badge > 99 ? '99+' : badge}
           </span>
         )}
       </button>
@@ -63,6 +63,11 @@ function DockBtn({ icon, label, badge, color = '#4a6070', active, onClick }: Doc
 export function FloatDock() {
   const { t } = useTranslation()
   const events            = useAppStore((s) => s.events)
+  const intelBrief        = useAppStore((s) => s.intelBrief)
+  const briefRead         = useAppStore((s) => s.briefRead)
+  const setBriefRead      = useAppStore((s) => s.setBriefRead)
+  const [showBrief, setShowBrief] = useState(false)
+  const briefRef = useRef<HTMLDivElement>(null)
   const immersiveMode     = useAppStore((s) => s.immersiveMode)
   const setImmersiveMode  = useAppStore((s) => s.setImmersiveMode)
   const liteMode          = useAppStore((s) => s.liteMode)
@@ -103,10 +108,51 @@ export function FloatDock() {
     }
   }, [events, hiddenCategories])
 
+  // Close brief when clicking outside
+  useEffect(() => {
+    if (!showBrief) return
+    const handler = (e: MouseEvent) => {
+      if (briefRef.current && !briefRef.current.contains(e.target as Node)) {
+        setShowBrief(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showBrief])
+
   return (
+    <div ref={briefRef} style={{ position: 'fixed', bottom: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}>
+
+      {/* Intel Brief modal */}
+      {showBrief && intelBrief && (
+        <div style={{
+          position: 'absolute', bottom: '52px', left: '50%', transform: 'translateX(-50%)',
+          width: '340px',
+          background: 'rgba(4,9,22,0.97)',
+          border: '1px solid rgba(255,215,0,0.3)',
+          borderTop: '2px solid #ffd700',
+          borderRadius: '4px',
+          padding: '10px 12px',
+          boxShadow: '0 0 24px rgba(255,215,0,0.12)',
+          backdropFilter: 'blur(8px)',
+          fontFamily: 'JetBrains Mono, monospace',
+          animation: 'toastEnter 0.25s cubic-bezier(0.34,1.56,0.64,1) both',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ color: '#ffd700', fontSize: '7px', letterSpacing: '0.15em', fontWeight: 700 }}>◇ INTEL BRIEF</span>
+            <span style={{ color: '#2a4060', fontSize: '7px' }}>
+              {new Date(intelBrief.generatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+          <div
+            className="agent-response"
+            style={{ color: '#a8c4d8', fontSize: '9px', lineHeight: 1.5 }}
+            dangerouslySetInnerHTML={{ __html: intelBrief.summary }}
+          />
+        </div>
+      )}
+
     <div style={{
-      position: 'fixed', bottom: '12px', left: '50%', transform: 'translateX(-50%)',
-      zIndex: 50,
       display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px',
       background: 'rgba(4,9,22,0.88)',
       border: '1px solid rgba(0,180,255,0.15)',
@@ -115,6 +161,7 @@ export function FloatDock() {
       backdropFilter: 'blur(8px)',
       boxShadow: '0 0 20px rgba(0,60,120,0.3)',
       animation: 'navFadeIn 0.2s ease both',
+      whiteSpace: 'nowrap',
     }}>
       {/* Top accent bar */}
       <div style={{
@@ -243,6 +290,18 @@ export function FloatDock() {
         onClick={() => setShowAnnotationCanvas(!showAnnotationCanvas)}
       />
 
+      {/* Intel brief */}
+      {intelBrief && (
+        <DockBtn
+          icon="◇"
+          label="INTEL BRIEF"
+          badge={briefRead ? undefined : '!'}
+          color="#ffd700"
+          active={showBrief}
+          onClick={() => { setShowBrief(v => !v); setBriefRead(true) }}
+        />
+      )}
+
       {/* Config */}
       <DockBtn
         icon="⚙"
@@ -274,6 +333,7 @@ export function FloatDock() {
           onClick={() => { setImmersiveMode(true); setLiteMode(false) }}
         />
       )}
+    </div>
     </div>
   )
 }

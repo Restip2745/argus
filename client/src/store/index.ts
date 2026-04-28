@@ -114,6 +114,16 @@ interface AppState {
   hiddenCategories: string[]
   toggleHiddenCategory: (cat: string) => void
 
+  // ── Event time-range filter (for EventStack) ──────────────
+  timeRangeFilter: '6h' | '12h' | '24h' | 'all'
+  setTimeRangeFilter: (v: '6h' | '12h' | '24h' | 'all') => void
+
+  // ── Intel brief (Periodic Intelligence Summary) ──────────
+  intelBrief: { id: string; summary: string; generatedAt: string; topEventIds: string[] } | null
+  setIntelBrief: (b: { id: string; summary: string; generatedAt: string; topEventIds: string[] }) => void
+  briefRead: boolean
+  setBriefRead: (v: boolean) => void
+
   // ── Panel z-order (click to bring to front) ───────────────
   panelZ: Record<string, number>
   bringToFront: (key: string) => void
@@ -233,6 +243,16 @@ export const useAppStore = create<AppState>((set) => ({
       ? s.hiddenCategories.filter((c) => c !== cat)
       : [...s.hiddenCategories, cat],
   })),
+
+  // Time-range filter
+  timeRangeFilter: 'all',
+  setTimeRangeFilter: (timeRangeFilter) => set({ timeRangeFilter }),
+
+  // Intel brief
+  intelBrief:    null,
+  setIntelBrief: (b) => set({ intelBrief: b, briefRead: false }),
+  briefRead:     false,
+  setBriefRead:  (briefRead) => set({ briefRead }),
 
   // Panel z-order — each call gives the clicked panel the current highest z
   panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33 },

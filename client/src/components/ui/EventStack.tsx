@@ -132,18 +132,31 @@ function IconItem({ event, animDelay, isNew, nudgeGen }: IconItemProps) {
   )
 }
 
+const TIME_RANGE_MS: Record<string, number> = {
+  '6h':  6  * 60 * 60 * 1000,
+  '12h': 12 * 60 * 60 * 1000,
+  '24h': 24 * 60 * 60 * 1000,
+}
+
 export function EventStack() {
   const events           = useAppStore((s) => s.events)
   const hiddenCategories = useAppStore((s) => s.hiddenCategories)
+  const timeRangeFilter  = useAppStore((s) => s.timeRangeFilter)
 
-  // Sort newest-first, filter hidden categories, cap at 45
-  const filtered = useMemo(() =>
-    [...events]
+  // Sort newest-first, apply time-range + category filters, cap at 45
+  const filtered = useMemo(() => {
+    const cutoff = timeRangeFilter !== 'all'
+      ? Date.now() - TIME_RANGE_MS[timeRangeFilter]
+      : null
+    return [...events]
       .sort((a, b) => (b.published_at ?? '').localeCompare(a.published_at ?? ''))
-      .filter((e) => !hiddenCategories.includes(e.category))
-      .slice(0, 45),
-    [events, hiddenCategories]
-  )
+      .filter((e) => {
+        if (hiddenCategories.includes(e.category)) return false
+        if (cutoff && e.published_at && new Date(e.published_at).getTime() < cutoff) return false
+        return true
+      })
+      .slice(0, 45)
+  }, [events, hiddenCategories, timeRangeFilter])
 
   // Track new arrivals for animation
   const prevIdsRef  = useRef<Set<string>>(new Set())

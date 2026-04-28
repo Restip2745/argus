@@ -5,6 +5,7 @@ import { Server } from 'socket.io'
 import cors from 'cors'
 import { Ollama } from 'ollama'
 import { initDb, getAnalyzedArticles, getRelatedEvents } from './db/sqlite'
+import { startSummaryWorker } from './workers/summary'
 import { initSocket } from './services/socket'
 import { startScraper } from './services/scraper'
 import { startOllamaWorker } from './services/ollama'
@@ -320,6 +321,7 @@ async function main() {
   startScraper()
   startOllamaWorker(io)
   startRetention()
+  startSummaryWorker(io)
 
   httpServer.listen(PORT, () => {
     console.log(`[ARGUS] Server → http://localhost:${PORT}`)

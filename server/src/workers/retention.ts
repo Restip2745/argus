@@ -17,11 +17,12 @@ function baseHeatScore(a: Article): number {
     intensity:     a.intensity as EventIntensity ?? 'LOW',
     sources_count: a.sources_count ?? 1,
     // Unused by calculateHeatScore but required by the interface:
-    title_zh:   '',
-    summary_zh: '',
-    location:   { type: 'geo', label: '', lat: null, lng: null, body: null },
-    actors:     [],
-    tags:       [],
+    title_zh:    '',
+    summary_zh:  '',
+    location:    { type: 'geo', label: '', lat: null, lng: null, body: null },
+    actors:      [],
+    tags:        [],
+    reliability: 'UNVERIFIED',
   } as OllamaClassification)
 }
 

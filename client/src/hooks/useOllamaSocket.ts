@@ -7,9 +7,17 @@ const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 let socket: Socket | null = null
 
+interface IntelBriefPayload {
+  id: string
+  summary: string
+  generatedAt: string
+  topEventIds: string[]
+}
+
 export function useOllamaSocket() {
-  const addEvent  = useAppStore((s) => s.addEvent)
-  const setEvents = useAppStore((s) => s.setEvents)
+  const addEvent      = useAppStore((s) => s.addEvent)
+  const setEvents     = useAppStore((s) => s.setEvents)
+  const setIntelBrief = useAppStore((s) => s.setIntelBrief)
 
   useEffect(() => {
     // Fetch existing analyzed articles on mount
@@ -31,6 +39,10 @@ export function useOllamaSocket() {
       addEvent(event)
     })
 
+    socket.on('intel_brief', (brief: IntelBriefPayload) => {
+      setIntelBrief(brief)
+    })
+
     socket.on('disconnect', () => {
       console.log('[Socket] Disconnected')
     })
@@ -39,5 +51,5 @@ export function useOllamaSocket() {
       socket?.disconnect()
       socket = null
     }
-  }, [addEvent, setEvents])
+  }, [addEvent, setEvents, setIntelBrief])
 }
