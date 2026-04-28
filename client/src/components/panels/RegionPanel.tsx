@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useAppStore } from '../../store'
+import { CATEGORY_COLOR, CATEGORY_ICON, CATEGORY_LABEL } from '../../data/categoryConfig'
+import type { ArgusEvent } from '../../types'
 import { useTranslation } from 'react-i18next'
 import { getCountryInfo, getDynamicTags } from '../../data/countryData'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
@@ -52,6 +54,12 @@ function formatPop(m: number): string {
 const BAR_COLORS = ['#00d4ff', '#4a6fa5', '#9b6dff', '#ff9c2a', '#39ff8a']
 
 // ── Compare mode card ─────────────────────────────────────────────────────────
+function compareMatchesCountry(e: ArgusEvent, countryName: string): boolean {
+  const loc   = (e.location_label ?? '').toLowerCase()
+  const cname = countryName.toLowerCase()
+  return loc.includes(cname) || cname.includes(loc.replace(/[()]/g, '').trim())
+}
+
 function CompareCard({
   country, color, onRemove,
 }: {
@@ -59,6 +67,7 @@ function CompareCard({
   color: string
   onRemove: () => void
 }) {
+  const events = useAppStore((s) => s.events)
   const info = getCountryInfo(country.name)
   const gdpPerCapita = info && info.populationM > 0
     ? Math.round((info.gdpB * 1e9) / (info.populationM * 1e6) / 1000)
@@ -66,6 +75,23 @@ function CompareCard({
   const stabilityColor = !info ? '#4a6070'
     : info.stability >= 70 ? '#39ff8a'
     : info.stability >= 45 ? '#ff9c2a' : '#ff4d4d'
+
+  const cutoff = Date.now() - 24 * 3600 * 1000
+  const countryEvents = useMemo(() =>
+    events.filter(e => {
+      const ts = e.published_at ? new Date(e.published_at).getTime() : 0
+      return ts >= cutoff && compareMatchesCountry(e, country.name)
+    }),
+    [events, country.name]
+  )
+
+  const categoryBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const e of countryEvents) {
+      counts[e.category] = (counts[e.category] ?? 0) + 1
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  }, [countryEvents])
 
   return (
     <div style={{
@@ -155,7 +181,7 @@ function CompareCard({
 
           {/* Top industries */}
           {info.industries.length > 0 && (
-            <div>
+            <div style={{ marginBottom: '6px' }}>
               <div style={{ color: '#2a4060', fontSize: '6px', letterSpacing: '0.1em', marginBottom: '4px' }}>INDUSTRIES</div>
               {info.industries.slice(0, 3).map((ind, i) => (
                 <div key={ind.label} style={{ marginBottom: '3px' }}>
@@ -172,8 +198,56 @@ function CompareCard({
           )}
         </>
       ) : (
-        <div style={{ color: '#2a4060', fontSize: '8px' }}>— no data —</div>
+        <div style={{ color: '#2a4060', fontSize: '8px', marginBottom: '6px' }}>— no data —</div>
       )}
+
+      {/* Event category breakdown (24h) */}
+      {categoryBreakdown.length > 0 && (
+        <div style={{ marginTop: '4px', borderTop: '1px solid rgba(0,180,255,0.07)', paddingTop: '5px' }}>
+          <div style={{ color: '#2a4060', fontSize: '6px', letterSpacing: '0.1em', marginBottom: '4px' }}>EVENTS (24H)</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+            {categoryBreakdown.map(([cat, count]) => {
+              const catColor = CATEGORY_COLOR[cat] ?? '#4a6070'
+              const catIcon  = CATEGORY_ICON[cat]  ?? '◉'
+              const catLabel = CATEGORY_LABEL[cat]  ?? cat
+              return (
+                <span key={cat} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '2px',
+                  fontSize: '6px', padding: '1px 4px', borderRadius: '2px',
+                  border: `1px solid ${catColor}30`,
+                  background: `${catColor}0a`,
+                  color: catColor,
+                }}>
+                  {catIcon} {catLabel} <span style={{ opacity: 0.7 }}>×{count}</span>
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Recent events list */}
+      {countryEvents.length > 0 && (
+        <div style={{ marginTop: '5px', borderTop: '1px solid rgba(0,180,255,0.07)', paddingTop: '5px' }}>
+          <div style={{ color: '#2a4060', fontSize: '6px', letterSpacing: '0.1em', marginBottom: '4px' }}>RECENT</div>
+          {countryEvents.slice(0, 3).map(e => {
+            const catColor = CATEGORY_COLOR[e.category] ?? '#4a6070'
+            const catIcon  = CATEGORY_ICON[e.category]  ?? '◉'
+            return (
+              <div key={e.id} style={{ display: 'flex', gap: '4px', marginBottom: '3px', alignItems: 'flex-start' }}>
+                <span style={{ color: catColor, fontSize: '7px', flexShrink: 0 }}>{catIcon}</span>
+                <span style={{ color: '#4a6070', fontSize: '7px', lineHeight: 1.3,
+                  overflow: 'hidden', display: '-webkit-box',
+                  WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                }}>
+                  {e.title}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
     </div>
   )
 }

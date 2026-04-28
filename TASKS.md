@@ -20,6 +20,35 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Region Comparison Panel
+  Description: The Zustand store already has `compareMode`, `comparedCountries`, `addComparedCountry`,
+    and `removeComparedCountry`. When compareMode is active, render a dual-column panel inside
+    RegionPanel showing key stats (event count by category, heat score summary, recent events)
+    side-by-side for up to 2 countries. Add a "Compare" toggle button to the RegionPanel header.
+  Description: The compare UI structure (toggle button, CompareCard component, dual-column grid)
+    was already in RegionPanel. Added the missing pieces: category event breakdown (24h, by count)
+    and recent events list to CompareCard. CompareCard now reads events from Zustand store directly
+    and computes country-filtered events via compareMatchesCountry helper. Imports CATEGORY_COLOR,
+    CATEGORY_ICON, CATEGORY_LABEL from categoryConfig.
+  Success Criteria: Met — compare mode shows side-by-side cards with stats, category breakdown,
+    and recent events; exits cleanly on ✕ or compare toggle; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Event Density Clustering
+  Description: EventMarkers currently renders one marker per event regardless of zoom level,
+    leading to overlapping icons when many events share a small geographic area. At low zoom
+    (solar / high-orbital distance), group markers within ~200 km radius into a single cluster
+    marker showing count. At surface zoom, show individual markers.
+  Success Criteria: Clustered markers appear at low zoom; expand to individual markers as user
+    zooms in. No visible regression to existing single-marker behaviour at surface zoom.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][MEDIUM] UI: Timeline Filter Slider
   Description: Added `timeRangeFilter` ('6h'|'12h'|'24h'|'all') to Zustand store. Rendered a
     segmented button group in CategoryFilterBar (left of category chips). EventStack filters events
