@@ -20,6 +20,16 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][MEDIUM] Bugfix: Fix pre-existing TypeScript errors in CelestialBody.tsx
+  Description: CelestialBody.tsx has 2 pre-existing TS errors: (1) RefObject<Object3D> not
+    assignable to Ref<Mesh> at line 216; (2) ForwardedRef<Object3D> not assignable to
+    Ref<Group> at line 410. Fix by widening the ref types or using proper type assertions.
+  Success Criteria: npx tsc --noEmit produces only the satellite.js import error, no others.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Feature: Periodic Intelligence Summary
   Description: Every 30 minutes, a server-side cron job picks the top-5 events by heat_score
     (is_analyzed=1), builds a short prompt, calls Ollama, and pushes the resulting summary as a

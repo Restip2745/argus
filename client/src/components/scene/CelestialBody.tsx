@@ -213,7 +213,7 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
           />
         ) : (
           <mesh
-            ref={meshRef}
+            ref={meshRef as React.Ref<THREE.Mesh>}
             onClick={handleClick}
             castShadow={!def.isStar}
             receiveShadow={!def.isStar}
@@ -407,7 +407,7 @@ const EarthMesh = forwardRef<THREE.Object3D, EarthMeshProps>(
     return (
       /* Both layers share a single group — rotation.y applied to this group
          rotates day AND night textures in lock-step, keeping them aligned. */
-      <group ref={ref}>
+      <group ref={ref as React.Ref<THREE.Group>}>
         {/* Base layer: day texture lit by the Sun — opaque, writes depth */}
         <mesh onClick={onClick} castShadow receiveShadow>
           <sphereGeometry args={[radius, segs, segs]} />
