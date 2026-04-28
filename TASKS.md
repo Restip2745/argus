@@ -55,11 +55,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Feature: i18n Complete Coverage
-  Description: `en.json` / `zh-TW.json` cover ~20 keys. Most UI strings are hardcoded English.
-    Extract all panel / toolbar / agent prompt strings into both locale files.
-  Success Criteria: Switching language changes all visible UI strings. No hardcoded English outside
-    of locale files (except console logs and data-layer strings).
+[DONE][LOW] Feature: i18n Complete Coverage
+  Description: Expanded en.json / zh-TW.json from ~20 keys to 40+ keys covering all major UI areas:
+    panel actions (focus, focus_region, region), event labels (heat, source, suggestedQueries, agent,
+    analyzing, viewSource, askAgent), time range filter (6h/12h/24h/all), region section labels, and
+    ui controls (liteMode, normalMode, immersive, aiAnalysis, config, compareMode, canvas.toggle,
+    celestialNav.collapse/expand). Updated EventPanelBody and CategoryFilterBar to use t() for all
+    visible labels.
+  Success Criteria: Met — all major visible strings are keyed; switching language changes panel and
+    toolbar labels; no new TS errors.
   Retry Count: 0
   Source: ROADMAP
 

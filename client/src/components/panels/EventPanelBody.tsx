@@ -171,7 +171,7 @@ export function EventPanelBody({
           const color = relColor[rel] ?? '#2a4060'
           return (
             <div className="flex items-center gap-2">
-              <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">SOURCE</span>
+              <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.source', 'SOURCE')}</span>
               <span
                 className="text-[7px] tracking-widest px-1.5 py-0.5 rounded"
                 style={{
@@ -191,7 +191,7 @@ export function EventPanelBody({
         {/* Heat Score */}
         {event.heat_score != null && (
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">HEAT</span>
+            <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.heat', 'HEAT')}</span>
             <div
               className="flex-1 rounded-sm overflow-hidden"
               style={{ height: '3px', background: 'rgba(0,180,255,0.08)', border: '1px solid rgba(0,180,255,0.1)' }}
@@ -263,7 +263,7 @@ export function EventPanelBody({
         >
           <span style={{ fontSize: '11px', opacity: 0.7 }}>↗</span>
           <span className="truncate flex-1">{hostname()}</span>
-          <span style={{ opacity: 0.5, fontSize: '8px', letterSpacing: '0.12em' }}>VIEW SOURCE</span>
+          <span style={{ opacity: 0.5, fontSize: '8px', letterSpacing: '0.12em' }}>{t('event.labels.viewSource', 'VIEW SOURCE')}</span>
         </a>
 
         {/* Coordinates */}
@@ -306,7 +306,7 @@ export function EventPanelBody({
       {/* ── Suggested Queries ──────────────────────────────────────────────── */}
       {suggestedQueries.length > 0 && (
         <div className="relative px-3 pb-2 pt-2 border-t border-[rgba(0,180,255,0.07)]">
-          <div className="text-[7px] text-[#2a4060] tracking-widest mb-1.5">SUGGESTED QUERIES</div>
+          <div className="text-[7px] text-[#2a4060] tracking-widest mb-1.5">{t('event.labels.suggestedQueries', 'SUGGESTED QUERIES')}</div>
           <div className="flex flex-wrap gap-1">
             {suggestedQueries.map(q => (
               <button
@@ -330,7 +330,7 @@ export function EventPanelBody({
 
       {/* ── Agent Chat ─────────────────────────────────────────────────────── */}
       <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
-        <div className="text-[7px] text-[#2a4060] tracking-widest mb-2">◈ INTELLIGENCE AGENT</div>
+        <div className="text-[7px] text-[#2a4060] tracking-widest mb-2">{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</div>
 
         {agentHistory.length > 0 && (
           <div className="mb-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
@@ -357,7 +357,7 @@ export function EventPanelBody({
 
         {agentLoading && agentHistory.length > 0 && agentHistory[agentHistory.length - 1].html === '' && (
           <div className="mb-2 flex items-center gap-2">
-            <span className="text-[7px] text-[#2a4060] tracking-widest">ANALYZING</span>
+            <span className="text-[7px] text-[#2a4060] tracking-widest">{t('event.labels.analyzing', 'ANALYZING')}</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>
           </div>
         )}
@@ -376,7 +376,7 @@ export function EventPanelBody({
                 if (agentInput.trim()) { agentAsk(agentInput, agentContext); setAgentInput('') }
               }
             }}
-            placeholder="詢問情報分析..."
+            placeholder={t('event.labels.askAgent', '詢問情報分析...')}
             disabled={agentLoading}
             className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
             style={{

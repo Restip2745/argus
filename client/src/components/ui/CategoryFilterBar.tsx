@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { CATEGORY_ICON, CATEGORY_COLOR, CATEGORY_LABEL } from '../../data/categoryConfig'
 
@@ -126,6 +127,7 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
 // ── Bar ─────────────────────────────────────────────────────────────────────
 
 export function CategoryFilterBar() {
+  const { t }                = useTranslation()
   const events               = useAppStore((s) => s.events)
   const hiddenCategories     = useAppStore((s) => s.hiddenCategories)
   const toggleHiddenCategory = useAppStore((s) => s.toggleHiddenCategory)
@@ -167,7 +169,7 @@ export function CategoryFilterBar() {
                 userSelect: 'none',
               }}
             >
-              {label}
+              {t(`event.timeRange.${value}`, label)}
             </button>
           )
         })}
