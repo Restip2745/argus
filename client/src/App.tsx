@@ -15,6 +15,7 @@ import { CategoryFilterBar } from './components/ui/CategoryFilterBar'
 import { FloatDock } from './components/ui/FloatDock'
 import { CanvasAnalysisPanel } from './components/ui/CanvasAnalysisPanel'
 import { CelestialBodyPanel } from './components/panels/CelestialBodyPanel'
+import { ToastContainer } from './components/ui/ToastContainer'
 import { useAppStore } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
 import { usePopoutSync } from './hooks/usePopoutSync'
@@ -69,6 +70,9 @@ export default function App() {
 
       {/* ── Annotation overlay (always on top of canvas, outside HUD scale) ── */}
       {showAnnotationCanvas && <AnnotationCanvas />}
+
+      {/* ── Toast notifications (outside HUD scale, always visible) ─────── */}
+      <ToastContainer />
 
       {/* ── Scaled HUD layer ─────────────────────────────────────────────── */}
       <div style={{ zoom: uiScale }}>

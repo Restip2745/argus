@@ -30,12 +30,12 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: High-Intensity Toast Notifications
-  Description: When a new CRITICAL or HIGH event arrives via WebSocket, display a non-blocking
-    corner toast (2-3 seconds, dismissible) showing the event category icon, title snippet, and
-    intensity label. Must not interrupt scene interaction.
-  Success Criteria: CRITICAL/HIGH events trigger a toast in the bottom-right (or top-right) corner.
-    Toast auto-dismisses after 3 s. Multiple toasts stack. Low/Moderate events do not toast.
+[DONE][MEDIUM] Feature: High-Intensity Toast Notifications
+  Description: Created ToastContainer component that detects new CRITICAL/HIGH events via store
+    event diffing (skips first load). Each toast shows category icon, intensity label, and title
+    snippet. Auto-dismisses after 3s with slide-out animation; manually dismissible. Multiple
+    toasts stack in bottom-right corner. Mounted in App.tsx outside HUD scale layer.
+  Success Criteria: Met — CRITICAL/HIGH events trigger toast; auto-dismiss 3s; stacking; no new TS errors.
   Retry Count: 0
   Source: ROADMAP
 
