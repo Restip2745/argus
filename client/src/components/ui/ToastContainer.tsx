@@ -95,9 +95,10 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 export function ToastContainer() {
   const events         = useAppStore((s) => s.events)
   const [toasts, setToasts] = useState<Toast[]>([])
-  const prevIdsRef     = useRef<Set<string>>(new Set())
-  const isFirstRender  = useRef(true)
-  const timersRef      = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const prevIdsRef    = useRef<Set<string>>(new Set())
+  // true once we have seen the first non-empty event array (REST hydration complete)
+  const isHydratedRef = useRef(false)
+  const timersRef     = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   const scheduleExit = useCallback((id: string) => {
     const existing = timersRef.current.get(id)
@@ -122,9 +123,12 @@ export function ToastContainer() {
   useEffect(() => {
     const currentIds = new Set(events.map((e) => e.id))
 
-    if (isFirstRender.current) {
-      isFirstRender.current = false
+    if (!isHydratedRef.current) {
+      // Seed prevIdsRef from whatever is in the store (empty set initially, then
+      // the full REST response). Only mark hydrated once we've seen a non-empty
+      // set — this ensures the bulk setEvents() load is never treated as arrivals.
       prevIdsRef.current = currentIds
+      if (events.length > 0) isHydratedRef.current = true
       return
     }
 

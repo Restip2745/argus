@@ -44,7 +44,7 @@ function DockBtn({ icon, label, badge, color = '#4a6070', active, onClick }: Doc
         }}
       >
         {icon}
-        {badge != null && Number(badge) > 0 && (
+        {badge != null && (typeof badge === 'string' ? badge.length > 0 : Number(badge) > 0) && (
           <span style={{
             position: 'absolute', top: '2px', right: '2px',
             background: '#ff4d4d', color: '#fff',
@@ -52,7 +52,7 @@ function DockBtn({ icon, label, badge, color = '#4a6070', active, onClick }: Doc
             borderRadius: '2px', padding: '0 2px',
             lineHeight: '9px', minWidth: '9px', textAlign: 'center',
           }}>
-            {Number(badge) > 99 ? '99+' : badge}
+            {typeof badge === 'number' && badge > 99 ? '99+' : badge}
           </span>
         )}
       </button>

@@ -8,6 +8,7 @@
  * Receives all data as props so EventPanel can animate this whole block as
  * a unit (slide in/out) when the user navigates the timeline.
  */
+import { useTranslation } from 'react-i18next'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
@@ -70,7 +71,6 @@ interface Props {
   agentContext:     string
   agentAsk:         (q: string, ctx: string) => void
   agentScrollRef:   React.RefObject<HTMLDivElement>
-  t:                (key: string, fallback: string) => string
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -82,10 +82,17 @@ export function EventPanelBody({
   agentHistory, agentLoading, agentError,
   agentInput, setAgentInput,
   suggestedQueries, agentContext, agentAsk,
-  agentScrollRef, t,
+  agentScrollRef,
 }: Props) {
-  const title   = event.title
-  const summary = event.content || event.summary_zh
+  const { t, i18n } = useTranslation()
+  const isEN = i18n.language === 'en'
+
+  const title = event.title
+  // In EN mode: prefer original English content; fall back to title as last resort.
+  // In zh-TW mode: prefer the Chinese summary, fall back to content.
+  const summary = isEN
+    ? (event.content || null)
+    : (event.summary_zh || event.content)
 
   function resolveCountry() {
     const label = event.location_label

@@ -10,7 +10,7 @@
  */
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useTranslation } from 'react-i18next'
+
 import { useAppStore } from '../../store'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
@@ -69,7 +69,7 @@ function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function EventPanel() {
-  const { t } = useTranslation()
+
   const activePanelId      = useAppStore(s => s.activePanelId)
   const events             = useAppStore(s => s.events)
   const setActivePanelId   = useAppStore(s => s.setActivePanelId)
@@ -437,7 +437,6 @@ export function EventPanel() {
                   agentContext=""
                   agentAsk={() => {}}
                   agentScrollRef={agentScrollRef}
-                  t={t}
                 />
               </div>
             )}
@@ -463,7 +462,6 @@ export function EventPanel() {
                   agentContext={agentContext}
                   agentAsk={agentAsk}
                   agentScrollRef={agentScrollRef}
-                  t={t}
                 />
               )}
             </div>

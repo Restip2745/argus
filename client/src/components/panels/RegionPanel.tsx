@@ -76,14 +76,13 @@ function CompareCard({
     : info.stability >= 70 ? '#39ff8a'
     : info.stability >= 45 ? '#ff9c2a' : '#ff4d4d'
 
-  const cutoff = Date.now() - 24 * 3600 * 1000
-  const countryEvents = useMemo(() =>
-    events.filter(e => {
+  const countryEvents = useMemo(() => {
+    const cutoff = Date.now() - 24 * 3600 * 1000
+    return events.filter(e => {
       const ts = e.published_at ? new Date(e.published_at).getTime() : 0
       return ts >= cutoff && compareMatchesCountry(e, country.name)
-    }),
-    [events, country.name]
-  )
+    })
+  }, [events, country.name])
 
   const categoryBreakdown = useMemo(() => {
     const counts: Record<string, number> = {}
