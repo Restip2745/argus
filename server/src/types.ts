@@ -19,6 +19,7 @@ export const VALID_CATEGORIES: EventCategory[] = [
 ]
 
 export type EventIntensity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL'
+export type SourceReliability = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNVERIFIED'
 
 export const VALID_INTENSITIES: EventIntensity[] = [
   'LOW', 'MODERATE', 'HIGH', 'CRITICAL',
@@ -52,6 +53,7 @@ export interface Article {
   actors: string | null               // JSON array string in DB
   tags: string | null                  // JSON array string in DB
   sources_count: number | null
+  reliability: SourceReliability | null
 
   // Heat Score
   heat_score: number
@@ -78,6 +80,7 @@ export interface OllamaClassification {
   actors: string[]
   sources_count: number
   tags: string[]
+  reliability: SourceReliability
 }
 
 // ────────────────────────────────────────────────────────────
@@ -104,6 +107,7 @@ export interface ClientEvent {
   actors: string[]
   tags: string[]
   sources_count: number
+  reliability: SourceReliability
   heat_score: number
   expires_at: string | null
   last_referenced: string | null

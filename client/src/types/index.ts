@@ -44,6 +44,7 @@ export type EventCategory =
   | 'SPACE'
 
 export type EventIntensity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL'
+export type SourceReliability = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNVERIFIED'
 
 export interface ArgusEvent {
   id: string
@@ -67,6 +68,7 @@ export interface ArgusEvent {
   actors: string[]          // Parsed from JSON string
   tags: string[]            // Parsed from JSON string
   sources_count: number
+  reliability: SourceReliability
   // Heat Score
   heat_score: number
   expires_at: string | null

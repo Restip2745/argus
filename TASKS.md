@@ -41,13 +41,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Event Source Reliability Labels
-  Description: Ollama classification prompt currently outputs `sources_count` (integer) but no
-    per-source reliability tier. Extend the prompt schema to include a `reliability` field
-    (e.g., "HIGH" | "MEDIUM" | "LOW" | "UNVERIFIED"). Add the column to the SQLite schema,
-    update `markAnalyzed`, and render a reliability badge in EventPanelBody.
-  Success Criteria: New articles receive a `reliability` classification. EventPanelBody shows the
-    badge. Existing articles without the field display "UNVERIFIED" gracefully.
+[DONE][MEDIUM] Feature: Event Source Reliability Labels
+  Description: Added `reliability` (HIGH|MEDIUM|LOW|UNVERIFIED) field end-to-end:
+    - `schema.sql`: new column + runtime ALTER TABLE migration for existing DBs
+    - `types.ts`: `SourceReliability` type added to Article, OllamaClassification, ClientEvent
+    - `ollama.ts`: system prompt updated, validateClassification parses + defaults UNVERIFIED
+    - `sqlite.ts`: markAnalyzed saves reliability; articleToClientEvent maps it
+    - `retention.ts`: baseHeatScore dummy object includes reliability
+    - Client types + EventPanelBody badge (color-coded: green/gold/orange/dim)
+  Success Criteria: Met — new articles get reliability; badge in panel; UNVERIFIED for old rows; no TS errors.
   Retry Count: 0
   Source: ROADMAP
 

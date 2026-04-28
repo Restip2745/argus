@@ -1,8 +1,10 @@
 import { Ollama } from 'ollama'
 import cron from 'node-cron'
 import type { Server } from 'socket.io'
-import type { Article, OllamaClassification, EventCategory, EventIntensity } from '../types'
+import type { Article, OllamaClassification, EventCategory, EventIntensity, SourceReliability } from '../types'
 import { VALID_CATEGORIES, VALID_INTENSITIES } from '../types'
+
+const VALID_RELIABILITIES: SourceReliability[] = ['HIGH', 'MEDIUM', 'LOW', 'UNVERIFIED']
 import {
   getPendingArticles,
   markAnalyzed,
@@ -40,7 +42,8 @@ Follow this schema exactly:
   },
   "actors": string[],         // Key parties involved, e.g. ["Ukraine", "Russia"] or ["NASA", "ESA"]
   "sources_count": number,    // Number of corroborating sources mentioned in the article (estimate 1 if unknown)
-  "tags": string[]            // 2–4 short keyword tags in English, e.g. ["military", "frontline", "artillery"]
+  "tags": string[],           // 2–4 short keyword tags in English, e.g. ["military", "frontline", "artillery"]
+  "reliability": string       // Perceived source reliability: HIGH | MEDIUM | LOW | UNVERIFIED
 }`
 
 // ── Heat score calculation ──────────────────────────────
@@ -133,6 +136,9 @@ function validateClassification(raw: Record<string, unknown>): OllamaClassificat
     actors:        Array.isArray(raw.actors) ? raw.actors.map(String) : [],
     sources_count: typeof raw.sources_count === 'number' ? raw.sources_count : 1,
     tags:          Array.isArray(raw.tags) ? raw.tags.map(String) : [],
+    reliability:   VALID_RELIABILITIES.includes(raw.reliability as SourceReliability)
+                     ? (raw.reliability as SourceReliability)
+                     : 'UNVERIFIED',
   }
 }
 

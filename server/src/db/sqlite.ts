@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import type { Article, OllamaClassification, ClientEvent } from '../types'
+import type { Article, OllamaClassification, ClientEvent, SourceReliability } from '../types'
 
 let db: Database.Database
 
@@ -21,6 +21,14 @@ export function initDb(): void {
 
   const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf-8')
   db.exec(schema)
+
+  // Migration: add reliability column if missing (schema may already exist)
+  const cols = db.prepare("PRAGMA table_info(articles)").all() as { name: string }[]
+  if (!cols.some(c => c.name === 'reliability')) {
+    db.exec("ALTER TABLE articles ADD COLUMN reliability TEXT")
+    console.log('[DB] Migration: added reliability column')
+  }
+
   console.log('[DB] SQLite initialised (articles schema)')
 }
 
@@ -95,6 +103,7 @@ export function markAnalyzed(
        actors         = @actors,
        tags           = @tags,
        sources_count  = @sources_count,
+       reliability    = @reliability,
        heat_score     = @heat_score,
        expires_at     = @expires_at
      WHERE id = @id`
@@ -112,6 +121,7 @@ export function markAnalyzed(
     actors:         JSON.stringify(data.actors),
     tags:           JSON.stringify(data.tags),
     sources_count:  data.sources_count,
+    reliability:    data.reliability,
     heat_score:     heatScore,
     expires_at:     expiresAt,
   })
@@ -194,6 +204,7 @@ export function articleToClientEvent(row: Article): ClientEvent {
     actors:          safeJsonParse(row.actors),
     tags:            safeJsonParse(row.tags),
     sources_count:   row.sources_count ?? 1,
+    reliability:     (row.reliability ?? 'UNVERIFIED') as SourceReliability,
     heat_score:      row.heat_score,
     expires_at:      row.expires_at,
     last_referenced: row.last_referenced,

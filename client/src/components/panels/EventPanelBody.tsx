@@ -159,6 +159,35 @@ export function EventPanelBody({
           </div>
         )}
 
+        {/* Source Reliability Badge */}
+        {(() => {
+          const rel = event.reliability ?? 'UNVERIFIED'
+          const relColor: Record<string, string> = {
+            HIGH:       '#39ff8a',
+            MEDIUM:     '#ffd700',
+            LOW:        '#ff9c2a',
+            UNVERIFIED: '#2a4060',
+          }
+          const color = relColor[rel] ?? '#2a4060'
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">SOURCE</span>
+              <span
+                className="text-[7px] tracking-widest px-1.5 py-0.5 rounded"
+                style={{
+                  color,
+                  border: `1px solid ${color}30`,
+                  background: `${color}0a`,
+                  letterSpacing: '0.1em',
+                  fontWeight: 600,
+                }}
+              >
+                {rel}
+              </span>
+            </div>
+          )
+        })()}
+
         {/* Heat Score */}
         {event.heat_score != null && (
           <div className="flex items-center gap-2 pt-1">
