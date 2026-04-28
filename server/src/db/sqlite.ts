@@ -72,6 +72,13 @@ export function getArticleById(id: string): Article | null {
     .get(id) as Article) ?? null
 }
 
+export function getTopHeatEvents(limit = 5): ClientEvent[] {
+  const rows = getDb()
+    .prepare('SELECT * FROM articles WHERE is_analyzed = 1 ORDER BY heat_score DESC LIMIT ?')
+    .all(limit) as Article[]
+  return rows.map(articleToClientEvent)
+}
+
 export function getAnalyzedArticles(): ClientEvent[] {
   const rows = getDb()
     .prepare('SELECT * FROM articles WHERE is_analyzed = 1 ORDER BY heat_score DESC, published_at DESC')

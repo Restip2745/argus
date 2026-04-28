@@ -32,3 +32,14 @@ export function initSocket(io: Server): void {
 export function broadcastEvent(io: Server, event: ClientEvent): void {
   io.emit('new_event', event)
 }
+
+export interface IntelBrief {
+  id: string
+  summary: string
+  generatedAt: string
+  topEventIds: string[]
+}
+
+export function broadcastBrief(io: Server, brief: IntelBrief): void {
+  io.emit('intel_brief', brief)
+}

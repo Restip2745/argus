@@ -20,6 +20,42 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Periodic Intelligence Summary
+  Description: Every 30 minutes, a server-side cron job picks the top-5 events by heat_score
+    (is_analyzed=1), builds a short prompt, calls Ollama, and pushes the resulting summary as a
+    new Socket.io event type `intel_brief` (JSON: {id, summary, generatedAt, topEventIds}).
+    FloatDock receives the brief and shows a "BRIEF" badge + modal/tooltip with the text.
+  Success Criteria: FloatDock shows BRIEF badge within 30 min of startup (or immediately if
+    events exist). Clicking shows the summary text. No crash when Ollama is unavailable.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Feature: Event Relationship Graph
+  Description: In EventPanelBody, below the heat score row, add a small relationship graph
+    section showing related events as nodes connected by shared actors/tags. Use existing
+    `getRelatedEvents` API endpoint. Render as a lightweight SVG force-directed-like layout
+    (static positions, no physics). Each node: category icon + title snippet. Clicking a node
+    navigates to that event.
+  Success Criteria: Related events section appears in EventPanel for events with actor/tag overlap.
+    Nodes are color-coded by category. Clicking node opens that event. Empty if no relations.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Event Export / Share
+  Description: Add an "Export" button to EventPanel header that generates a Markdown or JSON
+    summary of the current event (title, summary, category, intensity, actors, tags, heat score,
+    URL). Copy to clipboard + optionally trigger a file download. Single event export only.
+  Success Criteria: Export button appears in EventPanel. Clicking copies formatted Markdown to
+    clipboard and shows a brief "Copied!" confirmation. JSON mode via a secondary option.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Feature: Region Comparison Panel
   Description: The Zustand store already has `compareMode`, `comparedCountries`, `addComparedCountry`,
     and `removeComparedCountry`. When compareMode is active, render a dual-column panel inside
