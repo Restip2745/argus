@@ -32,7 +32,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Feature: Event Relationship Graph
+[DONE][HIGH] Feature: Event Relationship Graph
   Description: In EventPanelBody, below the heat score row, add a small relationship graph
     section showing related events as nodes connected by shared actors/tags. Use existing
     `getRelatedEvents` API endpoint. Render as a lightweight SVG force-directed-like layout

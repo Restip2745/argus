@@ -12,6 +12,7 @@ import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import type { AgentEntry } from '../../hooks/useAgentQuery'
+import { EventRelationGraph } from './EventRelationGraph'
 
 
 function relativeTime(iso: string | null): string {
@@ -221,6 +222,9 @@ export function EventPanelBody({
             </span>
           </div>
         )}
+
+        {/* Relationship graph */}
+        <EventRelationGraph eventId={event.id} accentColor={accentColor} />
 
         {/* Meta row: source · location */}
         <div className="flex items-center justify-between text-[9px] text-[#2a4060] pt-2 border-t border-[rgba(0,180,255,0.07)]">
