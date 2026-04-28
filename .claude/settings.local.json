@@ -42,7 +42,11 @@
       "Bash(file /c/Workspace/apps/argus/docs/*.docx)",
       "Bash(git stash *)",
       "Bash(git pull *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(gh issue *)",
+      "Bash(npx vite *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm list *)"
     ]
   }
 }
