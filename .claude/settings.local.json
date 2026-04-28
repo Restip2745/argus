@@ -38,7 +38,11 @@
       "Bash(mv /c/Workspace/apps/giss /c/Workspace/apps/argus)",
       "Read(//c/Workspace/apps//**)",
       "PowerShell(Rename-Item -Path \"C:\\\\Workspace\\\\apps\\\\giss\" -NewName \"argus\" -Force)",
-      "PowerShell(if \\($?\\) { \"Folder renamed OK\" } else { \"Failed\" })"
+      "PowerShell(if \\($?\\) { \"Folder renamed OK\" } else { \"Failed\" })",
+      "Bash(file /c/Workspace/apps/argus/docs/*.docx)",
+      "Bash(git stash *)",
+      "Bash(git pull *)",
+      "Bash(git checkout *)"
     ]
   }
 }
