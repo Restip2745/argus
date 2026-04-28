@@ -45,7 +45,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Event Export / Share
+[DONE][MEDIUM] Feature: Event Export / Share
   Description: Add an "Export" button to EventPanel header that generates a Markdown or JSON
     summary of the current event (title, summary, category, intensity, actors, tags, heat score,
     URL). Copy to clipboard + optionally trigger a file download. Single event export only.
