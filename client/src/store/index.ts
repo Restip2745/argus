@@ -114,6 +114,10 @@ interface AppState {
   hiddenCategories: string[]
   toggleHiddenCategory: (cat: string) => void
 
+  // ── Event time-range filter (for EventStack) ──────────────
+  timeRangeFilter: '6h' | '12h' | '24h' | 'all'
+  setTimeRangeFilter: (v: '6h' | '12h' | '24h' | 'all') => void
+
   // ── Panel z-order (click to bring to front) ───────────────
   panelZ: Record<string, number>
   bringToFront: (key: string) => void
@@ -233,6 +237,10 @@ export const useAppStore = create<AppState>((set) => ({
       ? s.hiddenCategories.filter((c) => c !== cat)
       : [...s.hiddenCategories, cat],
   })),
+
+  // Time-range filter
+  timeRangeFilter: 'all',
+  setTimeRangeFilter: (timeRangeFilter) => set({ timeRangeFilter }),
 
   // Panel z-order — each call gives the clicked panel the current highest z
   panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33 },

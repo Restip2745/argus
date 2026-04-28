@@ -4,6 +4,14 @@ import { CATEGORY_ICON, CATEGORY_COLOR, CATEGORY_LABEL } from '../../data/catego
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_COLOR)
 
+type TimeRange = '6h' | '12h' | '24h' | 'all'
+const TIME_RANGES: { value: TimeRange; label: string }[] = [
+  { value: '6h',  label: '6h'  },
+  { value: '12h', label: '12h' },
+  { value: '24h', label: '24h' },
+  { value: 'all', label: 'All' },
+]
+
 // ── Single filter button with mouse-tracking sheen ──────────────────────────
 
 interface FilterButtonProps {
@@ -121,12 +129,50 @@ export function CategoryFilterBar() {
   const events               = useAppStore((s) => s.events)
   const hiddenCategories     = useAppStore((s) => s.hiddenCategories)
   const toggleHiddenCategory = useAppStore((s) => s.toggleHiddenCategory)
+  const timeRangeFilter      = useAppStore((s) => s.timeRangeFilter)
+  const setTimeRangeFilter   = useAppStore((s) => s.setTimeRangeFilter)
 
   return (
     <div
       className="absolute top-2 z-20 flex items-center gap-1 font-mono"
       style={{ left: '50%', transform: 'translateX(-50%)' }}
     >
+      {/* Time-range quick-filter */}
+      <div
+        className="flex items-center rounded border overflow-hidden"
+        style={{
+          borderColor: 'rgba(0,180,255,0.15)',
+          background: 'rgba(4,9,22,0.75)',
+          backdropFilter: 'blur(4px)',
+          marginRight: '4px',
+        }}
+      >
+        {TIME_RANGES.map(({ value, label }) => {
+          const active = timeRangeFilter === value
+          return (
+            <button
+              key={value}
+              onClick={() => setTimeRangeFilter(value)}
+              className="font-mono"
+              style={{
+                padding: '3px 7px',
+                fontSize: '8px',
+                fontWeight: active ? 700 : 500,
+                letterSpacing: '0.08em',
+                color: active ? '#00d4ff' : '#2a5070',
+                background: active ? 'rgba(0,212,255,0.12)' : 'transparent',
+                borderRight: value !== 'all' ? '1px solid rgba(0,180,255,0.1)' : 'none',
+                transition: 'color 0.15s, background 0.15s',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
       {ALL_CATEGORIES.map((cat) => (
         <FilterButton
           key={cat}

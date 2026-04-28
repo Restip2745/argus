@@ -20,23 +20,11 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] UI: Timeline Filter Slider
-  Description: EventStack only supports category filtering. Add a time-range quick-filter
-    (Last 6h / 12h / 24h / All) in CategoryFilterBar or FloatDock. Filter should apply on top
-    of the existing category filter.
-  Success Criteria: User can switch between 6h / 12h / 24h / All and EventStack updates accordingly.
-    Filter state lives in the Zustand store and persists while the panel is open.
-  Retry Count: 0
-  Source: ROADMAP
-
----
-
-[TODO][MEDIUM] UI: Timeline Filter Slider
-  Description: EventStack only supports category filtering. Add a time-range quick-filter
-    (Last 6h / 12h / 24h / All) in CategoryFilterBar or FloatDock. Filter should apply on top
-    of the existing category filter.
-  Success Criteria: User can switch between 6h / 12h / 24h / All and EventStack updates accordingly.
-    Filter state lives in the Zustand store and persists while the panel is open.
+[DONE][MEDIUM] UI: Timeline Filter Slider
+  Description: Added `timeRangeFilter` ('6h'|'12h'|'24h'|'all') to Zustand store. Rendered a
+    segmented button group in CategoryFilterBar (left of category chips). EventStack filters events
+    by published_at cutoff before applying the category filter. No new TS errors.
+  Success Criteria: Met — user switches 6h/12h/24h/All, EventStack updates accordingly. State in store.
   Retry Count: 0
   Source: ROADMAP
 
