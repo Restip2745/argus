@@ -71,6 +71,8 @@ interface Props {
   agentContext:     string
   agentAsk:         (q: string, ctx: string) => void
   agentScrollRef:   React.RefObject<HTMLDivElement>
+  /** When true, the embedded agent section is hidden (e.g. in popout where AI is a separate column). */
+  hideAgent?:       boolean
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -83,6 +85,7 @@ export function EventPanelBody({
   agentInput, setAgentInput,
   suggestedQueries, agentContext, agentAsk,
   agentScrollRef,
+  hideAgent = false,
 }: Props) {
   const { t, i18n } = useTranslation()
   const isEN = i18n.language === 'en'
@@ -339,8 +342,8 @@ export function EventPanelBody({
         </div>
       )}
 
-      {/* ── Agent Chat ─────────────────────────────────────────────────────── */}
-      <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
+      {/* ── Agent Chat (hidden in popout mode — AI is in the right column) ── */}
+      {!hideAgent && <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
         <div className="text-[7px] text-[#2a4060] tracking-widest mb-2">{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</div>
 
         {agentHistory.length > 0 && (
@@ -411,7 +414,7 @@ export function EventPanelBody({
             {agentLoading ? '…' : '↵'}
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

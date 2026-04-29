@@ -1,7 +1,9 @@
-import { useRef, useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAppStore } from '../../store'
 import { useWikiSummary } from '../../hooks/useWikiSummary'
 import { BODIES } from '../../data/celestialBodies'
+import { usePanelDrag } from '../../hooks/usePanelDrag'
+import { Panel } from './Panel'
 
 // ── Wikipedia title disambiguation ────────────────────────────────────────────
 const WIKI_TITLE: Record<string, string> = {
@@ -157,113 +159,53 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
 export function CelestialBodyPanel() {
   const selectedBody    = useAppStore((s) => s.selectedBody)
   const setSelectedBody = useAppStore((s) => s.setSelectedBody)
-  const panelZ          = useAppStore((s) => s.panelZ)
-  const bringToFront    = useAppStore((s) => s.bringToFront)
 
-  const panelRef   = useRef<HTMLDivElement>(null)
-  const dragOffset = useRef({ x: 0, y: 0 })
-  const [pos,      setPos]      = useState({ x: window.innerWidth - 340, y: 80 })
-  const [dragging, setDragging] = useState(false)
+  const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront } =
+    usePanelDrag({
+      panelKey:   'body',
+      defaultPos: { x: window.innerWidth - 340, y: 80 },
+    })
 
-  // Keep initial X sane on resize
+  // Keep initial X in-bounds on resize
   useEffect(() => {
     const onResize = () => setPos((p) => ({ ...p, x: Math.min(p.x, window.innerWidth - 340) }))
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [])
+  }, [setPos])
 
   if (!selectedBody) return null
 
-  const def   = BODIES.find((b) => b.id === selectedBody)
-  const stats = BODY_STATS[selectedBody]
-  const wikiTitle = WIKI_TITLE[selectedBody] ?? def?.label ?? selectedBody
+  const def         = BODIES.find((b) => b.id === selectedBody)
+  const stats       = BODY_STATS[selectedBody]
+  const wikiTitle   = WIKI_TITLE[selectedBody] ?? def?.label ?? selectedBody
   const accentColor = stats ? typeColor(stats.type) : '#00d4ff'
 
-  const onMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
-    setDragging(true)
-    const onMove = (mv: MouseEvent) => {
-      const pw = panelRef.current?.offsetWidth  ?? 300
-      const ph = panelRef.current?.offsetHeight ?? 400
-      setPos({
-        x: Math.max(0, Math.min(window.innerWidth  - pw, mv.clientX - dragOffset.current.x)),
-        y: Math.max(0, Math.min(window.innerHeight - ph, mv.clientY - dragOffset.current.y)),
-      })
-    }
-    const onUp = () => {
-      setDragging(false)
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
-
   return (
-    <div
-      ref={panelRef}
-      onMouseDown={() => bringToFront('body')}
+    <Panel
+      panelRef={panelRef}
+      accentColor={accentColor}
+      onMouseDown={handleBringToFront}
+      dragging={dragging}
+      onHeaderMouseDown={onHeaderMouseDown}
+      title="◈ CELESTIAL BODY"
+      headerLeft={stats && (
+        <span style={{
+          fontSize: '6px', letterSpacing: '0.08em', padding: '1px 5px',
+          border: `1px solid ${accentColor}35`,
+          background: `${accentColor}10`,
+          color: accentColor, borderRadius: '2px',
+        }}>{stats.type.split(' ')[0].toUpperCase()}</span>
+      )}
+      onClose={() => setSelectedBody(null)}
       style={{
-        position:   'fixed',
-        left:       pos.x,
-        top:        pos.y,
-        zIndex:     panelZ['body'] ?? 32,
-        width:      '300px',
-        maxHeight:  'calc(100vh - 100px)',
-        display:    'flex',
-        flexDirection: 'column',
-        background: 'rgba(4,9,22,0.94)',
-        border:     `1px solid rgba(0,180,255,0.18)`,
-        borderTop:  `2px solid ${accentColor}60`,
-        borderRadius: '4px',
-        fontFamily: 'JetBrains Mono, monospace',
-        userSelect: dragging ? 'none' : 'auto',
-        boxShadow:  '0 0 32px rgba(0,100,180,0.18)',
+        position:  'fixed',
+        left:      pos.x,
+        top:       pos.y,
+        zIndex,
+        width:     '300px',
+        maxHeight: 'calc(100vh - 100px)',
       }}
     >
-      {/* Left accent */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '2px', background: `linear-gradient(180deg, transparent, ${accentColor}60, transparent)`, pointerEvents: 'none' }} />
-
-      {/* Corner accents */}
-      {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
-        <div key={`${v}${h}`} style={{ position:'absolute', [v]:0, [h]:0, width:8, height:8,
-          borderTop:    v==='top'    ? `1px solid ${accentColor}60` : 'none',
-          borderBottom: v==='bottom' ? `1px solid ${accentColor}60` : 'none',
-          borderLeft:   h==='left'   ? `1px solid ${accentColor}60` : 'none',
-          borderRight:  h==='right'  ? `1px solid ${accentColor}60` : 'none',
-          pointerEvents: 'none' }} />
-      ))}
-
-      {/* Header */}
-      <div
-        onMouseDown={onMouseDown}
-        style={{
-          cursor: dragging ? 'grabbing' : 'grab',
-          padding: '7px 10px',
-          borderBottom: '1px solid rgba(0,180,255,0.12)',
-          background: `linear-gradient(90deg, ${accentColor}0a 0%, transparent 100%)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-          <span style={{ color: accentColor, fontSize: '8px', letterSpacing: '0.15em' }}>◈ CELESTIAL BODY</span>
-          {stats && (
-            <span style={{
-              fontSize: '6px', letterSpacing: '0.08em', padding: '1px 5px',
-              border: `1px solid ${accentColor}35`,
-              background: `${accentColor}10`,
-              color: accentColor, borderRadius: '2px',
-            }}>{stats.type.split(' ')[0].toUpperCase()}</span>
-          )}
-        </div>
-        <button
-          onClick={() => setSelectedBody(null)}
-          style={{ background: 'none', border: 'none', color: '#4a6070', cursor: 'pointer', fontSize: '11px', lineHeight: 1 }}
-        >✕</button>
-      </div>
-
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
         <div style={{ padding: '10px 12px 14px' }}>
@@ -282,48 +224,36 @@ export function CelestialBodyPanel() {
 
           {/* Physical stats */}
           {stats && (
-            <div style={{
-              background: 'rgba(0,180,255,0.04)',
-              border: '1px solid rgba(0,180,255,0.08)',
-              borderRadius: '3px',
-              padding: '6px 8px',
-              marginBottom: '10px',
-            }}>
+            <div style={{ background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '3px', padding: '6px 8px', marginBottom: '10px' }}>
               <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '4px' }}>PHYSICAL DATA</div>
               <StatRow label="DIAMETER"    value={stats.diameter} />
               <StatRow label="MASS"        value={stats.mass} />
-              {stats.gravity   && <StatRow label="SURFACE GRAVITY" value={stats.gravity} />}
+              {stats.gravity   && <StatRow label="SURFACE GRAVITY"   value={stats.gravity} />}
               {stats.distSun   && <StatRow label="DISTANCE FROM SUN" value={stats.distSun} />}
               <StatRow label="DAY LENGTH"  value={stats.dayLength} />
-              {stats.moons     && <StatRow label="KNOWN MOONS"     value={stats.moons} />}
-              {stats.tempRange && <StatRow label="TEMPERATURE"      value={stats.tempRange} />}
+              {stats.moons     && <StatRow label="KNOWN MOONS"       value={stats.moons} />}
+              {stats.tempRange && <StatRow label="TEMPERATURE"        value={stats.tempRange} />}
             </div>
           )}
 
-          {/* Axial tilt + rotation from BodyDef */}
+          {/* Axial tilt + rotation (bodies without physical stats) */}
           {def && !stats && (
-            <div style={{
-              background: 'rgba(0,180,255,0.04)',
-              border: '1px solid rgba(0,180,255,0.08)',
-              borderRadius: '3px',
-              padding: '6px 8px',
-              marginBottom: '10px',
-            }}>
+            <div style={{ background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '3px', padding: '6px 8px', marginBottom: '10px' }}>
               <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '4px' }}>ORBITAL DATA</div>
               <StatRow label="AXIAL TILT"      value={`${def.axialTiltDeg}°`} />
               <StatRow label="ROTATION PERIOD" value={
-                def.rotationPeriodHours === 0 ? 'Tidally locked'
+                def.rotationPeriodHours === 0
+                  ? 'Tidally locked'
                   : `${Math.abs(def.rotationPeriodHours).toFixed(1)} h${def.rotationPeriodHours < 0 ? ' (retrograde)' : ''}`
               } />
-              {def.orbitParent && <StatRow label="ORBITS"  value={def.orbitParent} />}
+              {def.orbitParent && <StatRow label="ORBITS" value={def.orbitParent} />}
             </div>
           )}
 
           {/* Wikipedia */}
           <WikiSection wikiTitle={wikiTitle} />
-
         </div>
       </div>
-    </div>
+    </Panel>
   )
 }

@@ -46,7 +46,8 @@
       "Bash(gh issue *)",
       "Bash(npx vite *)",
       "Bash(git commit -m ' *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(npm test *)"
     ]
   }
 }

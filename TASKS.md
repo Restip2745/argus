@@ -20,6 +20,94 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Refactor: Introduce base Panel component
+  Description: Created Panel.tsx as the shared base visual shell. Provides outer container
+    (background, border, corner accents, left accent bar), draggable header (title + controls
+    + close button), and a body children slot. Accepts all HTML div props via spread for
+    animation events, className, style overrides, etc.
+  Success Criteria: Met — Panel.tsx exists with clear PanelProps interface; usePanelDrag
+    hook extracts position/drag/z-index logic; PanelTail.tsx extracts the SVG tail rAF loop.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Refactor: Extract shared panel logic into base Panel
+  Description: Extracted into shared modules: (1) usePanelDrag — unified drag hook
+    with uiScale-aware boundary clamping, replaces independent drag handlers in all 3 panels;
+    (2) Panel — visual shell replacing 40+ lines of duplicated accent/corner/header markup;
+    (3) PanelTail — rAF SVG tail loop replacing identical useEffect blocks in EventPanel
+    and RegionPanel.
+  Success Criteria: Met — drag code, SVG tail, and panel chrome are now single-source.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Refactor: Migrate EventPanel and RegionPanel to extend Panel
+  Description: All three panels migrated to use Panel + usePanelDrag: EventPanel (wraps
+    only the card, Timeline sidebar stays outside), RegionPanel (Panel is the root element,
+    receives animation + className props), CelestialBodyPanel (fully migrated). Duplicate
+    drag handlers, accent bars, corner accents, and header markup removed from all three.
+  Success Criteria: Met — all panels use Panel; UI and behavior consistent; zero new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Refactor: Standardize Panel API and extension pattern
+  Description: Panel extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> so any div prop
+    (onAnimationEnd, onMouseDown, className, style, etc.) passes through to the outer element.
+    Extension pattern documented in Panel.tsx header comment. usePanelDrag returns panelRef,
+    pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale.
+  Success Criteria: Met — all panels follow the same PanelProps + usePanelDrag pattern.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Improve Panel popout behavior
+  Description: usePopoutWindow now opens at window.screen.availWidth × window.screen.availHeight
+    with left=0,top=0 instead of the previous fixed 420×700.
+  Success Criteria: Met — popout windows open at full screen size.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Implement 2-column layout for popout panels
+  Description: PopoutPage.tsx completely rewritten with a 2-column layout (60/40 split).
+    Left column: panel content (EventPanelBody or RegionPanelOverview rendered without
+    floating position). Right column: PopoutAIPanel dedicated AI agent column.
+  Success Criteria: Met — two-column popout renders for both event and region panels.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Integrate AI interaction panel into popout layout
+  Description: Created PopoutAIPanel.tsx — standalone AI chat with suggested queries,
+    streaming history, clear button, and context-aware agent (receives agentContext from
+    parent). EventPanelBody gains hideAgent prop to suppress the embedded agent section
+    when AI is handled by the right column. agentContext and suggestedQueries computed
+    in PopoutPage root and passed down.
+  Success Criteria: Met — AI panel renders in popout right column with correct context.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Test: Add UI validation for panel refactor and popout layout
+  Description: Added Vitest + @testing-library/react setup (vite.config.ts, src/test/setup.ts,
+    package.json test script). Panel.test.tsx covers: renders title/children, onClose callback,
+    headerLeft/headerControls slots, width style, onHeaderMouseDown, dragging userSelect,
+    HTML div prop forwarding, and custom style merging. All 9 tests pass.
+  Success Criteria: Met — 9/9 tests pass; vitest run exits 0.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Feature: Dynamic Conflict Front Layer
   Description: Added toggleable GeoJSON overlay on the globe showing active conflict front lines
     and controlled-territory fills. Server endpoint GET /api/conflict/fronts fetches from
