@@ -1,0 +1,142 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source": "ARGUS Static Demo Data",
+    "note": "Approximate positions for demonstration only. Configure CONFLICT_GEOJSON_URL on the server for live ISW/OSINT GeoJSON data.",
+    "conflict": "Russia-Ukraine War",
+    "updated": "2024-06-01"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Contact Line (Approximate)",
+        "control": "frontline",
+        "conflict": "ukraine",
+        "description": "Approximate front line as of mid-2024. For demonstration only."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [37.6, 50.1],
+          [37.3, 49.8],
+          [37.0, 49.4],
+          [37.5, 49.1],
+          [38.1, 48.9],
+          [38.0, 48.5],
+          [37.7, 48.1],
+          [37.3, 47.8],
+          [36.6, 47.6],
+          [36.0, 47.4],
+          [35.5, 47.3],
+          [35.1, 47.1],
+          [34.7, 46.9],
+          [34.2, 46.7],
+          [33.6, 46.5],
+          [33.3, 46.2]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Russian-Occupied Territory — Eastern Donbas (Approximate)",
+        "control": "russia",
+        "conflict": "ukraine",
+        "description": "Approximate occupied territory in Luhansk and eastern Donetsk oblasts."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [38.1, 48.9],
+            [38.8, 49.0],
+            [39.4, 49.3],
+            [40.1, 49.5],
+            [40.2, 50.2],
+            [39.5, 50.5],
+            [38.6, 50.6],
+            [37.9, 50.2],
+            [37.6, 50.1],
+            [37.3, 49.8],
+            [37.0, 49.4],
+            [37.5, 49.1],
+            [38.1, 48.9]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Russian-Occupied Territory — Southern Corridor (Approximate)",
+        "control": "russia",
+        "conflict": "ukraine",
+        "description": "Approximate occupied territory covering parts of Zaporizhzhia, Kherson and the land bridge to Crimea."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [33.3, 46.2],
+            [33.6, 46.5],
+            [34.2, 46.7],
+            [34.7, 46.9],
+            [35.1, 47.1],
+            [35.5, 47.3],
+            [36.0, 47.4],
+            [36.6, 47.6],
+            [37.3, 47.8],
+            [37.7, 48.1],
+            [38.0, 48.5],
+            [38.1, 48.9],
+            [38.8, 49.0],
+            [39.4, 49.3],
+            [40.1, 49.5],
+            [40.2, 48.0],
+            [39.5, 47.5],
+            [38.5, 47.0],
+            [37.5, 46.5],
+            [36.5, 45.9],
+            [35.8, 45.4],
+            [35.0, 45.3],
+            [34.0, 45.1],
+            [33.5, 45.2],
+            [33.0, 45.5],
+            [32.8, 46.0],
+            [33.3, 46.2]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Crimea (Russian-Occupied since 2014)",
+        "control": "russia",
+        "conflict": "ukraine",
+        "description": "Crimean peninsula, occupied by Russia since 2014."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [32.5, 45.4],
+            [33.5, 45.2],
+            [34.0, 45.1],
+            [35.0, 45.3],
+            [35.8, 45.4],
+            [36.3, 45.2],
+            [36.6, 45.0],
+            [36.2, 44.7],
+            [35.5, 44.5],
+            [34.5, 44.6],
+            [33.5, 44.6],
+            [32.7, 44.9],
+            [32.5, 45.4]
+          ]
+        ]
+      }
+    }
+  ]
+}

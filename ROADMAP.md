@@ -10,7 +10,7 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 - [x] **AIS Ship Tracking** — server proxy at `/api/tracking/ships` (aisstream.io, requires `AISSTREAM_API_KEY`); `useShipsLayer` hook; TrackingLayer renders ships; FloatDock button wired
 - [x] **Heat Score UI Visualization** — EventPanelBody shows colored heat bar + score + expiry label; EventStack tooltip shows heat score badge
-- [ ] **Event Source Reliability** — `sources_count` stored in DB; Ollama prompt lacks per-source `reliability` field; add to prompt schema + DB + UI
+- [x] **Event Source Reliability** — `reliability` field (HIGH/MEDIUM/LOW/UNVERIFIED) added to DB schema, Ollama prompt, client types, and EventPanelBody badge
 
 ---
 
@@ -18,11 +18,11 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 > Improve interaction detail and operational efficiency.
 
-- [ ] **Timeline Filter Slider** — add time range selector (6h / 12h / 24h) in CategoryFilterBar or FloatDock
-- [ ] **Event Density Clustering** — auto-merge overlapping markers by zoom level; expand on approach
-- [ ] **High-Intensity Toast Notifications** — corner toast for new CRITICAL / HIGH events without interrupting scene
-- [ ] **Region Comparison Panel** — `compareMode` + `comparedCountries` state already in store; implement dual-column compare UI
-- [ ] **i18n Complete Coverage** — extract all hardcoded strings to `en.json` / `zh-TW.json`
+- [x] **Timeline Filter Slider** — `timeRangeFilter` ('6h'|'12h'|'24h'|'all') in Zustand store; segmented button group in CategoryFilterBar; EventStack filters by published_at
+- [x] **Event Density Clustering** — 3-tier zoom system; greedy haversine clustering; ClusterMarker component with count badge; clicking opens highest-intensity event
+- [x] **High-Intensity Toast Notifications** — ToastContainer detects new CRITICAL/HIGH events; auto-dismiss 3s; stacking bottom-right; slide-out animation
+- [x] **Region Comparison Panel** — compare toggle in RegionPanel header; dual-column CompareCard with category breakdown and recent events; exits on ✕
+- [x] **i18n Complete Coverage** — 40+ keys in en.json / zh-TW.json; all major UI strings keyed; language switch updates panel and toolbar labels
 
 ---
 
@@ -31,9 +31,9 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 > Deeper intelligence reasoning on top of existing Agent capabilities.
 
 - [ ] **Dynamic Conflict Front Layer** — ISW daily GeoJSON overlay for Ukraine etc., separate from static borders
-- [ ] **Event Relationship Graph** — node/edge diagram in event panel based on `actors` / `tags` intersection
-- [ ] **Periodic Intelligence Summary** — timed Ollama summary of high heat-score events, pushed to FloatDock
-- [ ] **Event Export / Share** — select events → export Markdown / JSON report or copy share link
+- [x] **Event Relationship Graph** — SVG force-directed graph in EventPanelBody; color-coded nodes by category; clicking node navigates to related event
+- [x] **Periodic Intelligence Summary** — 30-min server cron; top-5 heat-score events → Ollama → `intel_brief` Socket.io event; FloatDock BRIEF badge + modal
+- [x] **Event Export / Share** — Export button in EventPanel header; Markdown + JSON modes; copy to clipboard with "Copied!" confirmation
 
 ---
 

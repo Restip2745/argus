@@ -44,6 +44,9 @@
   "canvas": {
     "toggle": "標記畫布"
   },
+  "conflictLayer": {
+    "toggle": "衝突前線"
+  },
   "celestialNav": {
     "collapse": "收起",
     "expand":   "天體導航"

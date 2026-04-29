@@ -15,6 +15,7 @@ import { OrbitLines } from './OrbitLines'
 import { EventMarkers } from './EventMarkers'
 import { GeoJsonLayer } from './GeoJsonLayer'
 import { TrackingLayer } from './TrackingLayer'
+import { ConflictLayer } from './ConflictLayer'
 import { useAppStore } from '../../store'
 import type { CelestialBodyName } from '../../types'
 
@@ -341,6 +342,9 @@ export function SolarSystem() {
 
       {/* Live tracking layers: aircraft (ADS-B), satellites (TLE), ships (AIS) */}
       <TrackingLayer positionsRef={positionsRef} />
+
+      {/* Dynamic conflict front lines and controlled-territory fills */}
+      <ConflictLayer positionsRef={positionsRef} />
 
       {/* Keeps useGlobeProjection singleton up-to-date for DOM panels */}
       <GlobeProjectorSetup positionsRef={positionsRef} />

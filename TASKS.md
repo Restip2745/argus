@@ -20,6 +20,22 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Dynamic Conflict Front Layer
+  Description: Added toggleable GeoJSON overlay on the globe showing active conflict front lines
+    and controlled-territory fills. Server endpoint GET /api/conflict/fronts fetches from
+    CONFLICT_GEOJSON_URL (env var, 24h cache) and falls back to a static Ukraine demo dataset
+    (conflict_fronts_demo.geojson). Client hook useConflictLayer polls the endpoint.
+    ConflictLayer.tsx renders LineString/MultiLineString features as orange lines and
+    Polygon/MultiPolygon features as semi-transparent fills color-coded by `control` property
+    (russia=red, frontline=amber, ukraine=blue, contested=yellow). FloatDock ⚔ button toggles
+    the layer. Layer hidden beyond DIST_CONFLICT_MAX=20 units from Earth (same as satellites).
+  Success Criteria: Met — conflict layer toggle in FloatDock; demo data renders on globe;
+    no crash without CONFLICT_GEOJSON_URL; zero TypeScript errors on client and server.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][MEDIUM] Bugfix: Fix pre-existing TypeScript errors in CelestialBody.tsx
   Description: CelestialBody.tsx has 2 pre-existing TS errors: (1) RefObject<Object3D> not
     assignable to Ref<Mesh> at line 216; (2) ForwardedRef<Object3D> not assignable to

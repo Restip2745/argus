@@ -4,6 +4,8 @@ import { createServer } from 'http'
 import { Server } from 'socket.io'
 import cors from 'cors'
 import { Ollama } from 'ollama'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { initDb, getAnalyzedArticles, getRelatedEvents } from './db/sqlite'
 import { startSummaryWorker } from './workers/summary'
 import { initSocket } from './services/socket'
@@ -12,6 +14,7 @@ import { startOllamaWorker } from './services/ollama'
 import { startRetention } from './workers/retention'
 import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
+
 
 const app        = express()
 const httpServer = createServer(app)
@@ -310,6 +313,44 @@ app.get('/api/tracking/ships', async (_req, res) => {
   } catch (err) {
     console.warn('[tracking] ships fetch failed:', (err as Error).message)
     res.json([])
+  }
+})
+
+// ── Conflict Front Layer ──────────────────────────────────
+// Serves GeoJSON of active conflict front lines.
+// If CONFLICT_GEOJSON_URL is set, fetches & caches that URL (24-hour TTL).
+// Otherwise returns embedded demo data (approximate Ukraine 2024 contact line).
+
+let _demConflictGeoJSON: unknown | null = null
+function getDemoConflictGeoJSON(): unknown {
+  if (_demConflictGeoJSON) return _demConflictGeoJSON
+  try {
+    const p = join(__dirname, '../../client/public/geodata/conflict_fronts_demo.geojson')
+    _demConflictGeoJSON = JSON.parse(readFileSync(p, 'utf8'))
+  } catch {
+    _demConflictGeoJSON = { type: 'FeatureCollection', features: [] }
+  }
+  return _demConflictGeoJSON
+}
+
+const CONFLICT_TTL = 24 * 60 * 60 * 1000  // 24 hours
+
+app.get('/api/conflict/fronts', async (_req, res) => {
+  const externalUrl = process.env.CONFLICT_GEOJSON_URL
+  if (!externalUrl) {
+    res.json(getDemoConflictGeoJSON())
+    return
+  }
+  try {
+    const geojson = await fetchCached<unknown>('conflict_fronts', CONFLICT_TTL, async () => {
+      const r = await fetch(externalUrl, { signal: AbortSignal.timeout(15_000) })
+      if (!r.ok) throw new Error(`CONFLICT_GEOJSON_URL fetch ${r.status}`)
+      return r.json()
+    })
+    res.json(geojson)
+  } catch (err) {
+    console.warn('[conflict] GeoJSON fetch failed, using demo data:', (err as Error).message)
+    res.json(getDemoConflictGeoJSON())
   }
 })
 

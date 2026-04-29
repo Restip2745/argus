@@ -44,6 +44,9 @@
   "canvas": {
     "toggle": "ANNOTATION CANVAS"
   },
+  "conflictLayer": {
+    "toggle": "CONFLICT FRONTS"
+  },
   "celestialNav": {
     "collapse": "Collapse",
     "expand":   "Celestial Navigation"
