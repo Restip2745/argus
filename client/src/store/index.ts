@@ -157,11 +157,23 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Panel
   activePanelId:    null,
-  setActivePanelId: (activePanelId) => set({ activePanelId }),
+  setActivePanelId: (activePanelId) => set((s) => ({
+    activePanelId,
+    // Bring event panel to top whenever a new event is opened
+    panelZ: activePanelId !== null
+      ? { ...s.panelZ, event: Math.max(...Object.values(s.panelZ), 29) + 1 }
+      : s.panelZ,
+  })),
 
   // Selected celestial body
   selectedBody:    null,
-  setSelectedBody: (selectedBody) => set({ selectedBody }),
+  setSelectedBody: (selectedBody) => set((s) => ({
+    selectedBody,
+    // Bring celestial body panel to top whenever a body is selected
+    panelZ: selectedBody !== null
+      ? { ...s.panelZ, body: Math.max(...Object.values(s.panelZ), 29) + 1 }
+      : s.panelZ,
+  })),
 
   // Layers
   showEarthTexture:    true,
@@ -188,7 +200,13 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Region selection
   selectedCountry:    null,
-  setSelectedCountry: (selectedCountry) => set({ selectedCountry }),
+  setSelectedCountry: (selectedCountry) => set((s) => ({
+    selectedCountry,
+    // Bring region panel to top whenever a country is selected
+    panelZ: selectedCountry !== null
+      ? { ...s.panelZ, region: Math.max(...Object.values(s.panelZ), 29) + 1 }
+      : s.panelZ,
+  })),
   // Compare mode
   compareMode: false,
   setCompareMode: (compareMode) => set((s) => ({
