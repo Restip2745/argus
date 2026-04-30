@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useAppStore } from '../../store'
@@ -151,10 +151,18 @@ export function ConflictLayer({ positionsRef }: Props) {
 
   const data = useConflictLayer(showConflictLayer)
 
-  const rendered = useMemo(
-    () => (data ? buildRenderedFeatures(data.features) : []),
-    [data],
-  )
+  const [rendered, setRendered] = useState<RenderedFeature[]>([])
+
+  useEffect(() => {
+    const features = data ? buildRenderedFeatures(data.features) : []
+    setRendered(features)
+    return () => {
+      for (const f of features) {
+        f.lineGeo?.dispose()
+        f.fillGeo?.dispose()
+      }
+    }
+  }, [data])
 
   useFrame(({ camera }) => {
     const earthPos = positionsRef.current.get('earth')

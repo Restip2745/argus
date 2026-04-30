@@ -133,12 +133,55 @@ export function CategoryFilterBar() {
   const toggleHiddenCategory = useAppStore((s) => s.toggleHiddenCategory)
   const timeRangeFilter      = useAppStore((s) => s.timeRangeFilter)
   const setTimeRangeFilter   = useAppStore((s) => s.setTimeRangeFilter)
+  const searchQuery          = useAppStore((s) => s.searchQuery)
+  const setSearchQuery       = useAppStore((s) => s.setSearchQuery)
 
   return (
     <div
       className="absolute top-2 z-20 flex items-center gap-1 font-mono"
       style={{ left: '50%', transform: 'translateX(-50%)' }}
     >
+      {/* Keyword search */}
+      <div
+        className="flex items-center rounded border overflow-hidden"
+        style={{
+          borderColor: searchQuery ? 'rgba(0,212,255,0.35)' : 'rgba(0,180,255,0.15)',
+          background: 'rgba(4,9,22,0.75)',
+          backdropFilter: 'blur(4px)',
+          marginRight: '4px',
+          transition: 'border-color 0.2s',
+        }}
+      >
+        <span style={{ color: '#2a5070', fontSize: '9px', padding: '0 5px', userSelect: 'none' }}>⌕</span>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('event.search.placeholder', 'SEARCH')}
+          className="font-mono outline-none bg-transparent"
+          style={{
+            fontSize: '8px',
+            letterSpacing: '0.07em',
+            color: searchQuery ? '#a8c4d8' : '#2a5070',
+            width: searchQuery ? '80px' : '52px',
+            padding: '3px 0',
+            transition: 'width 0.2s, color 0.15s',
+          }}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            style={{
+              color: '#4a6070', fontSize: '9px', padding: '0 5px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              lineHeight: 1, transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#00d4ff' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#4a6070' }}
+          >✕</button>
+        )}
+      </div>
+
       {/* Time-range quick-filter */}
       <div
         className="flex items-center rounded border overflow-hidden"

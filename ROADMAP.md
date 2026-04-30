@@ -30,10 +30,20 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 > Deeper intelligence reasoning on top of existing Agent capabilities.
 
-- [ ] **Dynamic Conflict Front Layer** — ISW daily GeoJSON overlay for Ukraine etc., separate from static borders
+- [x] **Dynamic Conflict Front Layer** — ISW daily GeoJSON overlay for Ukraine etc., separate from static borders
 - [x] **Event Relationship Graph** — SVG force-directed graph in EventPanelBody; color-coded nodes by category; clicking node navigates to related event
 - [x] **Periodic Intelligence Summary** — 30-min server cron; top-5 heat-score events → Ollama → `intel_brief` Socket.io event; FloatDock BRIEF badge + modal
 - [x] **Event Export / Share** — Export button in EventPanel header; Markdown + JSON modes; copy to clipboard with "Copied!" confirmation
+
+---
+
+## Phase D — Operational Intelligence
+
+> Enhance analytical depth and situational awareness for active monitoring.
+
+- [ ] **Event Heatmap Layer** — geographic density heatmap on the globe; heat_score-weighted colored points; FloatDock toggle
+- [ ] **Actor / Tag Watchlist** — pin actors/tags; watched events float to top of EventStack with ★ indicator
+- [ ] **Event History Timeline Chart** — 7-day SVG bar chart above FloatDock; grouped by day+category; click opens event
 
 ---
 

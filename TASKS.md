@@ -250,6 +250,87 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+---
+
+## Phase D Tasks
+
+---
+
+[TODO][HIGH] Feature: Event Heatmap Layer
+  Description: Add a toggleable geographic heatmap overlay on the globe showing event density.
+    Group events by lat/lng (haversine bucketing ~200km cells), compute cell intensity from
+    heat_score sum. Render as colored sphere points (red=dense, amber=moderate, blue=sparse)
+    at HEATMAP_RADIUS (1.003). FloatDock button toggles; layer hidden beyond DIST_HEATMAP_MAX=20.
+    Reuses the existing `showEventMarkers` toggle pattern.
+  Success Criteria: Heatmap toggle button in FloatDock; colored density points on globe; intensity
+    reflects event heat_score; no crash when events array is empty; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Actor / Tag Watchlist
+  Description: Allow users to pin specific actor names or tags as a watchlist. Watched events
+    are highlighted in EventStack with a ★ indicator. Watchlist stored in Zustand as
+    `watchedActors: string[]` and `watchedTags: string[]` with add/remove actions. UI: a small
+    "WATCH" toggle button appears in EventPanelBody actor chips. Watched events float to the top
+    of the EventStack regardless of time-range filter.
+  Success Criteria: Actor chips in panel have toggle; watched events show ★; float to top;
+    persists across panel close/open; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Feature: Event History Timeline Chart
+  Description: A collapsible horizontal timeline widget (replaces or augments the per-event
+    EventTimeline) showing all events plotted over the last 7 days by published_at. Render as
+    an SVG bar chart (grouped by day, colored by category). Clicking a bar opens the highest
+    heat_score event for that day+category. Mount as a fixed bottom bar above FloatDock (hidden
+    in immersive mode).
+  Success Criteria: Timeline chart visible above FloatDock; bars colored by category; clicking
+    opens event panel; collapses on click; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Bugfix: Remove duplicate annotation canvas button and fix double divider
+  Description: Removed the redundant hardcoded Chinese-label "標記畫布" annotation toggle button
+    from App.tsx bottom-left (FloatDock already provides this toggle). Removed unused
+    `setShowAnnotationCanvas` selector from App.tsx. Fixed double consecutive divider in
+    FloatDock.tsx (two <div> dividers between earth texture button and tracking layer buttons).
+  Success Criteria: Met — no duplicate annotation button; single divider; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Bugfix: Fix ConflictLayer Three.js geometry memory leak
+  Description: ConflictLayer.tsx built THREE.BufferGeometry objects inside useMemo with no
+    disposal path. Replaced with useEffect + useState so the cleanup function calls
+    geometry.dispose() on every data change and on unmount, preventing GPU memory accumulation
+    when the GeoJSON is re-fetched. Removed now-unused useMemo import.
+  Success Criteria: Met — geometries disposed on cleanup; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Event Keyword Search
+  Description: Added full-text search across the EventStack feed. `searchQuery` / `setSearchQuery`
+    added to Zustand store. CategoryFilterBar gains a compact search input (⌕ icon, animated
+    width expansion, ✕ clear button, border highlights when active). EventStack.tsx filters events
+    matching the query against title, content, summary_zh, actors[], tags[], location_label, and
+    source (case-insensitive substring). i18n keys `event.search.placeholder` added to en.json
+    (SEARCH) and zh-TW.json (搜尋).
+  Success Criteria: Met — search input visible in filter bar; typing filters EventStack in real time;
+    clear button resets; no new TS errors; i18n keys present in both locales.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

@@ -258,9 +258,6 @@ export function FloatDock() {
       {/* Divider */}
       <div style={{ width: '1px', height: '16px', background: 'rgba(0,180,255,0.12)', margin: '0 2px' }} />
 
-      {/* ── Tracking layers ── */}
-      <div style={{ width: '1px', height: '16px', background: 'rgba(0,180,255,0.12)', margin: '0 2px' }} />
-
       <DockBtn
         icon="✈"
         label="AIRCRAFT (ADS-B)"
