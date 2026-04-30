@@ -1,5 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react'
-import { createPortal } from 'react-dom'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppStore } from '../../store'
 import { CATEGORY_COLOR, CATEGORY_ICON, CATEGORY_LABEL } from '../../data/categoryConfig'
 import type { ArgusEvent } from '../../types'
@@ -8,10 +7,11 @@ import { getCountryInfo, getDynamicTags } from '../../data/countryData'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { useWikiSummary } from '../../hooks/useWikiSummary'
-import { useDraggable } from '../../hooks/useDraggable'
-import { projectLatLng, panelEdgeAnchor } from '../../hooks/useGlobeProjection'
+import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { RegionPanelOverview } from './RegionPanelOverview'
 import { RegionPanelAgent } from './RegionPanelAgent'
+import { Panel } from './Panel'
+import { PanelTail } from './PanelTail'
 
 
 const TAG_COLOR: Record<string, string> = {
@@ -255,36 +255,28 @@ const COMPARE_PALETTE = ['#00ffcc', '#ff9c2a', '#9b6dff', '#39ff8a', '#ff4d4d', 
 
 export function RegionPanel() {
   const { t } = useTranslation()
-  const selectedCountry      = useAppStore((s) => s.selectedCountry)
-  const setSelectedCountry   = useAppStore((s) => s.setSelectedCountry)
-  const focusOnEarthSurface  = useAppStore((s) => s.focusOnEarthSurface)
-  const events               = useAppStore((s) => s.events)
-  const compareMode          = useAppStore((s) => s.compareMode)
-  const setCompareMode       = useAppStore((s) => s.setCompareMode)
-  const comparedCountries    = useAppStore((s) => s.comparedCountries)
+  const selectedCountry       = useAppStore((s) => s.selectedCountry)
+  const setSelectedCountry    = useAppStore((s) => s.setSelectedCountry)
+  const focusOnEarthSurface   = useAppStore((s) => s.focusOnEarthSurface)
+  const events                = useAppStore((s) => s.events)
+  const compareMode           = useAppStore((s) => s.compareMode)
+  const setCompareMode        = useAppStore((s) => s.setCompareMode)
+  const comparedCountries     = useAppStore((s) => s.comparedCountries)
   const removeComparedCountry = useAppStore((s) => s.removeComparedCountry)
-  const panelZ               = useAppStore((s) => s.panelZ)
-  const bringToFront         = useAppStore((s) => s.bringToFront)
-  const uiScale              = useAppStore((s) => s.uiScale)
-  const uiScaleRef           = useRef(uiScale)
-  uiScaleRef.current         = uiScale
+
+  // ── Drag / position ──────────────────────────────────────────────────────────
+  const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
+    usePanelDrag({ panelKey: 'region', defaultPos: { x: 20, y: 80 } })
 
   // Auto-focus on new country select
   useEffect(() => {
     if (selectedCountry && focusOnEarthSurface) {
       focusOnEarthSurface(selectedCountry.lat, selectedCountry.lng)
     }
-  }, [selectedCountry?.name])
+  }, [selectedCountry?.name]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const panelRef    = useRef<HTMLDivElement>(null)
-  const tailLineRef = useRef<SVGLineElement>(null)
-  const tailDotRef  = useRef<SVGCircleElement>(null)
-  const [pos,         setPos]        = useState({ x: 20, y: 80 })
-  const posRef      = useRef(pos)
-  posRef.current    = pos
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
-  const agentScrollRef               = useRef<HTMLDivElement>(null)
-  const { onMouseDown: startDrag, dragging } = useDraggable()
+  const agentScrollRef                = useRef<HTMLDivElement>(null)
 
   // ── Card-flip state (country switch animation) ───────────────────────────────
   const [displayedCountry, setDisplayedCountry] = useState(selectedCountry)
@@ -296,23 +288,30 @@ export function RegionPanel() {
   const [panelEntered, setPanelEntered] = useState(false)  // true after pop-in completes
 
   useEffect(() => {
-    const onResize = () => setWindowWidth(window.innerWidth)
+    const onResize = () => {
+      setWindowWidth(window.innerWidth)
+      const s  = uiScale
+      const pw = panelRef.current?.offsetWidth  ?? 320
+      const ph = panelRef.current?.offsetHeight ?? 400
+      setPos((p) => ({
+        x: Math.max(0, Math.min(window.innerWidth  / s - pw,            p.x)),
+        y: Math.max(0, Math.min(window.innerHeight / s - Math.min(ph, 60), p.y)),
+      }))
+    }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [])
+  }, [uiScale, panelRef, setPos])
 
   // When uiScale changes, clamp panel position so the header stays inside the viewport
   useEffect(() => {
     const scale = uiScale
     const pw = panelRef.current?.offsetWidth  ?? 320
     const ph = panelRef.current?.offsetHeight ?? 400
-    const maxX = window.innerWidth  / scale - pw
-    const maxY = window.innerHeight / scale - Math.min(ph, 60) // keep at least header (≈60px) in view
-    setPos(p => ({
-      x: Math.max(0, Math.min(maxX, p.x)),
-      y: Math.max(0, Math.min(maxY, p.y)),
+    setPos((p) => ({
+      x: Math.max(0, Math.min(window.innerWidth  / scale - pw,                p.x)),
+      y: Math.max(0, Math.min(window.innerHeight / scale - Math.min(ph, 60),  p.y)),
     }))
-  }, [uiScale])
+  }, [uiScale]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detect country switch → trigger flip; sync immediately on first mount or compare-mode changes
   useEffect(() => {
@@ -425,66 +424,19 @@ export function RegionPanel() {
     displayedCountry && !compareMode ? displayedCountry.name : null
   )
 
-  // rAF loop: imperatively update SVG tail each frame (no re-renders)
+  // Stable getLatLng for PanelTail — reads live state via refs
   const selectedCountryRef = useRef(selectedCountry)
   selectedCountryRef.current = selectedCountry
   const compareModeRef = useRef(compareMode)
   compareModeRef.current = compareMode
 
-  useEffect(() => {
-    let rafId: number
-    function tick() {
-      const panel   = panelRef.current
-      const line    = tailLineRef.current
-      const dot     = tailDotRef.current
-      const country = selectedCountryRef.current
-      const inCmp   = compareModeRef.current
-
-      const hide = () => {
-        line?.setAttribute('opacity', '0')
-        dot?.setAttribute('opacity', '0')
-        rafId = requestAnimationFrame(tick)
-      }
-
-      if (!panel || !line || !dot || !country || inCmp) { hide(); return }
-
-      const proj = projectLatLng(country.lat, country.lng)
-      if (!proj || proj.behind) { hide(); return }
-
-      const rect = panel.getBoundingClientRect()
-      const { ax, ay } = panelEdgeAnchor(rect, proj.x, proj.y)
-
-      line.setAttribute('x1', String(ax))
-      line.setAttribute('y1', String(ay))
-      line.setAttribute('x2', String(proj.x))
-      line.setAttribute('y2', String(proj.y))
-      line.setAttribute('opacity', '0.45')
-      dot.setAttribute('cx', String(proj.x))
-      dot.setAttribute('cy', String(proj.y))
-      dot.setAttribute('opacity', '0.7')
-
-      rafId = requestAnimationFrame(tick)
-    }
-    rafId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId)
-  }, []) // run once — reads live state via refs each frame
+  const getRegionLatLng = useCallback((): { lat: number; lng: number } | null => {
+    if (compareModeRef.current) return null
+    const c = selectedCountryRef.current
+    return c ? { lat: c.lat, lng: c.lng } : null
+  }, [])
 
   if (!selectedCountry && !compareMode) return null
-
-  // ── Drag ──────────────────────────────────────────────────────────────────────
-  const onMouseDown = (e: React.MouseEvent) => {
-    const scale  = uiScaleRef.current
-    const { x: initX, y: initY } = posRef.current
-    const startX = e.clientX / scale, startY = e.clientY / scale
-    startDrag(e, (mv) => {
-      const s  = uiScaleRef.current
-      const pw = panelRef.current?.offsetWidth ?? 320
-      setPos({
-        x: Math.max(0, Math.min(window.innerWidth  / s - pw, initX + mv.clientX / s - startX)),
-        y: Math.max(0, Math.min(window.innerHeight / s - 40, initY + mv.clientY / s - startY)),
-      })
-    })
-  }
 
   // Card-flip + pop-in animation end handler
   const handleFlipAnimEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
@@ -519,178 +471,122 @@ export function RegionPanel() {
 
   return (
     <>
-    {/* ── Tail SVG overlay for region panel ─────────────────────────────── */}
-    {createPortal(
-      <svg
-        style={{
-          position: 'fixed', inset: 0, width: '100%', height: '100%',
-          pointerEvents: 'none', zIndex: (panelZ['region'] ?? 31) - 1,
-          overflow: 'visible',
-        }}
-      >
-        <defs>
-          <filter id="tailGlowRegion" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        <line
-          ref={tailLineRef}
-          stroke={regionAccent}
-          strokeWidth="1"
-          strokeDasharray="5 4"
-          opacity="0"
-          filter="url(#tailGlowRegion)"
-        />
-        <circle
-          ref={tailDotRef}
-          r="3.5"
-          fill={regionAccent}
-          opacity="0"
-          filter="url(#tailGlowRegion)"
-        />
-      </svg>,
-      document.body,
-    )}
-    <div
-      ref={panelRef}
-      className={panelEntered ? undefined : 'region-panel-enter'}
-      onMouseDown={() => bringToFront('region')}
-      onAnimationEnd={handleFlipAnimEnd}
-      style={{
-        position: 'fixed',
-        left: pos.x,
-        top:  pos.y,
-        zIndex: panelZ['region'] ?? 31,
-        width: `${panelWidth}px`,
-        transition: 'width 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        maxHeight: `calc(${100 / uiScale}vh - 100px)`,
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'rgba(4,9,22,0.94)',
-        border: '1px solid rgba(0,180,255,0.18)',
-        borderRadius: '4px',
-        fontFamily: 'JetBrains Mono, monospace',
-        userSelect: dragging ? 'none' : 'auto',
-        boxShadow: '0 0 32px rgba(0,100,180,0.18)',
-        // Card-flip animation overrides the initial pop-in when switching countries
-        ...(flipPhase !== 'idle' && {
-          animation: flipPhase === 'out'
-            ? 'cardFlipOut 0.17s ease-in forwards'
-            : 'cardFlipIn 0.17s ease-out forwards',
-          transformOrigin: 'center top',
-        }),
-      }}
-    >
-      {/* Left accent */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '2px', background: 'linear-gradient(180deg, transparent, rgba(0,212,255,0.6), transparent)', pointerEvents: 'none' }} />
-
-      {/* Corner accents */}
-      {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
-        <div key={`${v}${h}`} style={{ position:'absolute', [v]:0, [h]:0, width:8, height:8,
-          borderTop: v==='top' ? '1px solid rgba(0,212,255,0.4)' : 'none',
-          borderBottom: v==='bottom' ? '1px solid rgba(0,212,255,0.4)' : 'none',
-          borderLeft: h==='left' ? '1px solid rgba(0,212,255,0.4)' : 'none',
-          borderRight: h==='right' ? '1px solid rgba(0,212,255,0.4)' : 'none',
-          pointerEvents: 'none' }} />
-      ))}
-
-      {/* ── Header ──────────────────────────────────────────────────────────────── */}
-      <div
-        onMouseDown={onMouseDown}
-        style={{
-          cursor: dragging ? 'grabbing' : 'grab',
-          padding: '7px 10px',
-          borderBottom: '1px solid rgba(0,180,255,0.12)',
-          background: 'linear-gradient(90deg, rgba(0,212,255,0.06) 0%, transparent 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ color: compareMode ? '#ff9c2a' : '#00d4ff', fontSize: '8px', letterSpacing: '0.15em' }}>
-          {compareMode ? '⊞ COMPARE MODE' : `◈ ${t('panel.region', 'REGION INTEL')}`}
-        </span>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-          <button
-            onClick={() => setCompareMode(!compareMode)}
-            title={compareMode ? 'Exit compare mode' : 'Enter compare mode'}
-            style={{
-              background: compareMode ? 'rgba(255,156,42,0.15)' : 'rgba(0,212,255,0.06)',
-              border: `1px solid ${compareMode ? 'rgba(255,156,42,0.4)' : 'rgba(0,212,255,0.2)'}`,
-              borderRadius: '2px', color: compareMode ? '#ff9c2a' : '#4a6070',
-              cursor: 'pointer', fontSize: '8px', padding: '2px 5px',
-              fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
-              transition: 'all 0.15s',
-            }}
-          >⊞</button>
-          <button
-            onClick={popoutOpen}
-            title={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
-            style={{ background:'none', border:'none', color: isPopped ? '#00d4ff' : '#4a6070', cursor:'pointer', fontSize:'11px', lineHeight:1 }}
-          >⊡</button>
-          <button
-            onClick={() => { setSelectedCountry(null); setCompareMode(false) }}
-            style={{ background:'none', border:'none', color:'#4a6070', cursor:'pointer', fontSize:'11px', lineHeight:1 }}
-          >✕</button>
-        </div>
-      </div>
-
-      {/* ── Scrollable content area ──────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.2) transparent' }}>
-
-      {/* ── Compare grid ─────────────────────────────────────────────────────── */}
-      {compareMode && (
-        <div style={{ padding: '8px 12px' }}>
-          {comparedCountries.length === 0 ? (
-            <div style={{ color: '#2a4060', fontSize: '8px', letterSpacing: '0.1em', padding: '8px 0', textAlign: 'center' }}>
-              點擊地球上的國家以加入比較
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: comparedCountries.length === 1 ? '1fr' : `repeat(${compareColumns}, 1fr)`,
-              gap: '6px',
-            }}>
-              {comparedCountries.map((c, i) => (
-                <CompareCard
-                  key={c.name}
-                  country={c}
-                  color={COMPARE_PALETTE[i % COMPARE_PALETTE.length]}
-                  onRemove={() => removeComparedCountry(c.name)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Overview (single mode only) — rendered by sub-component ──────────── */}
-      {displayedCountry && !compareMode && (
-        <RegionPanelOverview
-          country={displayedCountry}
-          info={info}
-          allTags={allTags}
-          recentEvents={recentEvents}
-          focusOnEarthSurface={focusOnEarthSurface}
-          wikiData={wikiData ?? null}
-          wikiLoading={wikiLoading}
-        />
-      )}
-
-      </div>{/* end scrollable area */}
-
-      {/* ── Agent section (suggested queries + chat) ─────────────────────────── */}
-      <RegionPanelAgent
-        history={history}
-        loading={loading}
-        error={error ?? null}
-        suggestedQueries={suggestedQueries}
-        agentContext={agentContext}
-        ask={ask}
-        agentScrollRef={agentScrollRef}
+      {/* ── SVG tail ── */}
+      <PanelTail
+        panelRef={panelRef}
+        getLatLng={getRegionLatLng}
+        color={regionAccent}
+        zIndex={zIndex}
+        filterId="tailGlowRegion"
       />
 
-    </div>
+      {/* ── Panel (handles position, styling, header, body) ── */}
+      <Panel
+        panelRef={panelRef}
+        accentColor={regionAccent}
+        onMouseDown={handleBringToFront}
+        onAnimationEnd={handleFlipAnimEnd}
+        className={panelEntered ? undefined : 'region-panel-enter'}
+        dragging={dragging}
+        onHeaderMouseDown={onHeaderMouseDown}
+        title={
+          <span style={{ color: compareMode ? '#ff9c2a' : regionAccent }}>
+            {compareMode ? '⊞ COMPARE MODE' : `◈ ${t('panel.region', 'REGION INTEL')}`}
+          </span>
+        }
+        headerControls={
+          <>
+            <button
+              onClick={() => setCompareMode(!compareMode)}
+              title={compareMode ? 'Exit compare mode' : 'Enter compare mode'}
+              style={{
+                background:   compareMode ? 'rgba(255,156,42,0.15)' : 'rgba(0,212,255,0.06)',
+                border:       `1px solid ${compareMode ? 'rgba(255,156,42,0.4)' : 'rgba(0,212,255,0.2)'}`,
+                borderRadius: '2px',
+                color:        compareMode ? '#ff9c2a' : '#4a6070',
+                cursor: 'pointer', fontSize: '8px', padding: '2px 5px',
+                fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
+                transition: 'all 0.15s',
+              }}
+            >⊞</button>
+            <button
+              onClick={popoutOpen}
+              title={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
+              style={{ background: 'none', border: 'none', color: isPopped ? '#00d4ff' : '#4a6070', cursor: 'pointer', fontSize: '11px', lineHeight: 1 }}
+            >⊡</button>
+          </>
+        }
+        onClose={() => { setSelectedCountry(null); setCompareMode(false) }}
+        style={{
+          position:   'fixed',
+          left:       pos.x,
+          top:        pos.y,
+          zIndex,
+          width:      `${panelWidth}px`,
+          transition: 'width 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          maxHeight:  `calc(${100 / uiScale}vh - 100px)`,
+          ...(flipPhase !== 'idle' && {
+            animation:       flipPhase === 'out'
+              ? 'cardFlipOut 0.17s ease-in forwards'
+              : 'cardFlipIn 0.17s ease-out forwards',
+            transformOrigin: 'center top',
+          }),
+        }}
+      >
+        {/* ── Scrollable content area ── */}
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.2) transparent' }}>
+
+          {/* Compare grid */}
+          {compareMode && (
+            <div style={{ padding: '8px 12px' }}>
+              {comparedCountries.length === 0 ? (
+                <div style={{ color: '#2a4060', fontSize: '8px', letterSpacing: '0.1em', padding: '8px 0', textAlign: 'center' }}>
+                  點擊地球上的國家以加入比較
+                </div>
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: comparedCountries.length === 1 ? '1fr' : `repeat(${compareColumns}, 1fr)`,
+                  gap: '6px',
+                }}>
+                  {comparedCountries.map((c, i) => (
+                    <CompareCard
+                      key={c.name}
+                      country={c}
+                      color={COMPARE_PALETTE[i % COMPARE_PALETTE.length]}
+                      onRemove={() => removeComparedCountry(c.name)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Overview (single country mode) */}
+          {displayedCountry && !compareMode && (
+            <RegionPanelOverview
+              country={displayedCountry}
+              info={info}
+              allTags={allTags}
+              recentEvents={recentEvents}
+              focusOnEarthSurface={focusOnEarthSurface}
+              wikiData={wikiData ?? null}
+              wikiLoading={wikiLoading}
+            />
+          )}
+        </div>
+
+        {/* ── Agent section (fixed at bottom) ── */}
+        <RegionPanelAgent
+          history={history}
+          loading={loading}
+          error={error ?? null}
+          suggestedQueries={suggestedQueries}
+          agentContext={agentContext}
+          ask={ask}
+          agentScrollRef={agentScrollRef}
+        />
+      </Panel>
     </>
   )
 }

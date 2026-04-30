@@ -7,7 +7,9 @@ export function usePopoutWindow(panelKey: 'event' | 'region') {
 
   const open = useCallback(() => {
     const url = `${window.location.origin}${window.location.pathname}?popout=${panelKey}`
-    const win = window.open(url, `argus-popout-${panelKey}`, 'width=420,height=700,menubar=no,toolbar=no,status=no')
+    const w   = window.screen.availWidth
+    const h   = window.screen.availHeight
+    const win = window.open(url, `argus-popout-${panelKey}`, `width=${w},height=${h},left=0,top=0,menubar=no,toolbar=no,status=no`)
     if (win) {
       setPoppedOut(panelKey, true)
       const timer = setInterval(() => {
