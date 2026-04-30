@@ -256,6 +256,40 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Context-aware layer activation in EventPanel
+  Description:
+  Enhance EventPanel so that when displaying an event, it automatically enables relevant
+  visualization layers based on event metadata.
+
+  Rules:
+  * If event is related to aviation → enable ADS-B layer
+  * If event is related to maritime → enable AIS layer
+  * If event is related to satellites/space → enable satellite layer
+
+  Detection uses keyword matching across title, tags, actors, and content fields.
+  Aviation keywords: aircraft, airline, airport, airspace, flight, helicopter, drone, uav, etc.
+  Maritime keywords: maritime, naval, navy, ship, vessel, port, fleet, submarine, coast guard, etc.
+  Satellite keywords: category=SPACE, location_type=orbital, satellite, spacecraft, orbit, etc.
+
+  Layer activation is non-destructive (only turns ON, never OFF) and fires once per event ID.
+  Users can still manually toggle layers after auto-activation.
+
+  Success Criteria:
+  * Aviation-related events trigger ADS-B layer activation
+  * Maritime-related events trigger AIS layer activation
+  * Satellite/SPACE-category events trigger satellite layer activation
+  * No incorrect layer activation occurs for unrelated events
+  * Users can manually toggle layers after auto-activation (idempotent setter)
+  * No regression in EventPanel rendering or performance
+  Implementation: Created useLayerAutoActivation.ts hook. Keyword matching runs across
+    title, tags, actors, and content. Hook called in EventPanel with displayedEvent so
+    timeline navigation also triggers it. Effect gated by event.id — fires once per event.
+  Success Criteria: Met — layers auto-activate on matched events; idempotent; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [TODO][HIGH] Feature: Event Heatmap Layer
   Description: Add a toggleable geographic heatmap overlay on the globe showing event density.
     Group events by lat/lng (haversine bucketing ~200km cells), compute cell intensity from

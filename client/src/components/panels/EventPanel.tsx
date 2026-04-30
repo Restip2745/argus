@@ -14,7 +14,8 @@ import { useAppStore }        from '../../store'
 import { useAgentQuery }      from '../../hooks/useAgentQuery'
 import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
 import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
-import { usePanelDrag }       from '../../hooks/usePanelDrag'
+import { usePanelDrag }             from '../../hooks/usePanelDrag'
+import { useLayerAutoActivation }   from '../../hooks/useLayerAutoActivation'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import { EventTimeline }      from './EventTimeline'
 import { EventPanelBody }     from './EventPanelBody'
@@ -184,6 +185,9 @@ export function EventPanel() {
     ].filter((l) => l !== null).join('\n').trim()
     navigator.clipboard.writeText(md).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }).catch(() => {})
   }, [displayedEvent])
+
+  // ── Context-aware layer activation ────────────────────────────────────────
+  useLayerAutoActivation(displayedEvent)
 
   // ── Focus ──────────────────────────────────────────────────────────────────
   function triggerFocus() {
