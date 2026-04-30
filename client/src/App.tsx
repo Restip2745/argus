@@ -15,6 +15,7 @@ import { CategoryFilterBar } from './components/ui/CategoryFilterBar'
 import { FloatDock } from './components/ui/FloatDock'
 import { CanvasAnalysisPanel } from './components/ui/CanvasAnalysisPanel'
 import { CelestialBodyPanel } from './components/panels/CelestialBodyPanel'
+import { PersonPanel }        from './components/panels/PersonPanel'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { useAppStore } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
@@ -100,6 +101,7 @@ export default function App() {
             <EventPanel />
             <RegionPanel />
             <CelestialBodyPanel />
+            <PersonPanel />
             <CelestialNavList />
 
             {/* ── Top-right control bar ──────────────────────────────────── */}
@@ -149,6 +151,7 @@ export default function App() {
             <EventPanel />
             <RegionPanel />
             <CelestialBodyPanel />
+            <PersonPanel />
             {showConfig && <ConfigModal />}
             {showCanvasAnalysis && <CanvasAnalysisPanel onClose={() => setShowCanvasAnalysis(false)} />}
           </>

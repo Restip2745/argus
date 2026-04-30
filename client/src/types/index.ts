@@ -76,6 +76,18 @@ export interface ArgusEvent {
 }
 
 // ────────────────────────────────────────────────────────────
+// Person entity (for PersonPanel / entity linking)
+// ────────────────────────────────────────────────────────────
+
+export interface PersonEntity {
+  name:        string
+  description: string | null   // Wikidata short description
+  extract:     string | null   // Wikipedia first paragraph
+  thumbnail:   string | null   // image URL
+  wikiUrl:     string | null   // Wikipedia desktop page URL
+}
+
+// ────────────────────────────────────────────────────────────
 // Annotation canvas
 // ────────────────────────────────────────────────────────────
 

@@ -92,6 +92,9 @@ export function FloatDock() {
   const setShowShipsLayer    = useAppStore((s) => s.setShowShipsLayer)
   const showConflictLayer    = useAppStore((s) => s.showConflictLayer)
   const setShowConflictLayer = useAppStore((s) => s.setShowConflictLayer)
+  const showPersonPanel      = useAppStore((s) => s.showPersonPanel)
+  const setShowPersonPanel   = useAppStore((s) => s.setShowPersonPanel)
+  const clearSelectedPersons = useAppStore((s) => s.clearSelectedPersons)
 
 
   const { alertCount, topCats } = useMemo(() => {
@@ -285,6 +288,18 @@ export function FloatDock() {
         color="#ff6600"
         active={showConflictLayer}
         onClick={() => setShowConflictLayer(!showConflictLayer)}
+      />
+
+      {/* Person intel panel */}
+      <DockBtn
+        icon="◎"
+        label="PERSON INTEL"
+        color="#9b6dff"
+        active={showPersonPanel}
+        onClick={() => {
+          if (showPersonPanel) { clearSelectedPersons() }
+          else setShowPersonPanel(true)
+        }}
       />
 
       {/* Annotation canvas toggle */}

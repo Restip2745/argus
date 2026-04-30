@@ -290,6 +290,97 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Implement PersonPanel component
+  Description: Create a new PersonPanel component to display information about individuals
+    (e.g., historical figures, politicians, notable people). Follows the same architecture as
+    other panels using the shared Panel base component. Data sourced from Wikipedia REST API
+    (reusing useWikiSummary). Accessible via FloatDock ◎ button or future entity links.
+  Success Criteria: PersonPanel renders correctly; displays name, description, extract, thumbnail,
+    and Wikipedia link; uses shared Panel + usePanelDrag architecture; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Support multi-person selection in PersonPanel
+  Description: Extend PersonPanel to support selecting multiple people. Users can search by
+    keyword using the Wikipedia search API; selecting a result adds the person to a
+    selectedPersons list. A sidebar shows all selected persons as thumbnail chips; clicking
+    one switches the main view. Each person has a ✕ remove button.
+  Success Criteria: Search input with debounced Wikipedia results; multi-person sidebar;
+    switching between people; removing individuals; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Integrate AI chat into PersonPanel
+  Description: Add AI interaction capability to PersonPanel using the existing useAgentQuery hook.
+    Agent receives contextual data (name, description, extract) from the active person. UI mirrors
+    the agent chat in EventPanelBody. Suggested queries based on person type.
+  Success Criteria: AI chat UI present in PersonPanel; responses are context-aware (person name
+    + description + extract in prompt); no regression to panel performance or layout.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Feature: Link person entities in EventPanel using LLM
+  Description: Add a server endpoint POST /api/events/:id/persons that extracts person names
+    from event title + content using Ollama (JSON array of names). Client calls this lazily
+    when EventPanel opens. Detected names are rendered as clickable ◎ chips in a "PERSONS"
+    row in EventPanelBody. Clicking a chip opens PersonPanel for that person.
+  Success Criteria: Person names extracted via Ollama; rendered as chips in EventPanelBody;
+    clicking opens PersonPanel; minimal false positives; no regression.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Enrich RegionPanel with related persons
+  Description: Extend RegionPanel to include a list of relevant people associated with the
+    region (head of state, notable figures). Use a server endpoint or Wikipedia category query.
+    Displayed as clickable ◎ chips in a "KEY PERSONS" section of RegionPanelOverview.
+    Clicking opens PersonPanel.
+  Success Criteria: RegionPanel shows key persons section; chips open PersonPanel correctly;
+    data is relevant to the region; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Link person entities in CelestialBodyPanel
+  Description: Detect and link person names in CelestialBodyPanel content (discoverers,
+    mission scientists). Convert them into clickable ◎ chips that open PersonPanel. Reuse
+    the centralized entity-linking mechanism from the refactor task.
+  Success Criteria: Person names identified and linked; links correctly open PersonPanel;
+    no incorrect or excessive linking; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Refactor: Centralize entity linking system (Person links)
+  Description: Create a reusable PersonChip component that renders a clickable person badge
+    and sets activePersonName in the store. Shared by EventPanelBody, RegionPanelOverview,
+    and CelestialBodyPanel. Avoids duplicating the chip UI and click handler in each panel.
+  Success Criteria: PersonChip component exists; all panels import and use it; consistent
+    appearance and behavior; no new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Test: Validate PersonPanel and entity linking behavior
+  Description: Add Vitest tests covering: PersonPanel renders with mocked wiki data; multi-
+    person selection adds/removes correctly from store; entity chip click sets activePersonName;
+    PersonPanel closes on ✕ and clears store.
+  Success Criteria: Core flows covered by tests; vitest run exits 0; no regression.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [TODO][HIGH] Feature: Event Heatmap Layer
   Description: Add a toggleable geographic heatmap overlay on the globe showing event density.
     Group events by lat/lng (haversine bucketing ~200km cells), compute cell intensity from

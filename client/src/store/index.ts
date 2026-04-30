@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ArgusEvent, CelestialBodyName, AnnotationStroke } from '../types'
+import type { ArgusEvent, CelestialBodyName, AnnotationStroke, PersonEntity } from '../types'
 import type { NavLevelId } from '../config/navLevels'
 import { NAV_LEVELS } from '../config/navLevels'
 import type { BodyDef } from '../data/celestialBodies'
@@ -123,6 +123,17 @@ interface AppState {
   // ── Event keyword search (for EventStack) ─────────────────
   searchQuery: string
   setSearchQuery: (q: string) => void
+
+  // ── Person Panel ──────────────────────────────────────────
+  showPersonPanel:      boolean
+  setShowPersonPanel:   (v: boolean) => void
+  selectedPersons:      PersonEntity[]
+  activePersonName:     string | null
+  /** Set the active person; auto-opens the panel and raises it to front. */
+  setActivePersonName:  (name: string | null) => void
+  addSelectedPerson:    (p: PersonEntity) => void
+  removeSelectedPerson: (name: string) => void
+  clearSelectedPersons: () => void
 
   // ── Intel brief (Periodic Intelligence Summary) ──────────
   intelBrief: { id: string; summary: string; generatedAt: string; topEventIds: string[] } | null
@@ -278,6 +289,30 @@ export const useAppStore = create<AppState>((set) => ({
   searchQuery: '',
   setSearchQuery: (searchQuery) => set({ searchQuery }),
 
+  // Person panel
+  showPersonPanel:    false,
+  setShowPersonPanel: (showPersonPanel) => set({ showPersonPanel }),
+  selectedPersons:    [],
+  activePersonName:   null,
+  setActivePersonName: (activePersonName) => set((s) => ({
+    activePersonName,
+    showPersonPanel: activePersonName !== null ? true : s.showPersonPanel,
+    panelZ: activePersonName !== null
+      ? { ...s.panelZ, person: Math.max(...Object.values(s.panelZ), 29) + 1 }
+      : s.panelZ,
+  })),
+  addSelectedPerson: (p) => set((s) =>
+    s.selectedPersons.some(x => x.name === p.name)
+      ? s
+      : { selectedPersons: [...s.selectedPersons, p] }
+  ),
+  removeSelectedPerson: (name) => set((s) => ({
+    selectedPersons: s.selectedPersons.filter(p => p.name !== name),
+  })),
+  clearSelectedPersons: () => set({
+    selectedPersons: [], activePersonName: null, showPersonPanel: false,
+  }),
+
   // Intel brief
   intelBrief:    null,
   setIntelBrief: (b) => set({ intelBrief: b, briefRead: false }),
@@ -285,7 +320,7 @@ export const useAppStore = create<AppState>((set) => ({
   setBriefRead:  (briefRead) => set({ briefRead }),
 
   // Panel z-order — each call gives the clicked panel the current highest z
-  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33 },
+  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33, person: 34 },
   bringToFront: (key) => set((s) => {
     const max = Math.max(...Object.values(s.panelZ), 29)
     return { panelZ: { ...s.panelZ, [key]: max + 1 } }
