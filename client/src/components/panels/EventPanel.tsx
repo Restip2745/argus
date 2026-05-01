@@ -74,6 +74,8 @@ export function EventPanel() {
   const focusOnEarthSurface = useAppStore((s) => s.focusOnEarthSurface)
   const focusOn             = useAppStore((s) => s.focusOn)
   const setSelectedCountry  = useAppStore((s) => s.setSelectedCountry)
+  const bookmarkedIds       = useAppStore((s) => s.bookmarkedIds)
+  const toggleBookmark      = useAppStore((s) => s.toggleBookmark)
 
   // ── Drag / position ────────────────────────────────────────────────────────
   const { panelRef, pos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
@@ -292,6 +294,22 @@ export function EventPanel() {
           title={<>{(displayedEvent?.category ?? event.category).replace(/_/g, ' ')}</>}
           headerControls={
             <>
+              {/* Bookmark toggle */}
+              {event && (() => {
+                const isBookmarked = bookmarkedIds.includes(event.id)
+                return (
+                  <button
+                    onClick={() => toggleBookmark(event.id)}
+                    title={isBookmarked ? 'Remove bookmark' : 'Bookmark this event'}
+                    style={{
+                      background: 'none', border: 'none',
+                      color: isBookmarked ? '#ffd700' : '#4a6070',
+                      cursor: 'pointer', fontSize: '11px', lineHeight: 1,
+                      padding: '1px 3px', transition: 'color 0.15s',
+                    }}
+                  >{isBookmarked ? '★' : '☆'}</button>
+                )
+              })()}
               <button
                 onClick={exportEvent}
                 title="Export as Markdown"

@@ -149,20 +149,24 @@ const ITEM_H = 30  // 26px icon + 4px flex gap
 const VSCROLL_BUFFER = 8  // extra items rendered above/below visible window
 
 export function EventStack() {
-  const events           = useAppStore((s) => s.events)
-  const hiddenCategories = useAppStore((s) => s.hiddenCategories)
-  const timeRangeFilter  = useAppStore((s) => s.timeRangeFilter)
-  const searchQuery      = useAppStore((s) => s.searchQuery)
+  const events             = useAppStore((s) => s.events)
+  const hiddenCategories   = useAppStore((s) => s.hiddenCategories)
+  const timeRangeFilter    = useAppStore((s) => s.timeRangeFilter)
+  const searchQuery        = useAppStore((s) => s.searchQuery)
+  const bookmarkedIds      = useAppStore((s) => s.bookmarkedIds)
+  const showWatchlistOnly  = useAppStore((s) => s.showWatchlistOnly)
 
-  // Sort newest-first, apply time-range + category + text filters (no hard cap)
+  // Sort newest-first, apply watchlist / time-range / category / text filters (no hard cap)
   const filtered = useMemo(() => {
     const cutoff = timeRangeFilter !== 'all'
       ? Date.now() - TIME_RANGE_MS[timeRangeFilter]
       : null
     const q = searchQuery.trim().toLowerCase()
+    const bookmarkSet = new Set(bookmarkedIds)
     return [...events]
       .sort((a, b) => safeTs(b.published_at) - safeTs(a.published_at))
       .filter((e) => {
+        if (showWatchlistOnly && !bookmarkSet.has(e.id)) return false
         if (hiddenCategories.includes(e.category)) return false
         const ts = safeTs(e.published_at)
         if (cutoff && ts > 0 && ts < cutoff) return false
@@ -175,7 +179,7 @@ export function EventStack() {
         }
         return true
       })
-  }, [events, hiddenCategories, timeRangeFilter, searchQuery])
+  }, [events, hiddenCategories, timeRangeFilter, searchQuery, bookmarkedIds, showWatchlistOnly])
 
   // ── Virtual scroll ────────────────────────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null)

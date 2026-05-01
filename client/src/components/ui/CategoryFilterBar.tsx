@@ -135,6 +135,9 @@ export function CategoryFilterBar() {
   const setTimeRangeFilter   = useAppStore((s) => s.setTimeRangeFilter)
   const searchQuery          = useAppStore((s) => s.searchQuery)
   const setSearchQuery       = useAppStore((s) => s.setSearchQuery)
+  const bookmarkedIds        = useAppStore((s) => s.bookmarkedIds)
+  const showWatchlistOnly    = useAppStore((s) => s.showWatchlistOnly)
+  const setShowWatchlistOnly = useAppStore((s) => s.setShowWatchlistOnly)
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -147,6 +150,29 @@ export function CategoryFilterBar() {
       className="absolute top-2 z-20 flex items-center gap-1 font-mono"
       style={{ left: '50%', transform: 'translateX(-50%)' }}
     >
+      {/* Watchlist toggle — ★ with bookmark count */}
+      <button
+        onClick={() => setShowWatchlistOnly(!showWatchlistOnly)}
+        title={showWatchlistOnly ? 'Show all events' : 'Show bookmarked only'}
+        className="flex items-center gap-1 rounded border font-mono"
+        style={{
+          padding: '3px 7px',
+          fontSize: '9px',
+          borderColor: showWatchlistOnly ? 'rgba(255,215,0,0.45)' : 'rgba(0,180,255,0.15)',
+          background:  showWatchlistOnly ? 'rgba(255,215,0,0.10)' : 'rgba(4,9,22,0.75)',
+          color:       showWatchlistOnly ? '#ffd700' : '#2a5070',
+          backdropFilter: 'blur(4px)',
+          cursor: 'pointer',
+          transition: 'color 0.15s, border-color 0.15s, background 0.15s',
+          marginRight: '4px',
+        }}
+      >
+        <span>{showWatchlistOnly ? '★' : '☆'}</span>
+        {bookmarkedIds.length > 0 && (
+          <span style={{ fontSize: '7px' }}>{bookmarkedIds.length}</span>
+        )}
+      </button>
+
       {/* Time-range quick-filter */}
       <div
         className="flex items-center rounded border overflow-hidden"

@@ -86,14 +86,17 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Feature: Bookmark / Watchlist
-  Description: Allow the user to pin events to a persistent watchlist. Add bookmarkedIds:
-    Set<string> (serialised as string[]) to the Zustand store with persistence via
-    localStorage. Add a bookmark icon button to EventPanel header (★/☆). Add a "Watchlist"
-    section or toggle in EventStack that shows only bookmarked events. FloatDock could show
-    a ★ badge with count when watchlist is non-empty.
-  Success Criteria: Bookmarking persists across page reload; watchlist view shows only
-    bookmarked events; bookmark icon reflects state; TS clean.
+[DONE][LOW] Feature: Bookmark / Watchlist
+  Description: bookmarkedIds: string[] + toggleBookmark + showWatchlistOnly +
+    setShowWatchlistOnly added to Zustand store. bookmarkedIds persisted to
+    localStorage ('argus-bookmarks') and restored on init. EventPanel header
+    gains a ★/☆ toggle button (gold when bookmarked). CategoryFilterBar has a
+    ☆ watchlist button (leftmost) that toggles showWatchlistOnly and shows
+    bookmark count when > 0. EventStack useMemo filters to bookmarked-only when
+    showWatchlistOnly is true.
+  Success Criteria: Met — bookmarks persist across reload; ★ in EventPanel
+    reflects state; ☆ in filter bar shows count and filters list; TS clean;
+    9/9 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
