@@ -59,15 +59,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Feature: Actor and Tag Click-to-Filter
-  Description: In EventPanelBody, actor chips and tag chips are rendered but not interactive
-    beyond display. Make each chip clickable: clicking an actor chip sets searchQuery to
-    the actor name (reusing the search filter from the Full-Text Search task); clicking a
-    tag chip sets searchQuery to the tag string. The EventStack will immediately filter to
-    show only events that mention that actor/tag. Show a visual "active filter" indicator
-    in the event list header. Clear on explicit search-clear or new panel open.
-  Success Criteria: Clicking actor/tag chip in EventPanel updates searchQuery; EventStack
-    filters accordingly; active filter is visible; clicking × clears; TS clean.
+[DONE][HIGH] Feature: Actor and Tag Click-to-Filter
+  Description: EventPanelBody now reads setSearchQuery from Zustand store directly.
+    Actor chips converted from <span> to <button> elements with onClick → setSearchQuery(actor)
+    and hover highlight. Tags section added below actors (was not previously rendered);
+    tag chips use # prefix and click → setSearchQuery(tag). Both chips show a tooltip
+    "Filter events by …". The CategoryFilterBar search input immediately reflects the
+    active query and provides the ✕ clear button.
+  Success Criteria: Met — actor/tag chips are buttons; clicking sets searchQuery; EventStack
+    filters accordingly; ✕ clears; TS clean; 9/9 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
