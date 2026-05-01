@@ -138,6 +138,13 @@ const TIME_RANGE_MS: Record<string, number> = {
   '24h': 24 * 60 * 60 * 1000,
 }
 
+// Returns 0 for null/undefined/invalid ISO strings so sort and filter never produce NaN.
+function safeTs(iso: string | null | undefined): number {
+  if (!iso) return 0
+  const t = new Date(iso).getTime()
+  return isNaN(t) ? 0 : t
+}
+
 export function EventStack() {
   const events           = useAppStore((s) => s.events)
   const hiddenCategories = useAppStore((s) => s.hiddenCategories)
@@ -149,10 +156,11 @@ export function EventStack() {
       ? Date.now() - TIME_RANGE_MS[timeRangeFilter]
       : null
     return [...events]
-      .sort((a, b) => (b.published_at ?? '').localeCompare(a.published_at ?? ''))
+      .sort((a, b) => safeTs(b.published_at) - safeTs(a.published_at))
       .filter((e) => {
         if (hiddenCategories.includes(e.category)) return false
-        if (cutoff && e.published_at && new Date(e.published_at).getTime() < cutoff) return false
+        const ts = safeTs(e.published_at)
+        if (cutoff && ts > 0 && ts < cutoff) return false
         return true
       })
       .slice(0, 45)

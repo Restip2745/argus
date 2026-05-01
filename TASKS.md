@@ -20,6 +20,85 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Bugfix: Fix null/invalid date handling in EventStack
+  Description: EventStack.tsx had two silent failure modes in date handling:
+    (1) Sort used localeCompare on published_at strings — malformed/null dates silently
+        produced wrong order.
+    (2) Time-range filter called new Date(e.published_at).getTime() without NaN guard.
+    Fix: added safeTs(iso) helper (returns 0 for null/invalid); used for both sort
+    (numeric timestamp diff) and filter (only applies cutoff when ts > 0).
+  Success Criteria: Met — sort and filter are NaN-safe; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Perf: Memoize category filter counts in CategoryFilterBar
+  Description: CategoryFilterBar calls events.filter(e => e.category === cat).length inside
+    the render (×9 categories) with no memoization — O(n×categories) on every render.
+    Replace with a single useMemo that builds a Record<string, number> count map once per
+    events reference change.
+  Success Criteria: Count map computed at most once per events update; render profile shows
+    no repeated full-list scans; no visual change; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Feature: Full-Text Event Search
+  Description: Add a keyword search input to the event list UI. Add searchQuery: string +
+    setSearchQuery() to the Zustand store. In EventStack, after applying the existing
+    time-range and category filters, further filter events where title, summary (if present),
+    or actors array contains the query string (case-insensitive). Add a search input field
+    above or integrated into CategoryFilterBar; show a clear (×) button when query is non-empty.
+    i18n key: ui.search (EN: "Search events…", zh-TW: "搜尋事件…").
+  Success Criteria: Typing in the search box narrows the event list in real time; clear button
+    resets; empty query shows all events; no new TS errors; existing tests still pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Feature: Actor and Tag Click-to-Filter
+  Description: In EventPanelBody, actor chips and tag chips are rendered but not interactive
+    beyond display. Make each chip clickable: clicking an actor chip sets searchQuery to
+    the actor name (reusing the search filter from the Full-Text Search task); clicking a
+    tag chip sets searchQuery to the tag string. The EventStack will immediately filter to
+    show only events that mention that actor/tag. Show a visual "active filter" indicator
+    in the event list header. Clear on explicit search-clear or new panel open.
+  Success Criteria: Clicking actor/tag chip in EventPanel updates searchQuery; EventStack
+    filters accordingly; active filter is visible; clicking × clears; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Remove 45-Event Hard Cap with Virtual Scroll
+  Description: EventStack currently slices events to a hard cap of MAX_VISIBLE=45 items before
+    rendering. Replace the slice cap with a virtualised list: show all filtered events but
+    only render the DOM nodes for visible rows. Use a simple window-based virtual scroll
+    (track scrollTop + containerHeight; render a buffer of ~10 above/below). Alternatively,
+    use react-window (already a common dep) if available. Remove the hard cap entirely.
+  Success Criteria: All filtered events render without the 45-item cap; scroll is smooth;
+    no layout regressions; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Feature: Bookmark / Watchlist
+  Description: Allow the user to pin events to a persistent watchlist. Add bookmarkedIds:
+    Set<string> (serialised as string[]) to the Zustand store with persistence via
+    localStorage. Add a bookmark icon button to EventPanel header (★/☆). Add a "Watchlist"
+    section or toggle in EventStack that shows only bookmarked events. FloatDock could show
+    a ★ badge with count when watchlist is non-empty.
+  Success Criteria: Bookmarking persists across page reload; watchlist view shows only
+    bookmarked events; bookmark icon reflects state; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Refactor: Introduce base Panel component
   Description: Created Panel.tsx as the shared base visual shell. Provides outer container
     (background, border, corner accents, left accent bar), draggable header (title + controls
