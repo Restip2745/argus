@@ -33,13 +33,12 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Perf: Memoize category filter counts in CategoryFilterBar
-  Description: CategoryFilterBar calls events.filter(e => e.category === cat).length inside
-    the render (×9 categories) with no memoization — O(n×categories) on every render.
-    Replace with a single useMemo that builds a Record<string, number> count map once per
-    events reference change.
-  Success Criteria: Count map computed at most once per events update; render profile shows
-    no repeated full-list scans; no visual change; TS clean.
+[DONE][MEDIUM] Perf: Memoize category filter counts in CategoryFilterBar
+  Description: Replaced nine per-render events.filter(…).length calls with a single
+    useMemo that builds a Record<string, number> count map via one pass over events.
+    categoryCounts[cat] ?? 0 used in FilterButton props.
+  Success Criteria: Met — count map computed once per events reference; no visual change;
+    TS clean; 9/9 tests pass.
   Retry Count: 0
   Source: ROADMAP
 

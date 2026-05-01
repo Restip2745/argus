@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { CATEGORY_ICON, CATEGORY_COLOR, CATEGORY_LABEL } from '../../data/categoryConfig'
@@ -136,6 +136,12 @@ export function CategoryFilterBar() {
   const searchQuery          = useAppStore((s) => s.searchQuery)
   const setSearchQuery       = useAppStore((s) => s.setSearchQuery)
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const e of events) counts[e.category] = (counts[e.category] ?? 0) + 1
+    return counts
+  }, [events])
+
   return (
     <div
       className="absolute top-2 z-20 flex items-center gap-1 font-mono"
@@ -224,7 +230,7 @@ export function CategoryFilterBar() {
         <FilterButton
           key={cat}
           cat={cat}
-          count={events.filter((e) => e.category === cat).length}
+          count={categoryCounts[cat] ?? 0}
           hidden={hiddenCategories.includes(cat)}
           color={CATEGORY_COLOR[cat]}
           icon={CATEGORY_ICON[cat]}
