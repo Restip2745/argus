@@ -145,13 +145,16 @@ function safeTs(iso: string | null | undefined): number {
   return isNaN(t) ? 0 : t
 }
 
+const ITEM_H = 30  // 26px icon + 4px flex gap
+const VSCROLL_BUFFER = 8  // extra items rendered above/below visible window
+
 export function EventStack() {
   const events           = useAppStore((s) => s.events)
   const hiddenCategories = useAppStore((s) => s.hiddenCategories)
   const timeRangeFilter  = useAppStore((s) => s.timeRangeFilter)
   const searchQuery      = useAppStore((s) => s.searchQuery)
 
-  // Sort newest-first, apply time-range + category + text filters, cap at 45
+  // Sort newest-first, apply time-range + category + text filters (no hard cap)
   const filtered = useMemo(() => {
     const cutoff = timeRangeFilter !== 'all'
       ? Date.now() - TIME_RANGE_MS[timeRangeFilter]
@@ -164,28 +167,63 @@ export function EventStack() {
         const ts = safeTs(e.published_at)
         if (cutoff && ts > 0 && ts < cutoff) return false
         if (q) {
-          const inTitle  = e.title.toLowerCase().includes(q)
+          const inTitle   = e.title.toLowerCase().includes(q)
           const inContent = (e.content ?? '').toLowerCase().includes(q)
-          const inActors = e.actors.some((a) => a.toLowerCase().includes(q))
-          const inTags   = e.tags.some((t) => t.toLowerCase().includes(q))
+          const inActors  = e.actors.some((a) => a.toLowerCase().includes(q))
+          const inTags    = e.tags.some((t) => t.toLowerCase().includes(q))
           if (!inTitle && !inContent && !inActors && !inTags) return false
         }
         return true
       })
-      .slice(0, 45)
   }, [events, hiddenCategories, timeRangeFilter, searchQuery])
 
-  // Track new arrivals for animation
-  const prevIdsRef  = useRef<Set<string>>(new Set())
-  const [newIds,    setNewIds]    = useState<Set<string>>(new Set())
-  const [nudgeGen,  setNudgeGen]  = useState(0)
+  // ── Virtual scroll ────────────────────────────────────────────────────────
+  const containerRef = useRef<HTMLDivElement>(null)
+  const scrollTopRef = useRef(0)
+  const [scrollTop,   setScrollTop]   = useState(0)
+  const [containerH,  setContainerH]  = useState(600)
+
+  // Track container height via ResizeObserver
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setContainerH(el.clientHeight))
+    ro.observe(el)
+    setContainerH(el.clientHeight)
+    return () => ro.disconnect()
+  }, [])
+
+  // Drive scroll from wheel events while keeping pointer-events:none on container
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    function onWheel(e: WheelEvent) {
+      const rect = el!.getBoundingClientRect()
+      if (e.clientX < rect.left || e.clientX > rect.right ||
+          e.clientY < rect.top  || e.clientY > rect.bottom) return
+      const maxScroll = Math.max(0, filtered.length * ITEM_H - rect.height)
+      scrollTopRef.current = Math.max(0, Math.min(maxScroll, scrollTopRef.current + e.deltaY))
+      el!.scrollTop = scrollTopRef.current
+      setScrollTop(scrollTopRef.current)
+    }
+    window.addEventListener('wheel', onWheel, { passive: true })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [filtered.length])
+
+  const total    = filtered.length
+  const startIdx = Math.max(0, Math.floor(scrollTop / ITEM_H) - VSCROLL_BUFFER)
+  const endIdx   = Math.min(total, Math.ceil((scrollTop + containerH) / ITEM_H) + VSCROLL_BUFFER)
+
+  // ── New-arrival animation tracking ───────────────────────────────────────
+  const prevIdsRef    = useRef<Set<string>>(new Set())
+  const [newIds,      setNewIds]    = useState<Set<string>>(new Set())
+  const [nudgeGen,    setNudgeGen]  = useState(0)
   const isFirstRender = useRef(true)
 
   useEffect(() => {
     const currentIds = new Set(filtered.map((e) => e.id))
 
     if (isFirstRender.current) {
-      // On first load, no animations for new arrivals — just fall-in
       isFirstRender.current = false
       prevIdsRef.current = currentIds
       return
@@ -200,7 +238,6 @@ export function EventStack() {
     setNewIds((prev) => new Set([...prev, ...ids]))
     setNudgeGen((g) => g + 1)
 
-    // Clear "new" status after animation completes
     const t = setTimeout(() => {
       setNewIds((prev) => {
         const next = new Set(prev)
@@ -213,18 +250,28 @@ export function EventStack() {
 
   return (
     <div
-      className="absolute left-2 flex flex-col gap-1 pointer-events-none"
+      ref={containerRef}
+      className="absolute left-2 pointer-events-none"
       style={{ top: '44px', bottom: '36px', overflow: 'hidden' }}
     >
-      {filtered.map((event, i) => (
-        <IconItem
-          key={event.id}
-          event={event}
-          animDelay={Math.min(i * 0.035, 0.7)}
-          isNew={newIds.has(event.id)}
-          nudgeGen={newIds.has(event.id) ? 0 : nudgeGen}
-        />
-      ))}
+      {/* Sentinel div establishes total scroll height */}
+      <div style={{ height: `${total * ITEM_H}px`, position: 'relative' }}>
+        {/* Render only the visible window, positioned at startIdx */}
+        <div
+          className="flex flex-col gap-1"
+          style={{ position: 'absolute', top: `${startIdx * ITEM_H}px` }}
+        >
+          {filtered.slice(startIdx, endIdx).map((event, localI) => (
+            <IconItem
+              key={event.id}
+              event={event}
+              animDelay={Math.min((startIdx + localI) * 0.035, 0.7)}
+              isNew={newIds.has(event.id)}
+              nudgeGen={newIds.has(event.id) ? 0 : nudgeGen}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

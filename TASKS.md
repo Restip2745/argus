@@ -72,14 +72,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Remove 45-Event Hard Cap with Virtual Scroll
-  Description: EventStack currently slices events to a hard cap of MAX_VISIBLE=45 items before
-    rendering. Replace the slice cap with a virtualised list: show all filtered events but
-    only render the DOM nodes for visible rows. Use a simple window-based virtual scroll
-    (track scrollTop + containerHeight; render a buffer of ~10 above/below). Alternatively,
-    use react-window (already a common dep) if available. Remove the hard cap entirely.
-  Success Criteria: All filtered events render without the 45-item cap; scroll is smooth;
-    no layout regressions; TS clean.
+[DONE][MEDIUM] Feature: Remove 45-Event Hard Cap with Virtual Scroll
+  Description: Removed .slice(0,45) cap. Replaced with window-based virtual scroll:
+    ITEM_H=30 (26px icon + 4px gap), VSCROLL_BUFFER=8. A sentinel div sets total scroll
+    height (total * ITEM_H). Visible slice positioned absolutely at startIdx * ITEM_H.
+    Container stays pointer-events:none; scroll is driven by a window wheel listener that
+    checks mouse bounds and programmatically sets el.scrollTop + state. ResizeObserver
+    tracks container height for accurate visible-window calculation.
+  Success Criteria: Met — all filtered events available via scroll; 45-cap removed;
+    pointer-events behaviour unchanged; TS clean; 9/9 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
