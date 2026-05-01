@@ -61,6 +61,7 @@
     "immersive":   "沉浸模式",
     "aiAnalysis":  "AI 畫面分析",
     "config":      "設定",
-    "compareMode": "比較模式"
+    "compareMode": "比較模式",
+    "search":      "搜尋事件…"
   }
 }

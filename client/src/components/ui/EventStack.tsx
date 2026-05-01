@@ -149,22 +149,31 @@ export function EventStack() {
   const events           = useAppStore((s) => s.events)
   const hiddenCategories = useAppStore((s) => s.hiddenCategories)
   const timeRangeFilter  = useAppStore((s) => s.timeRangeFilter)
+  const searchQuery      = useAppStore((s) => s.searchQuery)
 
-  // Sort newest-first, apply time-range + category filters, cap at 45
+  // Sort newest-first, apply time-range + category + text filters, cap at 45
   const filtered = useMemo(() => {
     const cutoff = timeRangeFilter !== 'all'
       ? Date.now() - TIME_RANGE_MS[timeRangeFilter]
       : null
+    const q = searchQuery.trim().toLowerCase()
     return [...events]
       .sort((a, b) => safeTs(b.published_at) - safeTs(a.published_at))
       .filter((e) => {
         if (hiddenCategories.includes(e.category)) return false
         const ts = safeTs(e.published_at)
         if (cutoff && ts > 0 && ts < cutoff) return false
+        if (q) {
+          const inTitle  = e.title.toLowerCase().includes(q)
+          const inContent = (e.content ?? '').toLowerCase().includes(q)
+          const inActors = e.actors.some((a) => a.toLowerCase().includes(q))
+          const inTags   = e.tags.some((t) => t.toLowerCase().includes(q))
+          if (!inTitle && !inContent && !inActors && !inTags) return false
+        }
         return true
       })
       .slice(0, 45)
-  }, [events, hiddenCategories, timeRangeFilter])
+  }, [events, hiddenCategories, timeRangeFilter, searchQuery])
 
   // Track new arrivals for animation
   const prevIdsRef  = useRef<Set<string>>(new Set())

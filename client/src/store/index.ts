@@ -120,6 +120,10 @@ interface AppState {
   timeRangeFilter: '6h' | '12h' | '24h' | 'all'
   setTimeRangeFilter: (v: '6h' | '12h' | '24h' | 'all') => void
 
+  // ── Event full-text search (for EventStack) ───────────────
+  searchQuery: string
+  setSearchQuery: (q: string) => void
+
   // ── Intel brief (Periodic Intelligence Summary) ──────────
   intelBrief: { id: string; summary: string; generatedAt: string; topEventIds: string[] } | null
   setIntelBrief: (b: { id: string; summary: string; generatedAt: string; topEventIds: string[] }) => void
@@ -269,6 +273,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Time-range filter
   timeRangeFilter: 'all',
   setTimeRangeFilter: (timeRangeFilter) => set({ timeRangeFilter }),
+
+  // Full-text search
+  searchQuery: '',
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
 
   // Intel brief
   intelBrief:    null,

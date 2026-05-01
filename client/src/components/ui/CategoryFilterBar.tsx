@@ -133,6 +133,8 @@ export function CategoryFilterBar() {
   const toggleHiddenCategory = useAppStore((s) => s.toggleHiddenCategory)
   const timeRangeFilter      = useAppStore((s) => s.timeRangeFilter)
   const setTimeRangeFilter   = useAppStore((s) => s.setTimeRangeFilter)
+  const searchQuery          = useAppStore((s) => s.searchQuery)
+  const setSearchQuery       = useAppStore((s) => s.setSearchQuery)
 
   return (
     <div
@@ -173,6 +175,49 @@ export function CategoryFilterBar() {
             </button>
           )
         })}
+      </div>
+
+      {/* Full-text search input */}
+      <div
+        className="flex items-center rounded border overflow-hidden"
+        style={{
+          borderColor: searchQuery ? 'rgba(0,212,255,0.35)' : 'rgba(0,180,255,0.15)',
+          background: 'rgba(4,9,22,0.75)',
+          backdropFilter: 'blur(4px)',
+          marginRight: '4px',
+          transition: 'border-color 0.15s',
+        }}
+      >
+        <span style={{ fontSize: '8px', color: '#2a5070', padding: '3px 4px 3px 6px' }}>⌕</span>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('ui.search', 'Search events…')}
+          className="font-mono bg-transparent outline-none"
+          style={{
+            fontSize: '8px',
+            color: searchQuery ? '#a0c8d8' : '#2a5070',
+            width: searchQuery ? '90px' : '70px',
+            padding: '3px 2px',
+            letterSpacing: '0.04em',
+            transition: 'width 0.2s, color 0.15s',
+          }}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            style={{
+              fontSize: '8px',
+              color: '#00d4ff',
+              padding: '3px 5px',
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {ALL_CATEGORIES.map((cat) => (

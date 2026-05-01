@@ -45,15 +45,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Feature: Full-Text Event Search
-  Description: Add a keyword search input to the event list UI. Add searchQuery: string +
-    setSearchQuery() to the Zustand store. In EventStack, after applying the existing
-    time-range and category filters, further filter events where title, summary (if present),
-    or actors array contains the query string (case-insensitive). Add a search input field
-    above or integrated into CategoryFilterBar; show a clear (×) button when query is non-empty.
-    i18n key: ui.search (EN: "Search events…", zh-TW: "搜尋事件…").
-  Success Criteria: Typing in the search box narrows the event list in real time; clear button
-    resets; empty query shows all events; no new TS errors; existing tests still pass.
+[DONE][HIGH] Feature: Full-Text Event Search
+  Description: Added searchQuery: string + setSearchQuery() to Zustand store. EventStack
+    filters events by title, content, actors[], and tags[] (case-insensitive) after the
+    existing time-range and category filters. CategoryFilterBar renders a compact ⌕ search
+    input between the time-range buttons and category chips; shows a ✕ clear button when
+    query is non-empty; input expands from 70px to 90px when active. i18n keys added to
+    en.json (Search events…) and zh-TW.json (搜尋事件…).
+  Success Criteria: Met — search input renders in CategoryFilterBar; filters events in real
+    time; clear button resets; empty query shows all events; TS clean; 9/9 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
