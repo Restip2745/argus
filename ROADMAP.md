@@ -41,10 +41,10 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 > Make it fast and natural to find specific events and patterns.
 
-- [ ] **Full-Text Event Search** — keyword search bar in EventStack filtering title/summary/actors
-- [ ] **Actor/Tag Drill-Down** — click actor or tag chip in EventPanel to filter global event list by that token
-- [ ] **Event Cap Removal** — replace 45-item hard cap with virtual-scrolling list; show all matching events
-- [ ] **Bookmark / Watchlist** — pin specific events to a persistent watchlist accessible from FloatDock
+- [x] **Full-Text Event Search** — ⌕ input in CategoryFilterBar; filters by title / content / actors / tags; ✕ clear; i18n
+- [x] **Actor/Tag Drill-Down** — actor chips → buttons setting searchQuery; tags section added to EventPanelBody
+- [x] **Event Cap Removal** — 45-item hard cap removed; window-based virtual scroll with ResizeObserver + wheel listener
+- [x] **Bookmark / Watchlist** — ★/☆ in EventPanel header; ☆ toggle + count badge in filter bar; localStorage-persisted
 
 ---
 
