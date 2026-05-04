@@ -30,8 +30,7 @@ const INTENSITY_SIZE: Record<string, number> = {
   CRITICAL: 26,
 }
 
-const MARKER_R     = 1.025
-const EARTH_RADIUS = 1.0
+const MARKER_R = 1.025
 
 // Cluster radius in km per zoom tier (0=solar, 1=orbital, 2=surface)
 const CLUSTER_KM = [1500, 600, 0]
@@ -106,11 +105,15 @@ function GeoMarker({
     if (!earthPos || !groupRef.current) return
     latLngToWorld(lat, lng, MARKER_R, earthPos, _local)
     groupRef.current.position.copy(_local)
+    // Surface normal = marker world pos minus Earth world pos (Earth-relative vector)
+    const mx = _local.x - earthPos.x
+    const my = _local.y - earthPos.y
+    const mz = _local.z - earthPos.z
+    // Camera vector relative to Earth
     const cx = camera.position.x - earthPos.x
     const cy = camera.position.y - earthPos.y
     const cz = camera.position.z - earthPos.z
-    const dot = _local.x * cx + _local.y * cy + _local.z * cz
-    const visible = dot >= EARTH_RADIUS * MARKER_R
+    const visible = mx * cx + my * cy + mz * cz > 0
     if (domRef.current) {
       const d = visible ? 'flex' : 'none'
       if (domRef.current.style.display !== d) domRef.current.style.display = d
@@ -175,11 +178,15 @@ function ClusterMarker({
     if (!earthPos || !groupRef.current) return
     latLngToWorld(cluster.lat, cluster.lng, MARKER_R, earthPos, _local)
     groupRef.current.position.copy(_local)
+    // Surface normal = marker world pos minus Earth world pos (Earth-relative vector)
+    const mx = _local.x - earthPos.x
+    const my = _local.y - earthPos.y
+    const mz = _local.z - earthPos.z
+    // Camera vector relative to Earth
     const cx = camera.position.x - earthPos.x
     const cy = camera.position.y - earthPos.y
     const cz = camera.position.z - earthPos.z
-    const dot = _local.x * cx + _local.y * cy + _local.z * cz
-    const visible = dot >= EARTH_RADIUS * MARKER_R
+    const visible = mx * cx + my * cy + mz * cz > 0
     if (domRef.current) {
       const d = visible ? 'flex' : 'none'
       if (domRef.current.style.display !== d) domRef.current.style.display = d
