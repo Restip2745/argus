@@ -120,6 +120,16 @@ interface AppState {
   timeRangeFilter: '6h' | '12h' | '24h' | 'all'
   setTimeRangeFilter: (v: '6h' | '12h' | '24h' | 'all') => void
 
+  // ── Event full-text search (for EventStack) ───────────────
+  searchQuery: string
+  setSearchQuery: (q: string) => void
+
+  // ── Bookmark / Watchlist ──────────────────────────────────
+  bookmarkedIds: string[]
+  toggleBookmark: (id: string) => void
+  showWatchlistOnly: boolean
+  setShowWatchlistOnly: (v: boolean) => void
+
   // ── Intel brief (Periodic Intelligence Summary) ──────────
   intelBrief: { id: string; summary: string; generatedAt: string; topEventIds: string[] } | null
   setIntelBrief: (b: { id: string; summary: string; generatedAt: string; topEventIds: string[] }) => void
@@ -269,6 +279,25 @@ export const useAppStore = create<AppState>((set) => ({
   // Time-range filter
   timeRangeFilter: 'all',
   setTimeRangeFilter: (timeRangeFilter) => set({ timeRangeFilter }),
+
+  // Full-text search
+  searchQuery: '',
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  // Bookmarks — persisted in localStorage
+  bookmarkedIds: (() => {
+    try { return JSON.parse(localStorage.getItem('argus-bookmarks') ?? '[]') as string[] }
+    catch { return [] }
+  })(),
+  toggleBookmark: (id) => set((s) => {
+    const next = s.bookmarkedIds.includes(id)
+      ? s.bookmarkedIds.filter((b) => b !== id)
+      : [...s.bookmarkedIds, id]
+    localStorage.setItem('argus-bookmarks', JSON.stringify(next))
+    return { bookmarkedIds: next }
+  }),
+  showWatchlistOnly: false,
+  setShowWatchlistOnly: (showWatchlistOnly) => set({ showWatchlistOnly }),
 
   // Intel brief
   intelBrief:    null,

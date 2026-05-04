@@ -30,10 +30,21 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 > Deeper intelligence reasoning on top of existing Agent capabilities.
 
-- [ ] **Dynamic Conflict Front Layer** — ISW daily GeoJSON overlay for Ukraine etc., separate from static borders
+- [x] **Dynamic Conflict Front Layer** — ISW daily GeoJSON overlay; `/api/conflict/fronts` with 24h cache; ConflictLayer renders line/polygon features; FloatDock ⚔ toggle
 - [x] **Event Relationship Graph** — SVG force-directed graph in EventPanelBody; color-coded nodes by category; clicking node navigates to related event
 - [x] **Periodic Intelligence Summary** — 30-min server cron; top-5 heat-score events → Ollama → `intel_brief` Socket.io event; FloatDock BRIEF badge + modal
 - [x] **Event Export / Share** — Export button in EventPanel header; Markdown + JSON modes; copy to clipboard with "Copied!" confirmation
+
+---
+
+## Phase D — Search & Discovery
+
+> Make it fast and natural to find specific events and patterns.
+
+- [x] **Full-Text Event Search** — ⌕ input in CategoryFilterBar; filters by title / content / actors / tags; ✕ clear; i18n
+- [x] **Actor/Tag Drill-Down** — actor chips → buttons setting searchQuery; tags section added to EventPanelBody
+- [x] **Event Cap Removal** — 45-item hard cap removed; window-based virtual scroll with ResizeObserver + wheel listener
+- [x] **Bookmark / Watchlist** — ★/☆ in EventPanel header; ☆ toggle + count badge in filter bar; localStorage-persisted
 
 ---
 
@@ -70,3 +81,6 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 - [x] Drag boundary clamping (panels cannot exceed viewport)
 - [x] Annotation canvas (free-draw + Socket.io multi-client sync)
 - [x] i18n foundation (i18next, EN / zh-TW)
+- [x] Panel base component (Panel.tsx + usePanelDrag + PanelTail; EventPanel / RegionPanel / CelestialBodyPanel migrated)
+- [x] Popout 2-column layout (usePopoutWindow full-screen; PopoutPage 60/40 split; PopoutAIPanel dedicated AI column)
+- [x] Vitest + @testing-library/react setup; 9 Panel unit tests

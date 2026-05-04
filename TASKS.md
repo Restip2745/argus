@@ -20,6 +20,88 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Bugfix: Fix null/invalid date handling in EventStack
+  Description: EventStack.tsx had two silent failure modes in date handling:
+    (1) Sort used localeCompare on published_at strings — malformed/null dates silently
+        produced wrong order.
+    (2) Time-range filter called new Date(e.published_at).getTime() without NaN guard.
+    Fix: added safeTs(iso) helper (returns 0 for null/invalid); used for both sort
+    (numeric timestamp diff) and filter (only applies cutoff when ts > 0).
+  Success Criteria: Met — sort and filter are NaN-safe; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Perf: Memoize category filter counts in CategoryFilterBar
+  Description: Replaced nine per-render events.filter(…).length calls with a single
+    useMemo that builds a Record<string, number> count map via one pass over events.
+    categoryCounts[cat] ?? 0 used in FilterButton props.
+  Success Criteria: Met — count map computed once per events reference; no visual change;
+    TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Full-Text Event Search
+  Description: Added searchQuery: string + setSearchQuery() to Zustand store. EventStack
+    filters events by title, content, actors[], and tags[] (case-insensitive) after the
+    existing time-range and category filters. CategoryFilterBar renders a compact ⌕ search
+    input between the time-range buttons and category chips; shows a ✕ clear button when
+    query is non-empty; input expands from 70px to 90px when active. i18n keys added to
+    en.json (Search events…) and zh-TW.json (搜尋事件…).
+  Success Criteria: Met — search input renders in CategoryFilterBar; filters events in real
+    time; clear button resets; empty query shows all events; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Actor and Tag Click-to-Filter
+  Description: EventPanelBody now reads setSearchQuery from Zustand store directly.
+    Actor chips converted from <span> to <button> elements with onClick → setSearchQuery(actor)
+    and hover highlight. Tags section added below actors (was not previously rendered);
+    tag chips use # prefix and click → setSearchQuery(tag). Both chips show a tooltip
+    "Filter events by …". The CategoryFilterBar search input immediately reflects the
+    active query and provides the ✕ clear button.
+  Success Criteria: Met — actor/tag chips are buttons; clicking sets searchQuery; EventStack
+    filters accordingly; ✕ clears; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Remove 45-Event Hard Cap with Virtual Scroll
+  Description: Removed .slice(0,45) cap. Replaced with window-based virtual scroll:
+    ITEM_H=30 (26px icon + 4px gap), VSCROLL_BUFFER=8. A sentinel div sets total scroll
+    height (total * ITEM_H). Visible slice positioned absolutely at startIdx * ITEM_H.
+    Container stays pointer-events:none; scroll is driven by a window wheel listener that
+    checks mouse bounds and programmatically sets el.scrollTop + state. ResizeObserver
+    tracks container height for accurate visible-window calculation.
+  Success Criteria: Met — all filtered events available via scroll; 45-cap removed;
+    pointer-events behaviour unchanged; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Feature: Bookmark / Watchlist
+  Description: bookmarkedIds: string[] + toggleBookmark + showWatchlistOnly +
+    setShowWatchlistOnly added to Zustand store. bookmarkedIds persisted to
+    localStorage ('argus-bookmarks') and restored on init. EventPanel header
+    gains a ★/☆ toggle button (gold when bookmarked). CategoryFilterBar has a
+    ☆ watchlist button (leftmost) that toggles showWatchlistOnly and shows
+    bookmark count when > 0. EventStack useMemo filters to bookmarked-only when
+    showWatchlistOnly is true.
+  Success Criteria: Met — bookmarks persist across reload; ★ in EventPanel
+    reflects state; ☆ in filter bar shows count and filters list; TS clean;
+    9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Refactor: Introduce base Panel component
   Description: Created Panel.tsx as the shared base visual shell. Provides outer container
     (background, border, corner accents, left accent bar), draggable header (title + controls
