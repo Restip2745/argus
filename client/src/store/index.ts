@@ -15,6 +15,8 @@ interface AppState {
   events: ArgusEvent[]
   setEvents: (events: ArgusEvent[]) => void
   addEvent: (event: ArgusEvent) => void
+  eventsLoadFailed: boolean
+  setEventsLoadFailed: (v: boolean) => void
 
   // ── Camera / Focus ────────────────────────────────────────
   focusedBody: CelestialBodyName | null
@@ -144,8 +146,10 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   // Events
   events:     [],
-  setEvents:  (events) => set({ events }),
+  setEvents:  (events) => set({ events, eventsLoadFailed: false }),
   addEvent:   (event) => set((s) => s.events.some(e => e.id === event.id) ? s : { events: [event, ...s.events] }),
+  eventsLoadFailed: false,
+  setEventsLoadFailed: (eventsLoadFailed) => set({ eventsLoadFailed }),
 
   // Camera
   focusedBody:    null,

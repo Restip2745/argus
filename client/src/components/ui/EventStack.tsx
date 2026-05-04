@@ -155,6 +155,7 @@ export function EventStack() {
   const searchQuery        = useAppStore((s) => s.searchQuery)
   const bookmarkedIds      = useAppStore((s) => s.bookmarkedIds)
   const showWatchlistOnly  = useAppStore((s) => s.showWatchlistOnly)
+  const eventsLoadFailed   = useAppStore((s) => s.eventsLoadFailed)
 
   // Sort newest-first, apply watchlist / time-range / category / text filters (no hard cap)
   const filtered = useMemo(() => {
@@ -258,6 +259,29 @@ export function EventStack() {
       className="absolute left-2 pointer-events-none"
       style={{ top: '44px', bottom: '36px', overflow: 'hidden' }}
     >
+      {/* Connection-error indicator — shown when the initial event fetch failed */}
+      {eventsLoadFailed && events.length === 0 && (
+        <div
+          className="pointer-events-auto font-mono"
+          title="Could not reach server — retrying on next connection"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '26px',
+            height: '26px',
+            fontSize: '11px',
+            color: '#ff9c2a',
+            borderColor: '#ff9c2a28',
+            background: 'rgba(4,9,22,0.82)',
+            border: '1px solid #ff9c2a44',
+            borderRadius: '4px',
+            marginBottom: '4px',
+          }}
+        >
+          ⚠
+        </div>
+      )}
       {/* Sentinel div establishes total scroll height */}
       <div style={{ height: `${total * ITEM_H}px`, position: 'relative' }}>
         {/* Render only the visible window, positioned at startIdx */}

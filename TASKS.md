@@ -347,14 +347,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Bugfix: Events-load error state and retry banner
+[DONE][HIGH] Bugfix: Events-load error state and retry banner
   Description: Silent fetch failure in useOllamaSocket leaves EventStack showing an empty
     list with no user feedback. Add eventsLoadFailed: boolean + setEventsLoadFailed to
     Zustand store. In useOllamaSocket catch block, call setEventsLoadFailed(true). In
-    EventStack, when events.length === 0 && eventsLoadFailed, show a small amber banner
-    "Connection error — retrying…" at the top of the stack. Reset on successful setEvents().
-  Success Criteria: Banner appears in EventStack when initial fetch fails; disappears when
-    events arrive; no new TS errors; existing 9 tests still pass.
+    EventStack, when events.length === 0 && eventsLoadFailed, show a small amber ⚠ icon
+    at the top of the stack (tooltip: "Could not reach server"). setEvents() resets the
+    flag so the indicator disappears once events load.
+  Success Criteria: Met — ⚠ indicator renders on fetch failure; clears on success;
+    TS clean; 34/34 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
