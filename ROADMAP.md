@@ -48,6 +48,17 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase E — Resilience & Test Coverage
+
+> Harden the system against silent failures and regressions; expand the test suite beyond Panel.
+
+- [ ] **Zustand Store Unit Tests** — cover addEvent dedup, toggleHiddenCategory, toggleBookmark (localStorage), bringToFront z-order, filter state mutations
+- [ ] **Events-Load Error State** — `eventsLoadFailed` flag in store; set on initial fetch failure in useOllamaSocket; retry banner in EventStack
+- [ ] **Remove Duplicate Color Configs** — EventPanelBody.tsx and PopoutPage.tsx each define their own CATEGORY_COLOR/ICON maps; consolidate to import from categoryConfig.ts
+- [ ] **Decompose RegionPanel** — RegionPanel.tsx is 592 lines; extract remaining stat/data sections into smaller subcomponents
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

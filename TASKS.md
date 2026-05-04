@@ -332,6 +332,58 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+---
+
+[DONE][HIGH] Test: Zustand store unit tests
+  Description: Add comprehensive unit tests for the Zustand store's core business logic:
+    addEvent deduplication (same id should not be added twice), toggleHiddenCategory
+    (add when absent, remove when present), toggleBookmark (add/remove + localStorage write),
+    bringToFront z-order (clicked panel gets max+1), setSearchQuery and setTimeRangeFilter
+    simple setters, setActivePanelId z-bump for event panel.
+  Success Criteria: Met — store.test.ts created with 25 tests; total suite 34/34 pass;
+    vitest exits 0.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Bugfix: Events-load error state and retry banner
+  Description: Silent fetch failure in useOllamaSocket leaves EventStack showing an empty
+    list with no user feedback. Add eventsLoadFailed: boolean + setEventsLoadFailed to
+    Zustand store. In useOllamaSocket catch block, call setEventsLoadFailed(true). In
+    EventStack, when events.length === 0 && eventsLoadFailed, show a small amber banner
+    "Connection error — retrying…" at the top of the stack. Reset on successful setEvents().
+  Success Criteria: Banner appears in EventStack when initial fetch fails; disappears when
+    events arrive; no new TS errors; existing 9 tests still pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Refactor: Consolidate duplicate CATEGORY_COLOR / CATEGORY_ICON definitions
+  Description: EventPanelBody.tsx and PopoutPage.tsx each define their own inline
+    CATEGORY_COLOR and CATEGORY_ICON maps instead of importing from categoryConfig.ts.
+    Remove the inline copies and import the shared constants instead.
+  Success Criteria: No inline CATEGORY_COLOR / CATEGORY_ICON objects in EventPanelBody.tsx
+    or PopoutPage.tsx; all references use categoryConfig.ts; no visual change; TS clean;
+    existing tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Refactor: Decompose RegionPanel.tsx (592 lines)
+  Description: RegionPanel.tsx is 592 lines with too many responsibilities. RegionPanelAgent
+    and RegionPanelOverview already exist as separate files. Extract the compare-mode section
+    (CompareCard + dual-column grid) into a dedicated RegionPanelCompare.tsx. This will reduce
+    RegionPanel.tsx to below 400 lines with clearer boundaries.
+  Success Criteria: RegionPanelCompare.tsx created; RegionPanel.tsx imports it; region panel
+    renders identically; TS clean; existing tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---
