@@ -62,7 +62,11 @@
       "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 log --oneline origin/main..HEAD)",
       "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 diff .claude/settings.local.json)",
       "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add .claude/settings.local.json)",
-      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 commit -m \"chore: add worktree tool permissions to settings.local.json\")"
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 commit -m \"chore: add worktree tool permissions to settings.local.json\")",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 push -u origin claude/infallible-galileo-92a906)",
+      "Bash(gh pr create --title 'Phase D: Search, Discovery & Bookmarks' --body ' *)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 commit -m \"chore: add push/pr tool permissions to settings.local.json\")",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 push)"
     ]
   }
 }
