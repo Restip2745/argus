@@ -372,13 +372,14 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Refactor: Decompose RegionPanel.tsx (592 lines)
-  Description: RegionPanel.tsx is 592 lines with too many responsibilities. RegionPanelAgent
-    and RegionPanelOverview already exist as separate files. Extract the compare-mode section
-    (CompareCard + dual-column grid) into a dedicated RegionPanelCompare.tsx. This will reduce
-    RegionPanel.tsx to below 400 lines with clearer boundaries.
-  Success Criteria: RegionPanelCompare.tsx created; RegionPanel.tsx imports it; region panel
-    renders identically; TS clean; existing tests pass.
+[DONE][LOW] Refactor: Decompose RegionPanel.tsx (592 → 351 lines)
+  Description: RegionPanel.tsx was 592 lines. Extracted CompareCard component and all its
+    supporting code (TAG_COLOR, formatGdp, formatPop, BAR_COLORS, compareMatchesCountry,
+    COMPARE_PALETTE) into RegionPanelCompare.tsx. formatGdp/formatPop/CompareCard/
+    COMPARE_PALETTE exported for use in RegionPanel. Removed now-unused CATEGORY_COLOR,
+    CATEGORY_ICON, CATEGORY_LABEL, ArgusEvent imports from RegionPanel.
+  Success Criteria: Met — RegionPanelCompare.tsx created; RegionPanel.tsx reduced from 592
+    to 351 lines; TS clean; 34/34 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
