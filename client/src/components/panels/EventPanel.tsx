@@ -16,6 +16,7 @@ import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
 import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
 import { usePanelDrag }       from '../../hooks/usePanelDrag'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
+import { CATEGORY_COLOR }     from '../../data/categoryConfig'
 import { EventTimeline }      from './EventTimeline'
 import { EventPanelBody }     from './EventPanelBody'
 import { Panel }              from './Panel'
@@ -39,18 +40,6 @@ const INTENSITY_COLOR: Record<string, string> = {
   MODERATE: '#ff9c2a',
   HIGH:     '#ff6b35',
   CRITICAL: '#ff4d4d',
-}
-
-const CATEGORY_COLOR: Record<string, string> = {
-  ARMED_CONFLICT: '#ff4d4d',
-  POLITICAL:      '#ff9c2a',
-  ECONOMIC:       '#ffd700',
-  SOCIAL:         '#c8cdd2',
-  SCIENCE_TECH:   '#9b6dff',
-  ENVIRONMENT:    '#39ff8a',
-  HEALTH:         '#a0c4ff',
-  CRIME_SECURITY: '#6a8090',
-  SPACE:          '#00d4ff',
 }
 
 function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null {

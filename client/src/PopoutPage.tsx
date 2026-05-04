@@ -19,6 +19,7 @@ import './i18n'
 import { EventPanelBody }      from './components/panels/EventPanelBody'
 import { RegionPanelOverview } from './components/panels/RegionPanelOverview'
 import { useWikiSummary }      from './hooks/useWikiSummary'
+import { CATEGORY_COLOR }      from './data/categoryConfig'
 import type { ArgusEvent }     from './types'
 
 const params     = new URLSearchParams(window.location.search)
@@ -62,11 +63,6 @@ function EventPopoutContent() {
     )
   }
 
-  const CATEGORY_COLOR: Record<string, string> = {
-    ARMED_CONFLICT: '#ff4d4d', POLITICAL: '#ff9c2a', ECONOMIC: '#ffd700',
-    SOCIAL: '#c8cdd2', SCIENCE_TECH: '#9b6dff', ENVIRONMENT: '#39ff8a',
-    HEALTH: '#a0c4ff', CRIME_SECURITY: '#6a8090', SPACE: '#00d4ff',
-  }
   const accentColor = CATEGORY_COLOR[event.category] ?? '#00d4ff'
 
   // Minimal stubs for agent props that are handled by the right column

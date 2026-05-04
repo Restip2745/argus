@@ -1,37 +1,13 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
-import { CATEGORY_ICON } from '../../data/categoryConfig'
-
-const CATEGORY_COLOR: Record<string, string> = {
-  ARMED_CONFLICT: '#ff4d4d',
-  POLITICAL:      '#ff9c2a',
-  ECONOMIC:       '#ffd700',
-  SOCIAL:         '#c8cdd2',
-  SCIENCE_TECH:   '#9b6dff',
-  ENVIRONMENT:    '#39ff8a',
-  HEALTH:         '#a0c4ff',
-  CRIME_SECURITY: '#6a8090',
-  SPACE:          '#00d4ff',
-}
+import { CATEGORY_COLOR, CATEGORY_ICON, CATEGORY_LABEL } from '../../data/categoryConfig'
 
 const INTENSITY_DOT: Record<string, string> = {
   CRITICAL: '#ff4d4d',
   HIGH:     '#ff9c2a',
   MODERATE: '#ffd700',
   LOW:      '#4a6fa5',
-}
-
-const CATEGORY_LABEL: Record<string, string> = {
-  ARMED_CONFLICT: 'CONFLICT',
-  POLITICAL:      'POLITICAL',
-  ECONOMIC:       'ECONOMIC',
-  SOCIAL:         'SOCIAL',
-  SCIENCE_TECH:   'SCI/TECH',
-  ENVIRONMENT:    'ENVIRON',
-  HEALTH:         'HEALTH',
-  CRIME_SECURITY: 'CRIME',
-  SPACE:          'SPACE',
 }
 
 export function Sidebar() {

@@ -361,13 +361,12 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Refactor: Consolidate duplicate CATEGORY_COLOR / CATEGORY_ICON definitions
-  Description: EventPanelBody.tsx and PopoutPage.tsx each define their own inline
-    CATEGORY_COLOR and CATEGORY_ICON maps instead of importing from categoryConfig.ts.
-    Remove the inline copies and import the shared constants instead.
-  Success Criteria: No inline CATEGORY_COLOR / CATEGORY_ICON objects in EventPanelBody.tsx
-    or PopoutPage.tsx; all references use categoryConfig.ts; no visual change; TS clean;
-    existing tests pass.
+[DONE][MEDIUM] Refactor: Consolidate duplicate CATEGORY_COLOR / CATEGORY_ICON definitions
+  Description: EventPanel.tsx, Sidebar.tsx, and PopoutPage.tsx each defined their own inline
+    CATEGORY_COLOR (and Sidebar also had CATEGORY_LABEL) instead of importing from
+    categoryConfig.ts. Removed all three inline copies and replaced with imports.
+  Success Criteria: Met — no inline CATEGORY_COLOR / CATEGORY_LABEL outside categoryConfig.ts;
+    TS clean; 34/34 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
