@@ -47,7 +47,22 @@
       "Bash(npx vite *)",
       "Bash(git commit -m ' *)",
       "Bash(npm list *)",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(npx vitest *)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add TASKS.md ROADMAP.md client/src/components/ui/EventStack.tsx)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 status)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 commit -m ' *)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add TASKS.md client/src/store/index.ts client/src/components/ui/EventStack.tsx client/src/components/ui/CategoryFilterBar.tsx client/src/i18n/locales/en.json client/src/i18n/locales/zh-TW.json)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add TASKS.md client/src/components/panels/EventPanelBody.tsx)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add TASKS.md client/src/components/ui/CategoryFilterBar.tsx)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add TASKS.md client/src/components/ui/EventStack.tsx)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add TASKS.md client/src/store/index.ts client/src/components/panels/EventPanel.tsx client/src/components/ui/EventStack.tsx client/src/components/ui/CategoryFilterBar.tsx)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add ROADMAP.md)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 commit -m \"chore: mark Phase D complete in ROADMAP\")",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 log --oneline origin/main..HEAD)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 diff .claude/settings.local.json)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 add .claude/settings.local.json)",
+      "Bash(git -C /c/Workspace/apps/argus/.claude/worktrees/infallible-galileo-92a906 commit -m \"chore: add worktree tool permissions to settings.local.json\")"
     ]
   }
 }
