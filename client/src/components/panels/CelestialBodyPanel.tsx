@@ -4,6 +4,7 @@ import { useWikiSummary } from '../../hooks/useWikiSummary'
 import { BODIES } from '../../data/celestialBodies'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { Panel } from './Panel'
+import { LinkedText } from '../../utils/entityLinker'
 
 // ── Wikipedia title disambiguation ────────────────────────────────────────────
 const WIKI_TITLE: Record<string, string> = {
@@ -102,9 +103,18 @@ function StatRow({ label, value }: { label: string; value: string }) {
   )
 }
 
+// Notable persons associated with celestial discoveries
+const CELESTIAL_PERSONS: string[] = [
+  'Galileo Galilei', 'Copernicus', 'Kepler', 'Isaac Newton', 'Edmond Halley',
+  'William Herschel', 'Clyde Tombaugh', 'Giovanni Cassini', 'Christiaan Huygens',
+  'Gerard Kuiper', 'Giuseppe Piazzi', 'Johann Galle', 'Urbain Le Verrier',
+  'Tycho Brahe', 'Carl Sagan', 'Edwin Hubble', 'Neil Armstrong',
+]
+
 // ── Wikipedia section ─────────────────────────────────────────────────────────
 function WikiSection({ wikiTitle }: { wikiTitle: string }) {
   const { data, loading, error } = useWikiSummary(wikiTitle)
+  const addSelectedPerson = useAppStore(s => s.addSelectedPerson)
 
   if (loading) return (
     <div style={{ color: '#2a4060', fontSize: '8px', padding: '6px 0', letterSpacing: '0.08em', textAlign: 'center' }}>
@@ -113,7 +123,6 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
   )
   if (error || !data) return null
 
-  // Trim extract to ~300 chars (approx 2–3 sentences)
   const extract = data.extract.length > 320
     ? data.extract.slice(0, 320).replace(/\s+\S*$/, '') + '…'
     : data.extract
@@ -149,7 +158,11 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
         />
       )}
       <p style={{ color: '#7a9ab0', fontSize: '9px', lineHeight: 1.55, margin: 0 }}>
-        {extract}
+        <LinkedText
+          text={extract}
+          knownPersons={CELESTIAL_PERSONS}
+          onPersonClick={addSelectedPerson}
+        />
       </p>
     </div>
   )

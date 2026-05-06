@@ -356,3 +356,92 @@ Managed by the autonomous development agent. Follow strict format below.
   Success Criteria: Met — ships toggle button functional; server returns [] without key; TS clean.
   Retry Count: 0
   Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Implement PersonPanel component
+  Description: Created PersonPanel.tsx + PersonPanelBody.tsx using shared Panel base. Displays
+    Wikipedia biography, thumbnail, and link via useWikiSummary hook. Uses usePanelDrag for
+    floating position. Added selectedPersons[], addSelectedPerson, removeSelectedPerson,
+    clearSelectedPersons to Zustand store with SelectedPerson interface.
+  Success Criteria: Met — PersonPanel renders correctly with Wikipedia data; uses shared Panel
+    architecture; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Support multi-person selection in PersonPanel
+  Description: PersonPanel supports multiple selected persons displayed as stacked cards. Search
+    via Wikipedia API (useWikiSearch hook) with real-time results. Users can add/remove persons
+    individually. Search bar toggleable via ⌕ button in header.
+  Success Criteria: Met — users can search and select multiple people; UI updates correctly;
+    TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Integrate AI chat into PersonPanel
+  Description: PersonPanel includes full AI agent section with suggested queries (context-aware
+    for single/multi person), streaming chat via useAgentQuery, and agentContext built from
+    selected persons list. Follows same pattern as RegionPanelAgent.
+  Success Criteria: Met — AI chat UI renders in PersonPanel; responses are context-aware;
+    no performance regression; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Link person entities in EventPanel using LLM
+  Description: EventPanelBody uses extractPersonNames() to detect person-like actors (filtering
+    out organizations via regex patterns). Person names in summary text are rendered as clickable
+    LinkedText buttons. Actor chips for detected persons show a 👤 button that opens PersonPanel.
+  Success Criteria: Met — person names identified and linked in EventPanel; clicking opens
+    PersonPanel; minimal false positives via org filtering; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Enrich RegionPanel with related persons
+  Description: RegionPanelOverview now includes a KEY FIGURES section that extracts person
+    names from recent events' actors using extractPersonNames(). Shows clickable 👤 buttons
+    with occurrence counts. Clicking opens PersonPanel.
+  Success Criteria: Met — RegionPanel shows related persons; links open PersonPanel;
+    data derived from region events; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Link person entities in CelestialBodyPanel
+  Description: CelestialBodyPanel WikiSection renders Wikipedia extract via LinkedText with
+    CELESTIAL_PERSONS list (17 notable astronomers/scientists). Matching names become clickable
+    links that open PersonPanel.
+  Success Criteria: Met — person names identified and linked in Wikipedia text; clicking opens
+    PersonPanel; no excessive linking; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Refactor: Centralize entity linking system (Person links)
+  Description: Created client/src/utils/entityLinker.tsx with: LinkedText component (renders
+    text with matched person names as clickable buttons, case-insensitive regex split),
+    extractPersonNames() (filters actors using org/acronym regex patterns). Used by EventPanelBody,
+    RegionPanelOverview, and CelestialBodyPanel.
+  Success Criteria: Met — shared utility used by all three panels; consistent linking behavior;
+    TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Test: Validate PersonPanel and entity linking behavior
+  Description: Added PersonPanel.test.tsx with 8 tests: extractPersonNames filters orgs/short
+    names correctly (3 tests), LinkedText renders plain text / buttons / handles click / multi-
+    person / case-insensitive matching (5 tests). All 17 tests pass (9 Panel + 8 PersonPanel).
+  Success Criteria: Met — core flows covered; no regression; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP

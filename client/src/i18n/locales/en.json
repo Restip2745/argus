@@ -51,6 +51,14 @@
     "collapse": "Collapse",
     "expand":   "Celestial Navigation"
   },
+  "person": {
+    "title":             "PERSON",
+    "search":            "Search person",
+    "searchPlaceholder": "Search people…",
+    "agent":             "◈ PERSON INTELLIGENCE",
+    "askAgent":          "Ask about this person…",
+    "keyFigures":        "KEY FIGURES"
+  },
   "ui": {
     "solarSystem": "Solar System",
     "earth":       "Earth",

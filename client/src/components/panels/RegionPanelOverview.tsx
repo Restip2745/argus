@@ -3,11 +3,14 @@
  *   flag · name · coords · gov tags · stats grid · stability bar
  *   industries · recent events (24h) · focus button · Wikipedia summary
  */
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CATEGORY_COLOR } from '../../data/categoryConfig'
 import type { CountryInfo } from '../../data/countryData'
+import { useAppStore } from '../../store'
 import type { SelectedCountry } from '../../store'
 import type { ArgusEvent } from '../../types'
+import { extractPersonNames } from '../../utils/entityLinker'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -63,6 +66,55 @@ function IndustryBar({ label, pct, color }: { label: string; pct: number; color:
   )
 }
 
+// ── Key Figures section ───────────────────────────────────────────────────────
+
+function RegionKeyFigures({ recentEvents, addSelectedPerson }: {
+  recentEvents: ArgusEvent[]
+  addSelectedPerson: (p: import('../../store').SelectedPerson) => void
+}) {
+  const persons = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const ev of recentEvents) {
+      for (const name of extractPersonNames(ev.actors ?? [])) {
+        counts.set(name, (counts.get(name) ?? 0) + 1)
+      }
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+  }, [recentEvents])
+
+  if (persons.length === 0) return null
+
+  return (
+    <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 6px' }}>
+      <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>KEY FIGURES</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+        {persons.map(([name, count]) => (
+          <button
+            key={name}
+            onClick={() => addSelectedPerson({ name, wikiTitle: name })}
+            title={`View person: ${name}`}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '3px',
+              background: '#c084fc08', border: '1px solid #c084fc22',
+              borderRadius: '2px', color: '#c084fccc', fontSize: '8px',
+              padding: '2px 6px', cursor: 'pointer',
+              fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.04em',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#c084fc18'; e.currentTarget.style.color = '#c084fc' }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#c084fc08'; e.currentTarget.style.color = '#c084fccc' }}
+          >
+            👤 {name}
+            {count > 1 && <span style={{ opacity: 0.6, fontSize: '7px' }}>×{count}</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -87,6 +139,7 @@ export function RegionPanelOverview({
   wikiData, wikiLoading,
 }: Props) {
   const { t } = useTranslation()
+  const addSelectedPerson = useAppStore(s => s.addSelectedPerson)
 
   const stabilityColor = !info ? '#4a6070'
     : info.stability >= 70 ? '#39ff8a'
@@ -223,6 +276,9 @@ export function RegionPanelOverview({
           ))
         )}
       </div>
+
+      {/* ── Key Figures ──────────────────────────────────────────────────────── */}
+      <RegionKeyFigures recentEvents={recentEvents} addSelectedPerson={addSelectedPerson} />
 
       {/* ── Focus button ────────────────────────────────────────────────────── */}
       {focusOnEarthSurface && (

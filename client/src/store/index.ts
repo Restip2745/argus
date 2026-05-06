@@ -4,6 +4,11 @@ import type { NavLevelId } from '../config/navLevels'
 import { NAV_LEVELS } from '../config/navLevels'
 import type { BodyDef } from '../data/celestialBodies'
 
+export interface SelectedPerson {
+  name: string
+  wikiTitle?: string
+}
+
 export interface SelectedCountry {
   name: string
   lat: number
@@ -135,6 +140,12 @@ interface AppState {
   setIntelBrief: (b: { id: string; summary: string; generatedAt: string; topEventIds: string[] }) => void
   briefRead: boolean
   setBriefRead: (v: boolean) => void
+
+  // ── Person panel ──────────────────────────────────────────
+  selectedPersons: SelectedPerson[]
+  addSelectedPerson: (p: SelectedPerson) => void
+  removeSelectedPerson: (name: string) => void
+  clearSelectedPersons: () => void
 
   // ── Panel z-order (click to bring to front) ───────────────
   panelZ: Record<string, number>
@@ -305,8 +316,20 @@ export const useAppStore = create<AppState>((set) => ({
   briefRead:     false,
   setBriefRead:  (briefRead) => set({ briefRead }),
 
+  // Person panel
+  selectedPersons: [],
+  addSelectedPerson: (p) => set((s) => {
+    if (s.selectedPersons.some(e => e.name === p.name)) return s
+    const panelZ = { ...s.panelZ, person: Math.max(...Object.values(s.panelZ), 29) + 1 }
+    return { selectedPersons: [...s.selectedPersons, p], panelZ }
+  }),
+  removeSelectedPerson: (name) => set((s) => ({
+    selectedPersons: s.selectedPersons.filter(p => p.name !== name),
+  })),
+  clearSelectedPersons: () => set({ selectedPersons: [] }),
+
   // Panel z-order — each call gives the clicked panel the current highest z
-  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33 },
+  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33, person: 34 },
   bringToFront: (key) => set((s) => {
     const max = Math.max(...Object.values(s.panelZ), 29)
     return { panelZ: { ...s.panelZ, [key]: max + 1 } }
