@@ -51,6 +51,14 @@
     "collapse": "收起",
     "expand":   "天體導航"
   },
+  "person": {
+    "title":             "人物",
+    "search":            "搜尋人物",
+    "searchPlaceholder": "搜尋人物…",
+    "agent":             "◈ 人物情報分析",
+    "askAgent":          "詢問人物情報…",
+    "keyFigures":        "關鍵人物"
+  },
   "ui": {
     "solarSystem": "太陽系",
     "earth":       "地球",

@@ -15,6 +15,7 @@ import type { SelectedCountry } from '../../store'
 import { useAppStore } from '../../store'
 import type { AgentEntry } from '../../hooks/useAgentQuery'
 import { EventRelationGraph } from './EventRelationGraph'
+import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
 
 
 function relativeTime(iso: string | null): string {
@@ -91,6 +92,8 @@ export function EventPanelBody({
   const { t, i18n } = useTranslation()
   const isEN = i18n.language === 'en'
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
+  const addSelectedPerson = useAppStore((s) => s.addSelectedPerson)
+  const personNames = extractPersonNames(event.actors ?? [])
 
   const title = event.title
   // In EN mode: prefer original English content; fall back to title as last resort.
@@ -150,31 +153,63 @@ export function EventPanelBody({
         )}
 
         {summary && (
-          <p className="text-[#4a6070] text-[10px] leading-relaxed">{summary}</p>
+          <p className="text-[#4a6070] text-[10px] leading-relaxed">
+            <LinkedText
+              text={summary}
+              knownPersons={personNames}
+              onPersonClick={addSelectedPerson}
+            />
+          </p>
         )}
 
         {/* Actors — click to filter EventStack by actor name */}
         {event.actors?.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {event.actors.map(a => (
-              <button
-                key={a}
-                onClick={() => setSearchQuery(a)}
-                title={`Filter events by "${a}"`}
-                className="px-1.5 py-0.5 text-[9px] rounded transition-all"
-                style={{
-                  background: `${accentColor}10`,
-                  border: `1px solid ${accentColor}30`,
-                  color: accentColor + 'cc',
-                  cursor: 'pointer',
-                  fontFamily: 'JetBrains Mono, monospace',
-                }}
-                onMouseEnter={e => { const el = e.currentTarget; el.style.background = `${accentColor}22`; el.style.borderColor = `${accentColor}70`; el.style.color = accentColor }}
-                onMouseLeave={e => { const el = e.currentTarget; el.style.background = `${accentColor}10`; el.style.borderColor = `${accentColor}30`; el.style.color = accentColor + 'cc' }}
-              >
-                {a}
-              </button>
-            ))}
+            {event.actors.map(a => {
+              const isPerson = personNames.includes(a)
+              return (
+                <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: '1px' }}>
+                  <button
+                    onClick={() => setSearchQuery(a)}
+                    title={`Filter events by "${a}"`}
+                    className="px-1.5 py-0.5 text-[9px] rounded transition-all"
+                    style={{
+                      background: `${accentColor}10`,
+                      border: `1px solid ${accentColor}30`,
+                      color: accentColor + 'cc',
+                      cursor: 'pointer',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      borderRadius: isPerson ? '2px 0 0 2px' : '2px',
+                    }}
+                    onMouseEnter={e => { const el = e.currentTarget; el.style.background = `${accentColor}22`; el.style.borderColor = `${accentColor}70`; el.style.color = accentColor }}
+                    onMouseLeave={e => { const el = e.currentTarget; el.style.background = `${accentColor}10`; el.style.borderColor = `${accentColor}30`; el.style.color = accentColor + 'cc' }}
+                  >
+                    {a}
+                  </button>
+                  {isPerson && (
+                    <button
+                      onClick={() => addSelectedPerson({ name: a, wikiTitle: a })}
+                      title={`View person: ${a}`}
+                      className="py-0.5 text-[8px] transition-all"
+                      style={{
+                        background: '#c084fc10',
+                        border: '1px solid #c084fc30',
+                        borderLeft: 'none',
+                        color: '#c084fccc',
+                        cursor: 'pointer',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        borderRadius: '0 2px 2px 0',
+                        padding: '1px 4px',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#c084fc22'; e.currentTarget.style.color = '#c084fc' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#c084fc10'; e.currentTarget.style.color = '#c084fccc' }}
+                    >
+                      👤
+                    </button>
+                  )}
+                </span>
+              )
+            })}
           </div>
         )}
 
