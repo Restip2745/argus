@@ -20,6 +20,19 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[OPEN][MEDIUM] UI/UX: Recurring UI/UX Optimization Pass
+  Description: Recurring task — each development cycle, audit the application for visual
+    polish and interaction quality issues. Look for: inconsistent spacing/alignment, poor
+    contrast or missing hover/focus states, janky animations, unresponsive layouts, clipped
+    content, accessibility gaps (keyboard nav, ARIA, focus rings), and perceived-performance
+    issues (missing loading states, un-debounced inputs). Fix issues found in-place.
+  Success Criteria: At least one measurable UX improvement per cycle (documented in commit).
+    No regressions; TS clean; all tests pass.
+  Retry Count: 0
+  Source: ROADMAP (Recurring — UI/UX Optimization)
+
+---
+
 [DONE][HIGH] Bugfix: Fix null/invalid date handling in EventStack
   Description: EventStack.tsx had two silent failure modes in date handling:
     (1) Sort used localeCompare on published_at strings — malformed/null dates silently
