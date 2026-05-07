@@ -1,16 +1,17 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '../store'
 import type { ArgusEvent } from '../types'
-import type { SelectedCountry } from '../store'
+import type { SelectedCountry, SelectedPerson } from '../store'
 
 const CHANNEL = 'argus-popout'
 
 type SyncMsg =
-  | { type: 'events';          data: ArgusEvent[] }
-  | { type: 'selectedCountry'; data: SelectedCountry | null }
-  | { type: 'activePanelId';   data: string | null }
-  | { type: 'compareMode';     data: boolean }
+  | { type: 'events';           data: ArgusEvent[] }
+  | { type: 'selectedCountry';  data: SelectedCountry | null }
+  | { type: 'activePanelId';    data: string | null }
+  | { type: 'compareMode';      data: boolean }
   | { type: 'comparedCountries'; data: SelectedCountry[] }
+  | { type: 'selectedPersons';  data: SelectedPerson[] }
 
 /**
  * Broadcast store slices to popout windows and receive updates from the main window.
@@ -26,11 +27,14 @@ export function usePopoutSync(role: 'host' | 'guest') {
   const activePanelId      = useAppStore((s) => s.activePanelId)
   const compareMode        = useAppStore((s) => s.compareMode)
   const comparedCountries  = useAppStore((s) => s.comparedCountries)
+  const selectedPersons    = useAppStore((s) => s.selectedPersons)
 
   const setEvents            = useAppStore((s) => s.setEvents)
   const setSelectedCountry   = useAppStore((s) => s.setSelectedCountry)
   const setActivePanelId     = useAppStore((s) => s.setActivePanelId)
   const setCompareMode       = useAppStore((s) => s.setCompareMode)
+  const clearSelectedPersons = useAppStore((s) => s.clearSelectedPersons)
+  const addSelectedPerson    = useAppStore((s) => s.addSelectedPerson)
 
   useEffect(() => {
     const ch = new BroadcastChannel(CHANNEL)
@@ -45,9 +49,12 @@ export function usePopoutSync(role: 'host' | 'guest') {
         if (msg.type === 'activePanelId')     setActivePanelId(msg.data)
         if (msg.type === 'compareMode')       setCompareMode(msg.data)
         if (msg.type === 'comparedCountries') {
-          // Apply via store's addComparedCountry isn't ideal; just batch-set
           const store = useAppStore.getState()
           msg.data.forEach(c => store.addComparedCountry(c))
+        }
+        if (msg.type === 'selectedPersons') {
+          clearSelectedPersons()
+          msg.data.forEach(p => addSelectedPerson(p))
         }
       }
       // Ask host to re-broadcast current state
@@ -79,6 +86,11 @@ export function usePopoutSync(role: 'host' | 'guest') {
     channelRef.current.postMessage({ type: 'comparedCountries', data: comparedCountries } satisfies SyncMsg)
   }, [role, compareMode, comparedCountries])
 
+  useEffect(() => {
+    if (role !== 'host' || !channelRef.current) return
+    channelRef.current.postMessage({ type: 'selectedPersons', data: selectedPersons } satisfies SyncMsg)
+  }, [role, selectedPersons])
+
   // Host: handle re-sync requests from guest
   useEffect(() => {
     if (role !== 'host' || !channelRef.current) return
@@ -91,6 +103,7 @@ export function usePopoutSync(role: 'host' | 'guest') {
         ch.postMessage({ type: 'activePanelId',     data: s.activePanelId })
         ch.postMessage({ type: 'compareMode',       data: s.compareMode })
         ch.postMessage({ type: 'comparedCountries', data: s.comparedCountries })
+        ch.postMessage({ type: 'selectedPersons',   data: s.selectedPersons })
       }
     }
     ch.addEventListener('message', handler)
