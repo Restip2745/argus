@@ -48,6 +48,25 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Recurring — UI/UX Optimization
+
+> Ongoing every development cycle. Identify and fix visual polish, interaction quality,
+> accessibility, responsiveness, and micro-UX issues across the application.
+
+- [ ] **Audit & improve** — each cycle, scan the app for rough edges: inconsistent spacing,
+  misaligned elements, poor contrast, missing hover/focus states, janky animations,
+  unresponsive layouts, or confusing interaction patterns. Fix what you find.
+- [ ] **Accessibility pass** — keyboard navigation, ARIA labels, focus rings, screen-reader
+  compatibility, color contrast (WCAG AA minimum)
+- [ ] **Performance-perceived UX** — loading skeletons, optimistic updates, transition
+  smoothness, debounce/throttle on high-frequency inputs
+- [ ] **Dark/light theme consistency** — ensure all panels, modals, toasts, and overlays
+  look correct in both themes (if applicable)
+- [ ] **Responsive edge cases** — small viewports, ultra-wide monitors, HiDPI scaling,
+  panel overflow and clipping
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.
