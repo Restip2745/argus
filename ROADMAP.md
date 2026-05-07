@@ -83,4 +83,7 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 - [x] i18n foundation (i18next, EN / zh-TW)
 - [x] Panel base component (Panel.tsx + usePanelDrag + PanelTail; EventPanel / RegionPanel / CelestialBodyPanel migrated)
 - [x] Popout 2-column layout (usePopoutWindow full-screen; PopoutPage 60/40 split; PopoutAIPanel dedicated AI column)
-- [x] Vitest + @testing-library/react setup; 9 Panel unit tests
+- [x] Vitest + @testing-library/react setup; 9 Panel unit tests + 8 PersonPanel tests
+- [x] PersonPanel — Wikipedia biography, thumbnail, multi-person cards, AI chat, search via Wikipedia API
+- [x] Entity linking — extractPersonNames() + LinkedText in EventPanelBody / RegionPanelOverview / CelestialBodyPanel
+- [x] PersonPanel popout — ⊡ button; person popout renders in 2-column layout with dedicated AI agent

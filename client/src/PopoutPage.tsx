@@ -18,6 +18,7 @@ import './i18n'
 // Lazy imports for panel content components (avoids loading 3-D scene code)
 import { EventPanelBody }      from './components/panels/EventPanelBody'
 import { RegionPanelOverview } from './components/panels/RegionPanelOverview'
+import { PersonPanelBody }     from './components/panels/PersonPanelBody'
 import { useWikiSummary }      from './hooks/useWikiSummary'
 import type { ArgusEvent }     from './types'
 
@@ -143,17 +144,46 @@ function RegionPopoutContent() {
   )
 }
 
+// ── Person popout ──────────────────────────────────────────────────────────────
+
+function PersonPopoutContent() {
+  const selectedPersons = useAppStore((s) => s.selectedPersons)
+
+  if (selectedPersons.length === 0) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>
+        NO PERSON SELECTED
+      </div>
+    )
+  }
+
+  const ACCENT = '#c084fc'
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
+      {selectedPersons.map(p => (
+        <PersonPanelBody key={p.name} person={p} accentColor={ACCENT} />
+      ))}
+    </div>
+  )
+}
+
 // ── Root ───────────────────────────────────────────────────────────────────────
 
 export default function PopoutPage() {
   usePopoutSync('guest')
 
-  const activePanelId   = useAppStore((s) => s.activePanelId)
-  const events          = useAppStore((s) => s.events)
-  const selectedCountry = useAppStore((s) => s.selectedCountry)
+  const activePanelId    = useAppStore((s) => s.activePanelId)
+  const events           = useAppStore((s) => s.events)
+  const selectedCountry  = useAppStore((s) => s.selectedCountry)
+  const selectedPersons  = useAppStore((s) => s.selectedPersons)
 
   useEffect(() => {
-    document.title = popoutType === 'region' ? 'ARGUS — Region Intel' : 'ARGUS — Event Intel'
+    const titles: Record<string, string> = {
+      region: 'ARGUS — Region Intel',
+      person: 'ARGUS — Person Intel',
+    }
+    document.title = titles[popoutType] ?? 'ARGUS — Event Intel'
     document.body.style.background = '#04090e'
     document.body.style.overflow   = 'hidden'
     document.body.style.margin     = '0'
@@ -201,9 +231,26 @@ export default function PopoutPage() {
     return (info?.queries ?? []).slice(0, 4)
   }, [selectedCountry])
 
-  const agentContext     = popoutType === 'region' ? regionAgentContext : eventAgentContext
-  const suggestedQueries = popoutType === 'region' ? regionQueries      : eventQueries
-  const agentLabel       = popoutType === 'region' ? 'REGION AGENT'     : 'EVENT AGENT'
+  const personAgentContext = useMemo(() => {
+    if (selectedPersons.length === 0) return ''
+    return selectedPersons.map(p =>
+      `Person: ${p.name}${p.wikiTitle && p.wikiTitle !== p.name ? ` (Wikipedia: ${p.wikiTitle})` : ''}`
+    ).join('\n')
+  }, [selectedPersons])
+
+  const personQueries = useMemo(() => {
+    if (selectedPersons.length === 0) return []
+    if (selectedPersons.length === 1) {
+      const name = selectedPersons[0].name
+      return [`${name} 的政治立場分析`, `${name} 的重要事蹟`, `${name} 的國際影響力`, `${name} 與當前事件的關聯`]
+    }
+    const names = selectedPersons.slice(0, 2).map(p => p.name)
+    return [`${names.join(' 與 ')} 的關係分析`, `${names.join(' 和 ')} 的政治立場比較`, '二者在國際事務上的角色']
+  }, [selectedPersons])
+
+  const agentContext     = popoutType === 'region' ? regionAgentContext  : popoutType === 'person' ? personAgentContext : eventAgentContext
+  const suggestedQueries = popoutType === 'region' ? regionQueries       : popoutType === 'person' ? personQueries     : eventQueries
+  const agentLabel       = popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'person' ? 'PERSON AGENT'    : 'EVENT AGENT'
 
   return (
     <div style={{
@@ -218,10 +265,10 @@ export default function PopoutPage() {
         {/* Column header */}
         <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(0,180,255,0.1)', background: 'linear-gradient(90deg, rgba(0,212,255,0.04) 0%, transparent 100%)', flexShrink: 0 }}>
           <span style={{ color: '#00d4ff', fontSize: '9px', letterSpacing: '0.15em' }}>
-            {popoutType === 'region' ? '◈ REGION INTEL' : '◈ EVENT INTEL'}
+            {popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'person' ? '◈ PERSON INTEL' : '◈ EVENT INTEL'}
           </span>
         </div>
-        {popoutType === 'region' ? <RegionPopoutContent /> : <EventPopoutContent />}
+        {popoutType === 'region' ? <RegionPopoutContent /> : popoutType === 'person' ? <PersonPopoutContent /> : <EventPopoutContent />}
       </div>
 
       {/* ── Right column: AI agent (40%) ── */}
