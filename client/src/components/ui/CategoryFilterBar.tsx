@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { CATEGORY_ICON, CATEGORY_COLOR, CATEGORY_LABEL } from '../../data/categoryConfig'
@@ -133,12 +133,46 @@ export function CategoryFilterBar() {
   const toggleHiddenCategory = useAppStore((s) => s.toggleHiddenCategory)
   const timeRangeFilter      = useAppStore((s) => s.timeRangeFilter)
   const setTimeRangeFilter   = useAppStore((s) => s.setTimeRangeFilter)
+  const searchQuery          = useAppStore((s) => s.searchQuery)
+  const setSearchQuery       = useAppStore((s) => s.setSearchQuery)
+  const bookmarkedIds        = useAppStore((s) => s.bookmarkedIds)
+  const showWatchlistOnly    = useAppStore((s) => s.showWatchlistOnly)
+  const setShowWatchlistOnly = useAppStore((s) => s.setShowWatchlistOnly)
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const e of events) counts[e.category] = (counts[e.category] ?? 0) + 1
+    return counts
+  }, [events])
 
   return (
     <div
       className="absolute top-2 z-20 flex items-center gap-1 font-mono"
       style={{ left: '50%', transform: 'translateX(-50%)' }}
     >
+      {/* Watchlist toggle — ★ with bookmark count */}
+      <button
+        onClick={() => setShowWatchlistOnly(!showWatchlistOnly)}
+        title={showWatchlistOnly ? 'Show all events' : 'Show bookmarked only'}
+        className="flex items-center gap-1 rounded border font-mono"
+        style={{
+          padding: '3px 7px',
+          fontSize: '9px',
+          borderColor: showWatchlistOnly ? 'rgba(255,215,0,0.45)' : 'rgba(0,180,255,0.15)',
+          background:  showWatchlistOnly ? 'rgba(255,215,0,0.10)' : 'rgba(4,9,22,0.75)',
+          color:       showWatchlistOnly ? '#ffd700' : '#2a5070',
+          backdropFilter: 'blur(4px)',
+          cursor: 'pointer',
+          transition: 'color 0.15s, border-color 0.15s, background 0.15s',
+          marginRight: '4px',
+        }}
+      >
+        <span>{showWatchlistOnly ? '★' : '☆'}</span>
+        {bookmarkedIds.length > 0 && (
+          <span style={{ fontSize: '7px' }}>{bookmarkedIds.length}</span>
+        )}
+      </button>
+
       {/* Time-range quick-filter */}
       <div
         className="flex items-center rounded border overflow-hidden"
@@ -175,11 +209,54 @@ export function CategoryFilterBar() {
         })}
       </div>
 
+      {/* Full-text search input */}
+      <div
+        className="flex items-center rounded border overflow-hidden"
+        style={{
+          borderColor: searchQuery ? 'rgba(0,212,255,0.35)' : 'rgba(0,180,255,0.15)',
+          background: 'rgba(4,9,22,0.75)',
+          backdropFilter: 'blur(4px)',
+          marginRight: '4px',
+          transition: 'border-color 0.15s',
+        }}
+      >
+        <span style={{ fontSize: '8px', color: '#2a5070', padding: '3px 4px 3px 6px' }}>⌕</span>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('ui.search', 'Search events…')}
+          className="font-mono bg-transparent outline-none"
+          style={{
+            fontSize: '8px',
+            color: searchQuery ? '#a0c8d8' : '#2a5070',
+            width: searchQuery ? '90px' : '70px',
+            padding: '3px 2px',
+            letterSpacing: '0.04em',
+            transition: 'width 0.2s, color 0.15s',
+          }}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            style={{
+              fontSize: '8px',
+              color: '#00d4ff',
+              padding: '3px 5px',
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {ALL_CATEGORIES.map((cat) => (
         <FilterButton
           key={cat}
           cat={cat}
-          count={events.filter((e) => e.category === cat).length}
+          count={categoryCounts[cat] ?? 0}
           hidden={hiddenCategories.includes(cat)}
           color={CATEGORY_COLOR[cat]}
           icon={CATEGORY_ICON[cat]}

@@ -88,8 +88,10 @@ export function FloatDock() {
   const setShowAircraftLayer = useAppStore((s) => s.setShowAircraftLayer)
   const showSatellitesLayer    = useAppStore((s) => s.showSatellitesLayer)
   const setShowSatellitesLayer = useAppStore((s) => s.setShowSatellitesLayer)
-  const showShipsLayer    = useAppStore((s) => s.showShipsLayer)
-  const setShowShipsLayer = useAppStore((s) => s.setShowShipsLayer)
+  const showShipsLayer       = useAppStore((s) => s.showShipsLayer)
+  const setShowShipsLayer    = useAppStore((s) => s.setShowShipsLayer)
+  const showConflictLayer    = useAppStore((s) => s.showConflictLayer)
+  const setShowConflictLayer = useAppStore((s) => s.setShowConflictLayer)
 
 
   const { alertCount, topCats } = useMemo(() => {
@@ -279,6 +281,13 @@ export function FloatDock() {
         color="#39ff8a"
         active={showShipsLayer}
         onClick={() => setShowShipsLayer(!showShipsLayer)}
+      />
+      <DockBtn
+        icon="⚔"
+        label={t('conflictLayer.toggle', 'CONFLICT FRONTS')}
+        color="#ff6600"
+        active={showConflictLayer}
+        onClick={() => setShowConflictLayer(!showConflictLayer)}
       />
 
       {/* Annotation canvas toggle */}

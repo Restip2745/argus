@@ -4,6 +4,11 @@ import type { NavLevelId } from '../config/navLevels'
 import { NAV_LEVELS } from '../config/navLevels'
 import type { BodyDef } from '../data/celestialBodies'
 
+export interface SelectedPerson {
+  name: string
+  wikiTitle?: string
+}
+
 export interface SelectedCountry {
   name: string
   lat: number
@@ -64,6 +69,8 @@ interface AppState {
   setShowSatellitesLayer: (v: boolean) => void
   showShipsLayer: boolean
   setShowShipsLayer: (v: boolean) => void
+  showConflictLayer: boolean
+  setShowConflictLayer: (v: boolean) => void
 
   // ── Region selection (GeoJSON country click) ──────────────
   selectedCountry: SelectedCountry | null
@@ -118,11 +125,27 @@ interface AppState {
   timeRangeFilter: '6h' | '12h' | '24h' | 'all'
   setTimeRangeFilter: (v: '6h' | '12h' | '24h' | 'all') => void
 
+  // ── Event full-text search (for EventStack) ───────────────
+  searchQuery: string
+  setSearchQuery: (q: string) => void
+
+  // ── Bookmark / Watchlist ──────────────────────────────────
+  bookmarkedIds: string[]
+  toggleBookmark: (id: string) => void
+  showWatchlistOnly: boolean
+  setShowWatchlistOnly: (v: boolean) => void
+
   // ── Intel brief (Periodic Intelligence Summary) ──────────
   intelBrief: { id: string; summary: string; generatedAt: string; topEventIds: string[] } | null
   setIntelBrief: (b: { id: string; summary: string; generatedAt: string; topEventIds: string[] }) => void
   briefRead: boolean
   setBriefRead: (v: boolean) => void
+
+  // ── Person panel ──────────────────────────────────────────
+  selectedPersons: SelectedPerson[]
+  addSelectedPerson: (p: SelectedPerson) => void
+  removeSelectedPerson: (name: string) => void
+  clearSelectedPersons: () => void
 
   // ── Panel z-order (click to bring to front) ───────────────
   panelZ: Record<string, number>
@@ -155,11 +178,23 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Panel
   activePanelId:    null,
-  setActivePanelId: (activePanelId) => set({ activePanelId }),
+  setActivePanelId: (activePanelId) => set((s) => ({
+    activePanelId,
+    // Bring event panel to top whenever a new event is opened
+    panelZ: activePanelId !== null
+      ? { ...s.panelZ, event: Math.max(...Object.values(s.panelZ), 29) + 1 }
+      : s.panelZ,
+  })),
 
   // Selected celestial body
   selectedBody:    null,
-  setSelectedBody: (selectedBody) => set({ selectedBody }),
+  setSelectedBody: (selectedBody) => set((s) => ({
+    selectedBody,
+    // Bring celestial body panel to top whenever a body is selected
+    panelZ: selectedBody !== null
+      ? { ...s.panelZ, body: Math.max(...Object.values(s.panelZ), 29) + 1 }
+      : s.panelZ,
+  })),
 
   // Layers
   showEarthTexture:    true,
@@ -181,10 +216,18 @@ export const useAppStore = create<AppState>((set) => ({
   setShowSatellitesLayer: (showSatellitesLayer) => set({ showSatellitesLayer }),
   showShipsLayer:       false,
   setShowShipsLayer:    (showShipsLayer) => set({ showShipsLayer }),
+  showConflictLayer:    false,
+  setShowConflictLayer: (showConflictLayer) => set({ showConflictLayer }),
 
   // Region selection
   selectedCountry:    null,
-  setSelectedCountry: (selectedCountry) => set({ selectedCountry }),
+  setSelectedCountry: (selectedCountry) => set((s) => ({
+    selectedCountry,
+    // Bring region panel to top whenever a country is selected
+    panelZ: selectedCountry !== null
+      ? { ...s.panelZ, region: Math.max(...Object.values(s.panelZ), 29) + 1 }
+      : s.panelZ,
+  })),
   // Compare mode
   compareMode: false,
   setCompareMode: (compareMode) => set((s) => ({
@@ -248,14 +291,45 @@ export const useAppStore = create<AppState>((set) => ({
   timeRangeFilter: 'all',
   setTimeRangeFilter: (timeRangeFilter) => set({ timeRangeFilter }),
 
+  // Full-text search
+  searchQuery: '',
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  // Bookmarks — persisted in localStorage
+  bookmarkedIds: (() => {
+    try { return JSON.parse(localStorage.getItem('argus-bookmarks') ?? '[]') as string[] }
+    catch { return [] }
+  })(),
+  toggleBookmark: (id) => set((s) => {
+    const next = s.bookmarkedIds.includes(id)
+      ? s.bookmarkedIds.filter((b) => b !== id)
+      : [...s.bookmarkedIds, id]
+    localStorage.setItem('argus-bookmarks', JSON.stringify(next))
+    return { bookmarkedIds: next }
+  }),
+  showWatchlistOnly: false,
+  setShowWatchlistOnly: (showWatchlistOnly) => set({ showWatchlistOnly }),
+
   // Intel brief
   intelBrief:    null,
   setIntelBrief: (b) => set({ intelBrief: b, briefRead: false }),
   briefRead:     false,
   setBriefRead:  (briefRead) => set({ briefRead }),
 
+  // Person panel
+  selectedPersons: [],
+  addSelectedPerson: (p) => set((s) => {
+    if (s.selectedPersons.some(e => e.name === p.name)) return s
+    const panelZ = { ...s.panelZ, person: Math.max(...Object.values(s.panelZ), 29) + 1 }
+    return { selectedPersons: [...s.selectedPersons, p], panelZ }
+  }),
+  removeSelectedPerson: (name) => set((s) => ({
+    selectedPersons: s.selectedPersons.filter(p => p.name !== name),
+  })),
+  clearSelectedPersons: () => set({ selectedPersons: [] }),
+
   // Panel z-order — each call gives the clicked panel the current highest z
-  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33 },
+  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33, person: 34 },
   bringToFront: (key) => set((s) => {
     const max = Math.max(...Object.values(s.panelZ), 29)
     return { panelZ: { ...s.panelZ, [key]: max + 1 } }

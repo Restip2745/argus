@@ -44,9 +44,20 @@
   "canvas": {
     "toggle": "ANNOTATION CANVAS"
   },
+  "conflictLayer": {
+    "toggle": "CONFLICT FRONTS"
+  },
   "celestialNav": {
     "collapse": "Collapse",
     "expand":   "Celestial Navigation"
+  },
+  "person": {
+    "title":             "PERSON",
+    "search":            "Search person",
+    "searchPlaceholder": "Search people…",
+    "agent":             "◈ PERSON INTELLIGENCE",
+    "askAgent":          "Ask about this person…",
+    "keyFigures":        "KEY FIGURES"
   },
   "ui": {
     "solarSystem": "Solar System",
@@ -58,6 +69,7 @@
     "immersive":   "Immersive mode",
     "aiAnalysis":  "AI Canvas Analysis",
     "config":      "Configuration",
-    "compareMode": "COMPARE MODE"
+    "compareMode": "COMPARE MODE",
+    "search":      "Search events…"
   }
 }

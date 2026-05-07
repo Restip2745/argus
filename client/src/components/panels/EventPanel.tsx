@@ -2,25 +2,25 @@
  * EventPanel — orchestration shell.
  *
  * Responsibilities:
- *  • Drag / position state
- *  • SVG tail line (rAF loop)
- *  • Slide animation state when navigating the timeline
+ *  • Drag / position — via usePanelDrag
+ *  • SVG tail line   — via PanelTail
+ *  • Slide animation when navigating the timeline
  *  • Merges current event into the sorted timeline list
  *  • Delegates rendering to EventTimeline + EventPanelBody
  */
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
 
-import { useAppStore } from '../../store'
-import { useAgentQuery } from '../../hooks/useAgentQuery'
-import { usePopoutWindow } from '../../hooks/usePopoutWindow'
-import { useRelatedEvents } from '../../hooks/useRelatedEvents'
-import { useDraggable } from '../../hooks/useDraggable'
+import { useAppStore }        from '../../store'
+import { useAgentQuery }      from '../../hooks/useAgentQuery'
+import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
+import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
+import { usePanelDrag }       from '../../hooks/usePanelDrag'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
-import { projectLatLng, panelEdgeAnchor } from '../../hooks/useGlobeProjection'
-import { EventTimeline } from './EventTimeline'
-import { EventPanelBody } from './EventPanelBody'
-import type { ArgusEvent } from '../../types'
+import { EventTimeline }      from './EventTimeline'
+import { EventPanelBody }     from './EventPanelBody'
+import { Panel }              from './Panel'
+import { PanelTail }          from './PanelTail'
+import type { ArgusEvent }    from '../../types'
 
 const CATEGORY_QUERIES: Record<string, string[]> = {
   ARMED_CONFLICT: ['升級風險評估', '停火可能性分析', '國際介入機率', '平民傷亡趨勢'],
@@ -53,8 +53,6 @@ const CATEGORY_COLOR: Record<string, string> = {
   SPACE:          '#00d4ff',
 }
 
-// ── helpers ────────────────────────────────────────────────────────────────────
-
 function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null {
   if (ev.lat !== null && ev.lng !== null) return { lat: ev.lat, lng: ev.lng }
   if (ev.location_label) {
@@ -69,56 +67,33 @@ function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function EventPanel() {
+  const activePanelId       = useAppStore((s) => s.activePanelId)
+  const events              = useAppStore((s) => s.events)
+  const setActivePanelId    = useAppStore((s) => s.setActivePanelId)
+  const goBack              = useAppStore((s) => s.goBack)
+  const focusOnEarthSurface = useAppStore((s) => s.focusOnEarthSurface)
+  const focusOn             = useAppStore((s) => s.focusOn)
+  const setSelectedCountry  = useAppStore((s) => s.setSelectedCountry)
+  const bookmarkedIds       = useAppStore((s) => s.bookmarkedIds)
+  const toggleBookmark      = useAppStore((s) => s.toggleBookmark)
 
-  const activePanelId      = useAppStore(s => s.activePanelId)
-  const events             = useAppStore(s => s.events)
-  const setActivePanelId   = useAppStore(s => s.setActivePanelId)
-  const goBack             = useAppStore(s => s.goBack)
-  const focusOnEarthSurface = useAppStore(s => s.focusOnEarthSurface)
-  const focusOn            = useAppStore(s => s.focusOn)
-  const panelZ             = useAppStore(s => s.panelZ)
-  const bringToFront       = useAppStore(s => s.bringToFront)
-  const setSelectedCountry = useAppStore(s => s.setSelectedCountry)
-  const uiScale            = useAppStore(s => s.uiScale)
+  // ── Drag / position ────────────────────────────────────────────────────────
+  const { panelRef, pos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
+    usePanelDrag({
+      panelKey:   'event',
+      defaultPos: {
+        x: Math.max(20, window.innerWidth  - 380),
+        y: Math.max(80, window.innerHeight - 600),
+      },
+    })
+
+  const [hovered, setHovered] = useState(false)
 
   const { open: popoutOpen, isPopped } = usePopoutWindow('event')
   const { history: agentHistory, loading: agentLoading, error: agentError, ask: agentAsk } = useAgentQuery()
   const { events: relatedEvents, loading: relatedLoading } = useRelatedEvents(activePanelId)
 
-  // ── Drag ──────────────────────────────────────────────────────────────────
-  const cardRef        = useRef<HTMLDivElement>(null)
-  const uiScaleRef     = useRef(uiScale)
-  uiScaleRef.current   = uiScale
-  const [hovered,      setHovered]    = useState(false)
-  const [dragOffset,   setDragOffset] = useState({ x: 0, y: 0 })
-  const dragOffsetRef  = useRef(dragOffset)
-  dragOffsetRef.current = dragOffset
-  const { onMouseDown: startDrag, dragging: isDragging } = useDraggable()
-
-  function handleHeaderMouseDown(e: React.MouseEvent) {
-    const rect   = cardRef.current?.getBoundingClientRect()
-    const scale  = uiScaleRef.current
-    const W = window.innerWidth / scale, H = window.innerHeight / scale
-    const rLeft   = rect ? rect.left   / scale : 0
-    const rRight  = rect ? rect.right  / scale : W
-    const rTop    = rect ? rect.top    / scale : 0
-    const rBottom = rect ? rect.bottom / scale : H
-    const { x: initX, y: initY } = dragOffsetRef.current
-    const startX = e.clientX / scale, startY = e.clientY / scale
-    const minX = rect ? initX - rLeft        : -Infinity
-    const maxX = rect ? initX + (W - rRight) :  Infinity
-    const minY = rect ? initY - rTop         : -Infinity
-    const maxY = rect ? initY + (H - rBottom):  Infinity
-    startDrag(e, (ev) => {
-      const s = uiScaleRef.current
-      setDragOffset({
-        x: Math.max(minX, Math.min(maxX, initX + ev.clientX / s - startX)),
-        y: Math.max(minY, Math.min(maxY, initY + ev.clientY / s - startY)),
-      })
-    })
-  }
-
-  // ── Timeline open/close ───────────────────────────────────────────────────
+  // ── Timeline open/close ────────────────────────────────────────────────────
   const [timelineOpen, setTimelineOpen] = useState(true)
 
   // ── Agent ──────────────────────────────────────────────────────────────────
@@ -128,15 +103,14 @@ export function EventPanel() {
     agentScrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [agentHistory])
 
-  // ── Current event (always from activePanelId) ─────────────────────────────
-  const event = events.find(e => e.id === activePanelId)
+  // ── Current event (always from activePanelId) ──────────────────────────────
+  const event = events.find((e) => e.id === activePanelId)
 
   // ── Merged timeline: current event + related, sorted newest-first ──────────
-  // Stable dep: only re-sort when the set of IDs or the current event changes
-  const relatedIdsKey = useMemo(() => relatedEvents.map(e => e.id).join(','), [relatedEvents])
+  const relatedIdsKey = useMemo(() => relatedEvents.map((e) => e.id).join(','), [relatedEvents])
   const allTimelineEvents = useMemo<ArgusEvent[]>(() => {
     if (!event) return relatedEvents
-    const dedupd = relatedEvents.some(e => e.id === event.id)
+    const dedupd = relatedEvents.some((e) => e.id === event.id)
       ? relatedEvents
       : [event, ...relatedEvents]
     return [...dedupd].sort((a, b) => {
@@ -144,56 +118,47 @@ export function EventPanel() {
       const tb = b.published_at ? new Date(b.published_at).getTime() : 0
       return tb - ta
     })
-  }, [relatedIdsKey, event?.id])
+  }, [relatedIdsKey, event?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const allTimelineEventsRef = useRef(allTimelineEvents)
   allTimelineEventsRef.current = allTimelineEvents
 
-  // ── Slide animation state ─────────────────────────────────────────────────
+  // ── Slide animation state ──────────────────────────────────────────────────
   const [displayedEventId, setDisplayedEventId] = useState(activePanelId)
-  const [slideDir,      setSlideDir]      = useState<'up' | 'down'>('down')
-  const [outgoingEvent, setOutgoingEvent] = useState<ArgusEvent | null>(null)
-  const [copied, setCopied]               = useState(false)
+  const [slideDir,         setSlideDir]          = useState<'up' | 'down'>('down')
+  const [outgoingEvent,    setOutgoingEvent]      = useState<ArgusEvent | null>(null)
+  const [copied,           setCopied]             = useState(false)
   const displayedEventIdRef = useRef(displayedEventId)
   displayedEventIdRef.current = displayedEventId
-  const isFirstNavRef = useRef(true)
-  const eventsRef = useRef(events)
-  eventsRef.current = events
-  // Direction is computed at click-time (before relatedEvents resets) and stored here
-  const pendingDirRef = useRef<'up' | 'down'>('down')
+  const isFirstNavRef    = useRef(true)
+  const eventsRef        = useRef(events)
+  eventsRef.current      = events
+  const pendingDirRef    = useRef<'up' | 'down'>('down')
 
   useEffect(() => {
     if (!activePanelId) return
-    if (isFirstNavRef.current) {
-      isFirstNavRef.current = false
-      setDisplayedEventId(activePanelId)
-      return
-    }
+    if (isFirstNavRef.current) { isFirstNavRef.current = false; setDisplayedEventId(activePanelId); return }
     if (activePanelId === displayedEventIdRef.current) return
-
-    // Direction was pre-computed at click time (see onSelect below)
-    const leaving = eventsRef.current.find(e => e.id === displayedEventIdRef.current) ?? null
+    const leaving = eventsRef.current.find((e) => e.id === displayedEventIdRef.current) ?? null
     setSlideDir(pendingDirRef.current)
     setOutgoingEvent(leaving)
     setDisplayedEventId(activePanelId)
   }, [activePanelId])
 
-  // ── Derived from displayedEventId (the event now entering / in view) ─────
-  const displayedEvent = events.find(e => e.id === displayedEventId) ?? event
+  const displayedEvent = events.find((e) => e.id === displayedEventId) ?? event
 
   const agentContext = useMemo(() => {
     if (!displayedEvent) return ''
-    const lines = [
+    return [
       `Event: ${displayedEvent.title_zh || displayedEvent.title}`,
       `Category: ${displayedEvent.category}`,
       `Intensity: ${displayedEvent.intensity}`,
       `Location: ${displayedEvent.location_label ?? 'Unknown'}`,
       `Source: ${displayedEvent.source}`,
-    ]
-    if (displayedEvent.summary_zh) lines.push(`Summary: ${displayedEvent.summary_zh}`)
-    if (displayedEvent.actors?.length) lines.push(`Actors: ${displayedEvent.actors.join(', ')}`)
-    if (displayedEvent.lat !== null) lines.push(`Coordinates: ${displayedEvent.lat?.toFixed(3)}, ${displayedEvent.lng?.toFixed(3)}`)
-    return lines.join('\n')
+      displayedEvent.summary_zh ? `Summary: ${displayedEvent.summary_zh}` : '',
+      displayedEvent.actors?.length ? `Actors: ${displayedEvent.actors.join(', ')}` : '',
+      displayedEvent.lat !== null ? `Coordinates: ${displayedEvent.lat?.toFixed(3)}, ${displayedEvent.lng?.toFixed(3)}` : '',
+    ].filter(Boolean).join('\n')
   }, [displayedEvent])
 
   const suggestedQueries = useMemo(() => {
@@ -201,13 +166,12 @@ export function EventPanel() {
     return (CATEGORY_QUERIES[displayedEvent.category] ?? []).slice(0, 4)
   }, [displayedEvent])
 
-  // ── Export ────────────────────────────────────────────────────────────────
+  // ── Export ─────────────────────────────────────────────────────────────────
   const exportEvent = useCallback(() => {
     if (!displayedEvent) return
     const e = displayedEvent
     const md = [
-      `# ${e.title}`,
-      '',
+      `# ${e.title}`, '',
       `**Category:** ${e.category.replace(/_/g, ' ')}  `,
       `**Intensity:** ${e.intensity}  `,
       `**Source:** ${e.source}  `,
@@ -215,21 +179,15 @@ export function EventPanel() {
       e.location_label ? `**Location:** ${e.location_label}  ` : '',
       e.heat_score != null ? `**Heat Score:** ${e.heat_score.toFixed(2)}  ` : '',
       e.reliability ? `**Reliability:** ${e.reliability}  ` : '',
-      '',
-      e.summary_zh ? `## Summary\n\n${e.summary_zh}` : '',
+      '', e.summary_zh ? `## Summary\n\n${e.summary_zh}` : '',
       e.actors?.length ? `\n## Actors\n\n${e.actors.join(', ')}` : '',
-      e.tags?.length   ? `\n## Tags\n\n${e.tags.join(', ')}` : '',
-      '',
-      `## Source\n\n[${e.source}](${e.url})`,
-    ].filter(l => l !== null).join('\n').trim()
-
-    navigator.clipboard.writeText(md).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }).catch(() => {})
+      e.tags?.length   ? `\n## Tags\n\n${e.tags.join(', ')}`   : '',
+      '', `## Source\n\n[${e.source}](${e.url})`,
+    ].filter((l) => l !== null).join('\n').trim()
+    navigator.clipboard.writeText(md).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }).catch(() => {})
   }, [displayedEvent])
 
-  // ── Focus ─────────────────────────────────────────────────────────────────
+  // ── Focus ──────────────────────────────────────────────────────────────────
   function triggerFocus() {
     if (!displayedEvent) return
     const coords = resolveEventLatLng(displayedEvent)
@@ -239,56 +197,24 @@ export function EventPanel() {
   }
   useEffect(() => { triggerFocus() }, [activePanelId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const canFocus = !!(displayedEvent && (resolveEventLatLng(displayedEvent) !== null || (displayedEvent.body && displayedEvent.body !== 'earth')))
+  const canFocus = !!(displayedEvent &&
+    (resolveEventLatLng(displayedEvent) !== null || (displayedEvent.body && displayedEvent.body !== 'earth')))
 
-  // ── SVG tail (rAF loop) ────────────────────────────────────────────────────
-  const tailLineRef = useRef<SVGLineElement>(null)
-  const tailDotRef  = useRef<SVGCircleElement>(null)
-  const eventRef    = useRef(event)
-  eventRef.current  = event
-
-  useEffect(() => {
-    let rafId: number
-    function tick() {
-      const panel = cardRef.current
-      const line  = tailLineRef.current
-      const dot   = tailDotRef.current
-      const ev    = eventRef.current
-      const hide  = () => { line?.setAttribute('opacity','0'); dot?.setAttribute('opacity','0'); rafId = requestAnimationFrame(tick) }
-      if (!panel || !line || !dot || !ev) { hide(); return }
-      let lat = ev.lat, lng = ev.lng
-      if ((lat === null || lng === null) && ev.location_label) {
-        const direct = getCountryCentroid(ev.location_label)
-        if (direct) { lat = direct.lat; lng = direct.lng }
-        else {
-          const key = resolveCountryName(ev.location_label)
-          if (key) { const c = getCountryCentroid(key); if (c) { lat = c.lat; lng = c.lng } }
-        }
-      }
-      if (lat === null || lng === null) { hide(); return }
-      const proj = projectLatLng(lat, lng)
-      if (!proj || proj.behind) { hide(); return }
-      const rect = panel.getBoundingClientRect()
-      const { ax, ay } = panelEdgeAnchor(rect, proj.x, proj.y)
-      line.setAttribute('x1', String(ax)); line.setAttribute('y1', String(ay))
-      line.setAttribute('x2', String(proj.x)); line.setAttribute('y2', String(proj.y))
-      line.setAttribute('opacity', '0.45')
-      dot.setAttribute('cx', String(proj.x)); dot.setAttribute('cy', String(proj.y))
-      dot.setAttribute('opacity', '0.7')
-      rafId = requestAnimationFrame(tick)
-    }
-    rafId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId)
+  // ── SVG tail — reads via ref each rAF tick ─────────────────────────────────
+  const eventRef   = useRef(event)
+  eventRef.current = event
+  const getEventLatLng = useCallback((): { lat: number; lng: number } | null => {
+    const ev = eventRef.current
+    if (!ev) return null
+    return resolveEventLatLng(ev)
   }, [])
 
   if (!event) return null
 
   const accentColor    = CATEGORY_COLOR[displayedEvent?.category ?? event.category] ?? '#00d4ff'
   const intensityColor = INTENSITY_COLOR[displayedEvent?.intensity ?? event.intensity] ?? '#4a6fa5'
-  const dragging       = isDragging
   const hasTimeline    = relatedLoading || allTimelineEvents.length > 0
 
-  // Simultaneous scroll animations
   const exitAnim  = outgoingEvent
     ? (slideDir === 'up' ? 'scrollUpExit 0.28s ease-in-out forwards' : 'scrollDownExit 0.28s ease-in-out forwards')
     : undefined
@@ -298,103 +224,100 @@ export function EventPanel() {
 
   return (
     <>
-    {/* ── SVG tail ── */}
-    {createPortal(
-      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: (panelZ['event'] ?? 30) - 1, overflow: 'visible' }}>
-        <defs>
-          <filter id="tailGlowEvent" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        <line ref={tailLineRef} stroke={accentColor} strokeWidth="1" strokeDasharray="5 4" opacity="0" filter="url(#tailGlowEvent)" />
-        <circle ref={tailDotRef} r="3.5" fill={accentColor} opacity="0" filter="url(#tailGlowEvent)" />
-      </svg>,
-      document.body,
-    )}
+      {/* ── SVG tail ── */}
+      <PanelTail
+        panelRef={panelRef}
+        getLatLng={getEventLatLng}
+        color={accentColor}
+        zIndex={zIndex}
+        filterId="tailGlowEvent"
+      />
 
-    {/* ── Panel ── */}
-    <div
-      ref={cardRef}
-      onMouseDown={() => bringToFront('event')}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="absolute font-mono text-xs flex flex-row"
-      style={{
-        bottom: '1.5rem', right: '1.5rem',
-        transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-        transition: dragging ? 'none' : 'box-shadow 0.2s',
-        boxShadow: hovered
-          ? `0 0 0 1px ${accentColor}30, 0 8px 32px rgba(0,0,0,0.7), 0 0 24px ${accentColor}18`
-          : `0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,180,255,0.1)`,
-        cursor: dragging ? 'grabbing' : 'default',
-        zIndex: panelZ['event'] ?? 30,
-      }}
-    >
-      {/* ── Timeline strip (left) ── */}
-      {hasTimeline && (
-        <EventTimeline
-          events={allTimelineEvents}
-          loading={relatedLoading}
-          accentColor={accentColor}
-          activeEventId={displayedEventId ?? ''}
-          onSelect={(id) => {
-            // Compute direction NOW while allTimelineEvents is still fully populated.
-            // The useRelatedEvents hook resets to [] immediately on activePanelId change,
-            // so we must capture direction before that happens.
-            const sorted = allTimelineEventsRef.current
-            const curIdx = sorted.findIndex(e => e.id === (displayedEventIdRef.current ?? ''))
-            const newIdx = sorted.findIndex(e => e.id === id)
-            pendingDirRef.current = (newIdx !== -1 && curIdx !== -1 && newIdx < curIdx) ? 'up' : 'down'
-            setActivePanelId(id)
-          }}
-          isOpen={timelineOpen}
-          onToggle={() => setTimelineOpen(o => !o)}
-        />
-      )}
-
-      {/* ── Main card ── */}
+      {/* ── Outer positioning wrapper (flex row: timeline + card) ── */}
       <div
-        style={{ backgroundColor: '#04090e', position: 'relative', width: 320 }}
-        className="border border-[rgba(0,180,255,0.14)] rounded overflow-hidden flex-shrink-0"
+        ref={panelRef}
+        onMouseDown={handleBringToFront}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          position:   'fixed',
+          left:       pos.x,
+          top:        pos.y,
+          zIndex,
+          display:    'flex',
+          flexDirection: 'row',
+          cursor:     dragging ? 'grabbing' : 'default',
+          transition: dragging ? 'none' : 'box-shadow 0.2s',
+          boxShadow:  hovered
+            ? `0 0 0 1px ${accentColor}30, 0 8px 32px rgba(0,0,0,0.7), 0 0 24px ${accentColor}18`
+            : `0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,180,255,0.1)`,
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize:   '12px',
+        }}
       >
-        {/* Decorative accents */}
-        <div className="absolute inset-0 pointer-events-none z-10" />
-        <div className="absolute left-0 top-0 bottom-0 w-[2px] pointer-events-none z-10"
-          style={{ background: `linear-gradient(180deg, transparent, ${accentColor}99, transparent)` }} />
-        <div className="absolute top-0 left-0 w-3 h-3 border-t border-l pointer-events-none z-10" style={{ borderColor: accentColor + '80' }} />
-        <div className="absolute top-0 right-0 w-3 h-3 border-t border-r pointer-events-none z-10" style={{ borderColor: accentColor + '80' }} />
-        <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l pointer-events-none z-10" style={{ borderColor: accentColor + '80' }} />
-        <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r pointer-events-none z-10" style={{ borderColor: accentColor + '80' }} />
+        {/* Left: timeline strip */}
+        {hasTimeline && (
+          <EventTimeline
+            events={allTimelineEvents}
+            loading={relatedLoading}
+            accentColor={accentColor}
+            activeEventId={displayedEventId ?? ''}
+            onSelect={(id) => {
+              const sorted = allTimelineEventsRef.current
+              const curIdx = sorted.findIndex((e) => e.id === (displayedEventIdRef.current ?? ''))
+              const newIdx = sorted.findIndex((e) => e.id === id)
+              pendingDirRef.current = (newIdx !== -1 && curIdx !== -1 && newIdx < curIdx) ? 'up' : 'down'
+              setActivePanelId(id)
+            }}
+            isOpen={timelineOpen}
+            onToggle={() => setTimelineOpen((o) => !o)}
+          />
+        )}
 
-        <div style={{ margin: '4px' }}>
-
-          {/* ── Header (drag handle — stays fixed, not animated) ── */}
-          <div
-            className="relative flex justify-between items-center px-3 py-2.5 border-b border-[rgba(0,180,255,0.1)] select-none"
-            style={{ cursor: dragging ? 'grabbing' : 'grab' }}
-            onMouseDown={handleHeaderMouseDown}
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="text-[8px] tracking-widest uppercase font-semibold px-1.5 py-0.5 rounded"
-                style={{ color: intensityColor, border: `1px solid ${intensityColor}40`, background: `${intensityColor}12` }}
-              >
-                {displayedEvent?.intensity ?? event.intensity}
-              </span>
-              <span className="text-[8px] tracking-widest uppercase" style={{ color: accentColor }}>
-                {(displayedEvent?.category ?? event.category).replace(/_/g, ' ')}
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        {/* Right: main card via Panel base */}
+        <Panel
+          accentColor={accentColor}
+          width={320}
+          dragging={dragging}
+          onHeaderMouseDown={onHeaderMouseDown}
+          headerLeft={
+            <span style={{
+              fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              fontWeight: 600, padding: '1px 5px', borderRadius: '2px',
+              color: intensityColor,
+              border: `1px solid ${intensityColor}40`,
+              background: `${intensityColor}12`,
+            }}>
+              {displayedEvent?.intensity ?? event.intensity}
+            </span>
+          }
+          title={<>{(displayedEvent?.category ?? event.category).replace(/_/g, ' ')}</>}
+          headerControls={
+            <>
+              {/* Bookmark toggle */}
+              {event && (() => {
+                const isBookmarked = bookmarkedIds.includes(event.id)
+                return (
+                  <button
+                    onClick={() => toggleBookmark(event.id)}
+                    title={isBookmarked ? 'Remove bookmark' : 'Bookmark this event'}
+                    style={{
+                      background: 'none', border: 'none',
+                      color: isBookmarked ? '#ffd700' : '#4a6070',
+                      cursor: 'pointer', fontSize: '11px', lineHeight: 1,
+                      padding: '1px 3px', transition: 'color 0.15s',
+                    }}
+                  >{isBookmarked ? '★' : '☆'}</button>
+                )
+              })()}
               <button
                 onClick={exportEvent}
                 title="Export as Markdown"
                 style={{
-                  background: copied ? 'rgba(57,255,138,0.12)' : 'none',
-                  border: copied ? '1px solid rgba(57,255,138,0.4)' : '1px solid transparent',
+                  background:   copied ? 'rgba(57,255,138,0.12)' : 'none',
+                  border:       copied ? '1px solid rgba(57,255,138,0.4)' : '1px solid transparent',
                   borderRadius: '2px',
-                  color: copied ? '#39ff8a' : '#4a6070',
+                  color:        copied ? '#39ff8a' : '#4a6070',
                   cursor: 'pointer', fontSize: '9px', lineHeight: 1,
                   padding: '1px 5px', transition: 'all 0.15s',
                   fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.06em',
@@ -403,24 +326,28 @@ export function EventPanel() {
               <button
                 onClick={popoutOpen}
                 title="Open in new window"
-                style={{ background: 'none', border: 'none', color: isPopped ? '#00d4ff' : '#4a6070', cursor: 'pointer', fontSize: '10px', lineHeight: 1, padding: '1px 3px', transition: 'color 0.15s' }}
+                style={{
+                  background: 'none', border: 'none',
+                  color: isPopped ? '#00d4ff' : '#4a6070',
+                  cursor: 'pointer', fontSize: '10px', lineHeight: 1,
+                  padding: '1px 3px', transition: 'color 0.15s',
+                }}
               >⊡</button>
-              <button
-                onClick={() => setActivePanelId(null)}
-                className="text-[#4a6070] hover:text-[#00d4ff] transition-colors text-sm leading-none"
-              >✕</button>
-            </div>
-          </div>
-
-          {/* ── Animated body clip container — fixed height, scale-aware so it never overflows ── */}
-          <div style={{ overflow: 'hidden', position: 'relative', height: `calc(${80 / uiScale}vh - 5.6rem)` }}>
+            </>
+          }
+          onClose={() => setActivePanelId(null)}
+          style={{ flexShrink: 0, boxShadow: 'none' }}
+        >
+          {/* Animated body clip container */}
+          <div style={{
+            overflow: 'hidden', position: 'relative',
+            height: `calc(${80 / uiScale}vh - 5.6rem)`,
+          }}>
             {/* Outgoing event — absolute overlay, exits */}
             {outgoingEvent && (
               <div style={{
                 position: 'absolute', top: 0, left: 0, right: 0,
-                animation: exitAnim,
-                pointerEvents: 'none',
-                zIndex: 1,
+                animation: exitAnim, pointerEvents: 'none', zIndex: 1,
               }}>
                 <EventPanelBody
                   event={outgoingEvent}
@@ -441,10 +368,7 @@ export function EventPanel() {
               </div>
             )}
             {/* Incoming event — in-flow, enters */}
-            <div
-              onAnimationEnd={() => setOutgoingEvent(null)}
-              style={{ animation: enterAnim }}
-            >
+            <div onAnimationEnd={() => setOutgoingEvent(null)} style={{ animation: enterAnim }}>
               {displayedEvent && (
                 <EventPanelBody
                   event={displayedEvent}
@@ -466,10 +390,8 @@ export function EventPanel() {
               )}
             </div>
           </div>
-
-        </div>
+        </Panel>
       </div>
-    </div>
     </>
   )
 }

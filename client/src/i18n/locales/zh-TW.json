@@ -44,9 +44,20 @@
   "canvas": {
     "toggle": "標記畫布"
   },
+  "conflictLayer": {
+    "toggle": "衝突前線"
+  },
   "celestialNav": {
     "collapse": "收起",
     "expand":   "天體導航"
+  },
+  "person": {
+    "title":             "人物",
+    "search":            "搜尋人物",
+    "searchPlaceholder": "搜尋人物…",
+    "agent":             "◈ 人物情報分析",
+    "askAgent":          "詢問人物情報…",
+    "keyFigures":        "關鍵人物"
   },
   "ui": {
     "solarSystem": "太陽系",
@@ -58,6 +69,7 @@
     "immersive":   "沉浸模式",
     "aiAnalysis":  "AI 畫面分析",
     "config":      "設定",
-    "compareMode": "比較模式"
+    "compareMode": "比較模式",
+    "search":      "搜尋事件…"
   }
 }

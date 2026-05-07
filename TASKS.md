@@ -20,6 +20,192 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Bugfix: Fix null/invalid date handling in EventStack
+  Description: EventStack.tsx had two silent failure modes in date handling:
+    (1) Sort used localeCompare on published_at strings — malformed/null dates silently
+        produced wrong order.
+    (2) Time-range filter called new Date(e.published_at).getTime() without NaN guard.
+    Fix: added safeTs(iso) helper (returns 0 for null/invalid); used for both sort
+    (numeric timestamp diff) and filter (only applies cutoff when ts > 0).
+  Success Criteria: Met — sort and filter are NaN-safe; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Perf: Memoize category filter counts in CategoryFilterBar
+  Description: Replaced nine per-render events.filter(…).length calls with a single
+    useMemo that builds a Record<string, number> count map via one pass over events.
+    categoryCounts[cat] ?? 0 used in FilterButton props.
+  Success Criteria: Met — count map computed once per events reference; no visual change;
+    TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Full-Text Event Search
+  Description: Added searchQuery: string + setSearchQuery() to Zustand store. EventStack
+    filters events by title, content, actors[], and tags[] (case-insensitive) after the
+    existing time-range and category filters. CategoryFilterBar renders a compact ⌕ search
+    input between the time-range buttons and category chips; shows a ✕ clear button when
+    query is non-empty; input expands from 70px to 90px when active. i18n keys added to
+    en.json (Search events…) and zh-TW.json (搜尋事件…).
+  Success Criteria: Met — search input renders in CategoryFilterBar; filters events in real
+    time; clear button resets; empty query shows all events; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Actor and Tag Click-to-Filter
+  Description: EventPanelBody now reads setSearchQuery from Zustand store directly.
+    Actor chips converted from <span> to <button> elements with onClick → setSearchQuery(actor)
+    and hover highlight. Tags section added below actors (was not previously rendered);
+    tag chips use # prefix and click → setSearchQuery(tag). Both chips show a tooltip
+    "Filter events by …". The CategoryFilterBar search input immediately reflects the
+    active query and provides the ✕ clear button.
+  Success Criteria: Met — actor/tag chips are buttons; clicking sets searchQuery; EventStack
+    filters accordingly; ✕ clears; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Remove 45-Event Hard Cap with Virtual Scroll
+  Description: Removed .slice(0,45) cap. Replaced with window-based virtual scroll:
+    ITEM_H=30 (26px icon + 4px gap), VSCROLL_BUFFER=8. A sentinel div sets total scroll
+    height (total * ITEM_H). Visible slice positioned absolutely at startIdx * ITEM_H.
+    Container stays pointer-events:none; scroll is driven by a window wheel listener that
+    checks mouse bounds and programmatically sets el.scrollTop + state. ResizeObserver
+    tracks container height for accurate visible-window calculation.
+  Success Criteria: Met — all filtered events available via scroll; 45-cap removed;
+    pointer-events behaviour unchanged; TS clean; 9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Feature: Bookmark / Watchlist
+  Description: bookmarkedIds: string[] + toggleBookmark + showWatchlistOnly +
+    setShowWatchlistOnly added to Zustand store. bookmarkedIds persisted to
+    localStorage ('argus-bookmarks') and restored on init. EventPanel header
+    gains a ★/☆ toggle button (gold when bookmarked). CategoryFilterBar has a
+    ☆ watchlist button (leftmost) that toggles showWatchlistOnly and shows
+    bookmark count when > 0. EventStack useMemo filters to bookmarked-only when
+    showWatchlistOnly is true.
+  Success Criteria: Met — bookmarks persist across reload; ★ in EventPanel
+    reflects state; ☆ in filter bar shows count and filters list; TS clean;
+    9/9 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Refactor: Introduce base Panel component
+  Description: Created Panel.tsx as the shared base visual shell. Provides outer container
+    (background, border, corner accents, left accent bar), draggable header (title + controls
+    + close button), and a body children slot. Accepts all HTML div props via spread for
+    animation events, className, style overrides, etc.
+  Success Criteria: Met — Panel.tsx exists with clear PanelProps interface; usePanelDrag
+    hook extracts position/drag/z-index logic; PanelTail.tsx extracts the SVG tail rAF loop.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Refactor: Extract shared panel logic into base Panel
+  Description: Extracted into shared modules: (1) usePanelDrag — unified drag hook
+    with uiScale-aware boundary clamping, replaces independent drag handlers in all 3 panels;
+    (2) Panel — visual shell replacing 40+ lines of duplicated accent/corner/header markup;
+    (3) PanelTail — rAF SVG tail loop replacing identical useEffect blocks in EventPanel
+    and RegionPanel.
+  Success Criteria: Met — drag code, SVG tail, and panel chrome are now single-source.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Refactor: Migrate EventPanel and RegionPanel to extend Panel
+  Description: All three panels migrated to use Panel + usePanelDrag: EventPanel (wraps
+    only the card, Timeline sidebar stays outside), RegionPanel (Panel is the root element,
+    receives animation + className props), CelestialBodyPanel (fully migrated). Duplicate
+    drag handlers, accent bars, corner accents, and header markup removed from all three.
+  Success Criteria: Met — all panels use Panel; UI and behavior consistent; zero new TS errors.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Refactor: Standardize Panel API and extension pattern
+  Description: Panel extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> so any div prop
+    (onAnimationEnd, onMouseDown, className, style, etc.) passes through to the outer element.
+    Extension pattern documented in Panel.tsx header comment. usePanelDrag returns panelRef,
+    pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale.
+  Success Criteria: Met — all panels follow the same PanelProps + usePanelDrag pattern.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Improve Panel popout behavior
+  Description: usePopoutWindow now opens at window.screen.availWidth × window.screen.availHeight
+    with left=0,top=0 instead of the previous fixed 420×700.
+  Success Criteria: Met — popout windows open at full screen size.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Implement 2-column layout for popout panels
+  Description: PopoutPage.tsx completely rewritten with a 2-column layout (60/40 split).
+    Left column: panel content (EventPanelBody or RegionPanelOverview rendered without
+    floating position). Right column: PopoutAIPanel dedicated AI agent column.
+  Success Criteria: Met — two-column popout renders for both event and region panels.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Integrate AI interaction panel into popout layout
+  Description: Created PopoutAIPanel.tsx — standalone AI chat with suggested queries,
+    streaming history, clear button, and context-aware agent (receives agentContext from
+    parent). EventPanelBody gains hideAgent prop to suppress the embedded agent section
+    when AI is handled by the right column. agentContext and suggestedQueries computed
+    in PopoutPage root and passed down.
+  Success Criteria: Met — AI panel renders in popout right column with correct context.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Test: Add UI validation for panel refactor and popout layout
+  Description: Added Vitest + @testing-library/react setup (vite.config.ts, src/test/setup.ts,
+    package.json test script). Panel.test.tsx covers: renders title/children, onClose callback,
+    headerLeft/headerControls slots, width style, onHeaderMouseDown, dragging userSelect,
+    HTML div prop forwarding, and custom style merging. All 9 tests pass.
+  Success Criteria: Met — 9/9 tests pass; vitest run exits 0.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Dynamic Conflict Front Layer
+  Description: Added toggleable GeoJSON overlay on the globe showing active conflict front lines
+    and controlled-territory fills. Server endpoint GET /api/conflict/fronts fetches from
+    CONFLICT_GEOJSON_URL (env var, 24h cache) and falls back to a static Ukraine demo dataset
+    (conflict_fronts_demo.geojson). Client hook useConflictLayer polls the endpoint.
+    ConflictLayer.tsx renders LineString/MultiLineString features as orange lines and
+    Polygon/MultiPolygon features as semi-transparent fills color-coded by `control` property
+    (russia=red, frontline=amber, ukraine=blue, contested=yellow). FloatDock ⚔ button toggles
+    the layer. Layer hidden beyond DIST_CONFLICT_MAX=20 units from Earth (same as satellites).
+  Success Criteria: Met — conflict layer toggle in FloatDock; demo data renders on globe;
+    no crash without CONFLICT_GEOJSON_URL; zero TypeScript errors on client and server.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][MEDIUM] Bugfix: Fix pre-existing TypeScript errors in CelestialBody.tsx
   Description: CelestialBody.tsx has 2 pre-existing TS errors: (1) RefObject<Object3D> not
     assignable to Ref<Mesh> at line 216; (2) ForwardedRef<Object3D> not assignable to
@@ -146,6 +332,19 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: PersonPanel popout support
+  Description: Extended usePopoutWindow to accept 'person' panel key. Added PersonPopoutContent
+    component to PopoutPage.tsx that renders PersonPanelBody cards for all selectedPersons.
+    Wired person agentContext and suggestedQueries (single/multi-person variants) to PopoutAIPanel.
+    Added ⊡ popout button to PersonPanel headerControls (active color = ACCENT purple when popped).
+    Left column header shows '◈ PERSON INTEL'. document.title set to 'ARGUS — Person Intel'.
+  Success Criteria: PersonPanel header shows ⊡ button; clicking opens a full-screen 2-column window
+    with person cards on the left and AI agent on the right; isPopped turns button purple; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---
@@ -168,5 +367,94 @@ Managed by the autonomous development agent. Follow strict format below.
     to render `ShipMarker` for each vessel. Enabled FloatDock ships button with green colour.
     Added `AISSTREAM_API_KEY` entry to `.env.example`.
   Success Criteria: Met — ships toggle button functional; server returns [] without key; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Implement PersonPanel component
+  Description: Created PersonPanel.tsx + PersonPanelBody.tsx using shared Panel base. Displays
+    Wikipedia biography, thumbnail, and link via useWikiSummary hook. Uses usePanelDrag for
+    floating position. Added selectedPersons[], addSelectedPerson, removeSelectedPerson,
+    clearSelectedPersons to Zustand store with SelectedPerson interface.
+  Success Criteria: Met — PersonPanel renders correctly with Wikipedia data; uses shared Panel
+    architecture; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Support multi-person selection in PersonPanel
+  Description: PersonPanel supports multiple selected persons displayed as stacked cards. Search
+    via Wikipedia API (useWikiSearch hook) with real-time results. Users can add/remove persons
+    individually. Search bar toggleable via ⌕ button in header.
+  Success Criteria: Met — users can search and select multiple people; UI updates correctly;
+    TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Integrate AI chat into PersonPanel
+  Description: PersonPanel includes full AI agent section with suggested queries (context-aware
+    for single/multi person), streaming chat via useAgentQuery, and agentContext built from
+    selected persons list. Follows same pattern as RegionPanelAgent.
+  Success Criteria: Met — AI chat UI renders in PersonPanel; responses are context-aware;
+    no performance regression; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Link person entities in EventPanel using LLM
+  Description: EventPanelBody uses extractPersonNames() to detect person-like actors (filtering
+    out organizations via regex patterns). Person names in summary text are rendered as clickable
+    LinkedText buttons. Actor chips for detected persons show a 👤 button that opens PersonPanel.
+  Success Criteria: Met — person names identified and linked in EventPanel; clicking opens
+    PersonPanel; minimal false positives via org filtering; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Enrich RegionPanel with related persons
+  Description: RegionPanelOverview now includes a KEY FIGURES section that extracts person
+    names from recent events' actors using extractPersonNames(). Shows clickable 👤 buttons
+    with occurrence counts. Clicking opens PersonPanel.
+  Success Criteria: Met — RegionPanel shows related persons; links open PersonPanel;
+    data derived from region events; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Link person entities in CelestialBodyPanel
+  Description: CelestialBodyPanel WikiSection renders Wikipedia extract via LinkedText with
+    CELESTIAL_PERSONS list (17 notable astronomers/scientists). Matching names become clickable
+    links that open PersonPanel.
+  Success Criteria: Met — person names identified and linked in Wikipedia text; clicking opens
+    PersonPanel; no excessive linking; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Refactor: Centralize entity linking system (Person links)
+  Description: Created client/src/utils/entityLinker.tsx with: LinkedText component (renders
+    text with matched person names as clickable buttons, case-insensitive regex split),
+    extractPersonNames() (filters actors using org/acronym regex patterns). Used by EventPanelBody,
+    RegionPanelOverview, and CelestialBodyPanel.
+  Success Criteria: Met — shared utility used by all three panels; consistent linking behavior;
+    TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Test: Validate PersonPanel and entity linking behavior
+  Description: Added PersonPanel.test.tsx with 8 tests: extractPersonNames filters orgs/short
+    names correctly (3 tests), LinkedText renders plain text / buttons / handles click / multi-
+    person / case-insensitive matching (5 tests). All 17 tests pass (9 Panel + 8 PersonPanel).
+  Success Criteria: Met — core flows covered; no regression; 17/17 tests pass.
   Retry Count: 0
   Source: ROADMAP

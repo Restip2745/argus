@@ -12,8 +12,10 @@ import { useTranslation } from 'react-i18next'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
+import { useAppStore } from '../../store'
 import type { AgentEntry } from '../../hooks/useAgentQuery'
 import { EventRelationGraph } from './EventRelationGraph'
+import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
 
 
 function relativeTime(iso: string | null): string {
@@ -71,6 +73,8 @@ interface Props {
   agentContext:     string
   agentAsk:         (q: string, ctx: string) => void
   agentScrollRef:   React.RefObject<HTMLDivElement>
+  /** When true, the embedded agent section is hidden (e.g. in popout where AI is a separate column). */
+  hideAgent?:       boolean
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -83,9 +87,13 @@ export function EventPanelBody({
   agentInput, setAgentInput,
   suggestedQueries, agentContext, agentAsk,
   agentScrollRef,
+  hideAgent = false,
 }: Props) {
   const { t, i18n } = useTranslation()
   const isEN = i18n.language === 'en'
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery)
+  const addSelectedPerson = useAppStore((s) => s.addSelectedPerson)
+  const personNames = extractPersonNames(event.actors ?? [])
 
   const title = event.title
   // In EN mode: prefer original English content; fall back to title as last resort.
@@ -145,24 +153,88 @@ export function EventPanelBody({
         )}
 
         {summary && (
-          <p className="text-[#4a6070] text-[10px] leading-relaxed">{summary}</p>
+          <p className="text-[#4a6070] text-[10px] leading-relaxed">
+            <LinkedText
+              text={summary}
+              knownPersons={personNames}
+              onPersonClick={addSelectedPerson}
+            />
+          </p>
         )}
 
-        {/* Actors */}
+        {/* Actors — click to filter EventStack by actor name */}
         {event.actors?.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {event.actors.map(a => (
-              <span
-                key={a}
-                className="px-1.5 py-0.5 text-[9px] rounded"
+            {event.actors.map(a => {
+              const isPerson = personNames.includes(a)
+              return (
+                <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: '1px' }}>
+                  <button
+                    onClick={() => setSearchQuery(a)}
+                    title={`Filter events by "${a}"`}
+                    className="px-1.5 py-0.5 text-[9px] rounded transition-all"
+                    style={{
+                      background: `${accentColor}10`,
+                      border: `1px solid ${accentColor}30`,
+                      color: accentColor + 'cc',
+                      cursor: 'pointer',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      borderRadius: isPerson ? '2px 0 0 2px' : '2px',
+                    }}
+                    onMouseEnter={e => { const el = e.currentTarget; el.style.background = `${accentColor}22`; el.style.borderColor = `${accentColor}70`; el.style.color = accentColor }}
+                    onMouseLeave={e => { const el = e.currentTarget; el.style.background = `${accentColor}10`; el.style.borderColor = `${accentColor}30`; el.style.color = accentColor + 'cc' }}
+                  >
+                    {a}
+                  </button>
+                  {isPerson && (
+                    <button
+                      onClick={() => addSelectedPerson({ name: a, wikiTitle: a })}
+                      title={`View person: ${a}`}
+                      className="py-0.5 text-[8px] transition-all"
+                      style={{
+                        background: '#c084fc10',
+                        border: '1px solid #c084fc30',
+                        borderLeft: 'none',
+                        color: '#c084fccc',
+                        cursor: 'pointer',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        borderRadius: '0 2px 2px 0',
+                        padding: '1px 4px',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#c084fc22'; e.currentTarget.style.color = '#c084fc' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#c084fc10'; e.currentTarget.style.color = '#c084fccc' }}
+                    >
+                      👤
+                    </button>
+                  )}
+                </span>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Tags — click to filter EventStack by tag */}
+        {event.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {event.tags.map(tag => (
+              <button
+                key={tag}
+                onClick={() => setSearchQuery(tag)}
+                title={`Filter events by "${tag}"`}
+                className="px-1.5 py-0.5 text-[9px] rounded transition-all"
                 style={{
-                  background: `${accentColor}10`,
-                  border: `1px solid ${accentColor}30`,
-                  color: accentColor + 'cc',
+                  background: 'rgba(0,180,255,0.05)',
+                  border: '1px solid rgba(0,180,255,0.18)',
+                  color: '#2a6080',
+                  cursor: 'pointer',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  letterSpacing: '0.04em',
                 }}
+                onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(0,180,255,0.12)'; el.style.borderColor = 'rgba(0,180,255,0.45)'; el.style.color = '#00d4ff' }}
+                onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(0,180,255,0.05)'; el.style.borderColor = 'rgba(0,180,255,0.18)'; el.style.color = '#2a6080' }}
               >
-                {a}
-              </span>
+                # {tag}
+              </button>
             ))}
           </div>
         )}
@@ -339,8 +411,8 @@ export function EventPanelBody({
         </div>
       )}
 
-      {/* ── Agent Chat ─────────────────────────────────────────────────────── */}
-      <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
+      {/* ── Agent Chat (hidden in popout mode — AI is in the right column) ── */}
+      {!hideAgent && <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
         <div className="text-[7px] text-[#2a4060] tracking-widest mb-2">{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</div>
 
         {agentHistory.length > 0 && (
@@ -411,7 +483,7 @@ export function EventPanelBody({
             {agentLoading ? '…' : '↵'}
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   )
 }
