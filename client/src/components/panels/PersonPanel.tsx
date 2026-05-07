@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
+import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { Panel } from './Panel'
 import { PersonPanelBody } from './PersonPanelBody'
 
@@ -68,6 +69,7 @@ export function PersonPanel() {
   const { results: searchResults, loading: searchLoading } = useWikiSearch(searchInput)
 
   const { history, loading: agentLoading, error: agentError, ask } = useAgentQuery()
+  const { open: popoutOpen, isPopped } = usePopoutWindow('person')
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)
 
@@ -133,18 +135,30 @@ export function PersonPanel() {
         </span>
       }
       headerControls={
-        <button
-          onClick={() => setShowSearch(v => !v)}
-          title={t('person.search', 'Search person')}
-          style={{
-            background: showSearch ? `${ACCENT}18` : 'none',
-            border: `1px solid ${showSearch ? ACCENT + '40' : 'transparent'}`,
-            borderRadius: '2px', color: showSearch ? ACCENT : '#4a6070',
-            cursor: 'pointer', fontSize: '9px', padding: '2px 5px',
-            fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
-            transition: 'all 0.15s',
-          }}
-        >⌕</button>
+        <>
+          <button
+            onClick={() => setShowSearch(v => !v)}
+            title={t('person.search', 'Search person')}
+            style={{
+              background: showSearch ? `${ACCENT}18` : 'none',
+              border: `1px solid ${showSearch ? ACCENT + '40' : 'transparent'}`,
+              borderRadius: '2px', color: showSearch ? ACCENT : '#4a6070',
+              cursor: 'pointer', fontSize: '9px', padding: '2px 5px',
+              fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
+              transition: 'all 0.15s',
+            }}
+          >⌕</button>
+          <button
+            onClick={popoutOpen}
+            title={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
+            style={{
+              background: 'none', border: 'none',
+              color: isPopped ? ACCENT : '#4a6070',
+              cursor: 'pointer', fontSize: '10px', lineHeight: 1,
+              padding: '1px 3px', transition: 'color 0.15s',
+            }}
+          >⊡</button>
+        </>
       }
       onClose={clearSelectedPersons}
       style={{

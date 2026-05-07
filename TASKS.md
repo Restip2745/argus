@@ -345,6 +345,19 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: PersonPanel popout support
+  Description: Extended usePopoutWindow to accept 'person' panel key. Added PersonPopoutContent
+    component to PopoutPage.tsx that renders PersonPanelBody cards for all selectedPersons.
+    Wired person agentContext and suggestedQueries (single/multi-person variants) to PopoutAIPanel.
+    Added ⊡ popout button to PersonPanel headerControls (active color = ACCENT purple when popped).
+    Left column header shows '◈ PERSON INTEL'. document.title set to 'ARGUS — Person Intel'.
+  Success Criteria: PersonPanel header shows ⊡ button; clicking opens a full-screen 2-column window
+    with person cards on the left and AI agent on the right; isPopped turns button purple; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

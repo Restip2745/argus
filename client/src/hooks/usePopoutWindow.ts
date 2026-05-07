@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useAppStore } from '../store'
 
-export function usePopoutWindow(panelKey: 'event' | 'region') {
+export function usePopoutWindow(panelKey: 'event' | 'region' | 'person') {
   const setPoppedOut = useAppStore((s) => s.setPoppedOut)
   const poppedOut    = useAppStore((s) => s.poppedOut)
 
