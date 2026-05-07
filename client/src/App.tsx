@@ -26,7 +26,6 @@ export default function App() {
   useOllamaSocket()
   usePopoutSync('host')
   const showAnnotationCanvas    = useAppStore((s) => s.showAnnotationCanvas)
-  const setShowAnnotationCanvas = useAppStore((s) => s.setShowAnnotationCanvas)
   const showConfig    = useAppStore((s) => s.showConfig)
   const setShowConfig = useAppStore((s) => s.setShowConfig)
   const uiScale       = useAppStore((s) => s.uiScale)
@@ -143,17 +142,6 @@ export default function App() {
             {/* ── AI Canvas Analysis panel ───────────────────────────────── */}
             {showCanvasAnalysis && <CanvasAnalysisPanel onClose={() => setShowCanvasAnalysis(false)} />}
 
-            {/* ── Annotation canvas toggle ───────────────────────────────── */}
-            <button
-              onClick={() => setShowAnnotationCanvas(!showAnnotationCanvas)}
-              className={`absolute bottom-4 left-4 z-20 text-xs border rounded px-3 py-1 font-mono transition-colors ${
-                showAnnotationCanvas
-                  ? 'bg-argus-accent text-argus-bg border-argus-accent'
-                  : 'text-argus-dim border-argus-border hover:text-argus-accent'
-              }`}
-            >
-              ✏ 標記畫布
-            </button>
           </>
         ) : (
           /* ── Immersive mode: FloatDock only ──────────────────────────── */

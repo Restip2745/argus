@@ -33,6 +33,9 @@
       "12h":  "12h",
       "24h":  "24h",
       "all":  "All"
+    },
+    "search": {
+      "placeholder": "SEARCH"
     }
   },
   "region": {
