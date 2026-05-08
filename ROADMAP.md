@@ -52,10 +52,10 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 > Code quality, persistence, and power-user ergonomics.
 
-- [ ] **Config Persistence** — persist llmConfig + feedsConfig to `server/data/config.json`; load on startup; atomic file write
-- [ ] **Shared Event Utilities** — extract `relativeTime()` + `heatColor()` from EventStack/EventPanelBody into `client/src/utils/eventUtils.ts`
-- [ ] **Globe Heatmap Overlay** — choropleth fill on GeoJsonLayer country polygons by event density/heat; FloatDock HEAT toggle
-- [ ] **Keyboard Shortcuts** — Escape=close panel, /=focus search, b=bookmark, [/]=prev/next event
+- [x] **Config Persistence** — persist llmConfig + feedsConfig to `server/data/config.json`; load on startup; atomic file write
+- [x] **Shared Event Utilities** — extract `relativeTime()` + `heatColor()` from EventStack/EventPanelBody into `client/src/utils/eventUtils.ts`; filter logic into `useFilteredEvents` hook
+- [x] **Globe Heatmap Overlay** — choropleth fill on GeoJsonLayer country polygons by event density/heat; FloatDock ⬡ HEAT toggle
+- [x] **Keyboard Shortcuts** — Escape=close panel, /=focus search, b=bookmark, [/]=prev/next event
 
 ---
 

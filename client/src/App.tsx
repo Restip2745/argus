@@ -20,6 +20,7 @@ import { ToastContainer } from './components/ui/ToastContainer'
 import { useAppStore } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
 import { usePopoutSync } from './hooks/usePopoutSync'
+import { useFilteredEvents } from './hooks/useFilteredEvents'
 import './i18n'
 
 export default function App() {
@@ -35,21 +36,69 @@ export default function App() {
   const setImmersiveMode = useAppStore((s) => s.setImmersiveMode)
   const [showCanvasAnalysis, setShowCanvasAnalysis] = useState(false)
 
+  const activePanelId       = useAppStore((s) => s.activePanelId)
+  const setActivePanelId    = useAppStore((s) => s.setActivePanelId)
+  const setSelectedCountry  = useAppStore((s) => s.setSelectedCountry)
+  const clearSelectedPersons = useAppStore((s) => s.clearSelectedPersons)
+  const toggleBookmark      = useAppStore((s) => s.toggleBookmark)
+  const filteredEvents      = useFilteredEvents()
+
   // ── Global keyboard shortcuts ────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Ignore when typing in an input
-      if ((e.target as HTMLElement).tagName === 'INPUT' ||
-          (e.target as HTMLElement).tagName === 'TEXTAREA') return
+      const tag = (e.target as HTMLElement).tagName
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA'
 
-      if (e.key === 'i' || e.key === 'I') {
-        setImmersiveMode(!immersiveMode)
-        if (!immersiveMode) setLiteMode(false)
+      // / → focus search (works even from outside inputs)
+      if (e.key === '/' && !inInput) {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('argus:focus-search'))
+        return
+      }
+
+      // All other shortcuts ignored while typing
+      if (inInput) return
+
+      switch (e.key) {
+        case 'Escape':
+          // Close panels in reverse open order
+          if (activePanelId) { setActivePanelId(null); break }
+          setSelectedCountry(null)
+          clearSelectedPersons()
+          break
+
+        case 'i':
+        case 'I':
+          setImmersiveMode(!immersiveMode)
+          if (!immersiveMode) setLiteMode(false)
+          break
+
+        case 'b':
+        case 'B':
+          if (activePanelId) toggleBookmark(activePanelId)
+          break
+
+        case '[': {
+          if (filteredEvents.length === 0) break
+          const idx = filteredEvents.findIndex(ev => ev.id === activePanelId)
+          const prev = idx <= 0 ? filteredEvents[filteredEvents.length - 1] : filteredEvents[idx - 1]
+          setActivePanelId(prev.id)
+          break
+        }
+        case ']': {
+          if (filteredEvents.length === 0) break
+          const idx = filteredEvents.findIndex(ev => ev.id === activePanelId)
+          const next = idx < 0 || idx >= filteredEvents.length - 1 ? filteredEvents[0] : filteredEvents[idx + 1]
+          setActivePanelId(next.id)
+          break
+        }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [immersiveMode, setImmersiveMode, setLiteMode])
+  }, [immersiveMode, setImmersiveMode, setLiteMode,
+      activePanelId, setActivePanelId, setSelectedCountry, clearSelectedPersons,
+      toggleBookmark, filteredEvents])
 
   const hudVisible = !immersiveMode
 

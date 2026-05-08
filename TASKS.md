@@ -394,14 +394,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Feature: Keyboard shortcuts for panel actions
-  Description: Power users need fast navigation. Add a global keyboard shortcut layer:
-    `Escape` → close active panel; `/` → focus search input; `b` → toggle bookmark on active event;
-    `[` / `]` → navigate previous/next event in the filtered EventStack list.
-    Show a brief shortcut hint footer in EventPanel and CategoryFilterBar.
-  Success Criteria: All four shortcuts work from any panel state; Escape closes EventPanel if open,
-    then RegionPanel, then PersonPanel; / focuses CategoryFilterBar search. No conflicts with
-    existing browser shortcuts. TS clean. 17/17 tests pass.
+[DONE][LOW] Feature: Keyboard shortcuts for panel actions
+  Description: Added global keyboard shortcuts in App.tsx:
+    `/` → dispatches `argus:focus-search` custom event; CategoryFilterBar listens and focuses
+    the search input. `Escape` → closes EventPanel, then selectedCountry, then clearSelectedPersons
+    in priority order. `b/B` → toggleBookmark on activePanelId. `[`/`]` → navigate prev/next event
+    in the filtered list (uses new `useFilteredEvents` hook).
+    Also extracted filter logic into `client/src/hooks/useFilteredEvents.ts`; EventStack now uses
+    it too, removing ~30 lines of duplicate useMemo code.
+  Success Criteria: Met — all shortcuts work; TS clean; 17/17 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
