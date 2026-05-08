@@ -356,15 +356,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Feature: Persist LLM and feed config across server restarts
-  Description: `server/src/config/llmConfig.ts` and `feedsConfig.ts` store user-configured settings
-    in memory only. Any server restart silently resets them to env-var defaults, discarding changes
-    the user made via the Config Modal. Persist both configs to a JSON file in the server data
-    directory (e.g. `server/data/config.json`). On startup, load from file if it exists; fall back
-    to env-var defaults. Write file on every `setLlmConfig` / `setFeedsConfig` call. Use atomic
-    write (write-then-rename) to avoid corruption on crash.
-  Success Criteria: LLM model and feed toggle changes survive a server restart (file is written and
-    re-loaded). No crash when the file doesn't exist. No new TS errors. 17/17 tests pass.
+[DONE][HIGH] Feature: Persist LLM and feed config across server restarts
+  Description: `server/src/config/llmConfig.ts` and `feedsConfig.ts` stored user-configured settings
+    in memory only. Any server restart silently reset them to env-var defaults, discarding changes
+    the user made via the Config Modal. Added `server/src/config/configStore.ts` with atomic JSON
+    persistence (write-then-rename) to `server/data/config.json`. Both llmConfig and feedsConfig
+    now load persisted values over env-var defaults on startup and call `persistConfig` on every
+    `set*` call. feedsConfig also merges any new default feeds not yet in the saved list.
+  Success Criteria: Met — server TS clean; 17/17 client tests pass; no crash on missing file;
+    persisted values override defaults after restart.
   Retry Count: 0
   Source: ROADMAP
 
