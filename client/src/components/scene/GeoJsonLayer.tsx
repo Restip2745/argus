@@ -180,6 +180,58 @@ function buildHighlightFillGeometry(feature: GeoFeature): THREE.BufferGeometry |
 
 const COMPARE_COLORS = ['#00ffcc', '#ff9c2a', '#9b6dff', '#39ff8a', '#ff4d4d', '#00d4ff']
 
+const HEATMAP_FILL_RADIUS = 1.003
+
+// Map total heat score → CSS hex color (blue → amber → red)
+function heatmapColor(total: number): string {
+  if (total >= 3.0) return '#ff2222'
+  if (total >= 2.0) return '#ff6600'
+  if (total >= 1.2) return '#ff9c2a'
+  if (total >= 0.6) return '#ffd700'
+  return '#00d4ff'
+}
+
+// Opacity scales with intensity, capped at 0.22
+function heatmapOpacity(total: number): number {
+  return Math.min(0.22, 0.06 + total * 0.06)
+}
+
+function buildHeatFillGeometry(feature: GeoFeature): THREE.BufferGeometry | null {
+  const polygons: number[][][][] =
+    feature.geometry.type === 'Polygon'
+      ? [feature.geometry.coordinates as number[][][]]
+      : (feature.geometry.coordinates as number[][][][])
+
+  const positions: number[] = []
+
+  for (const poly of polygons) {
+    if (poly.length === 0) continue
+    const shape = new THREE.Shape(
+      poly[0].map(([lng, lat]) => new THREE.Vector2(lng, lat)),
+    )
+    for (let h = 1; h < poly.length; h++) {
+      shape.holes.push(new THREE.Path(
+        poly[h].map(([lng, lat]) => new THREE.Vector2(lng, lat)),
+      ))
+    }
+    const pts2d   = shape.extractPoints(1)
+    const indices = THREE.ShapeUtils.triangulateShape(pts2d.shape, pts2d.holes)
+    const allPts  = [...pts2d.shape, ...pts2d.holes.flat()]
+    for (const [a, b, c] of indices) {
+      for (const idx of [a, b, c]) {
+        const pt = allPts[idx]
+        const v  = latLngToLocal(pt.y, pt.x, HEATMAP_FILL_RADIUS)
+        positions.push(v.x, v.y, v.z)
+      }
+    }
+  }
+
+  if (positions.length === 0) return null
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  return geo
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -195,6 +247,8 @@ export function GeoJsonLayer({ positionsRef }: Props) {
   const comparedCountries      = useAppStore((s) => s.comparedCountries)
   const addComparedCountry     = useAppStore((s) => s.addComparedCountry)
   const removeComparedCountry  = useAppStore((s) => s.removeComparedCountry)
+  const showHeatmapLayer       = useAppStore((s) => s.showHeatmapLayer)
+  const events                 = useAppStore((s) => s.events)
 
   // Refs so handleSurfaceClick stays stable across compare state changes
   const compareModeRef       = useRef(compareMode)
@@ -333,6 +387,41 @@ export function GeoJsonLayer({ positionsRef }: Props) {
     }).filter((x): x is NonNullable<typeof x> => x !== null)
   }, [compareMode, comparedCountries, features])
 
+  // ── Heatmap: per-country total heat score from events ────────────────────────
+  const heatmapEntries = useMemo(() => {
+    if (!showHeatmapLayer || !showGeoJsonLayer || features.length === 0) return []
+
+    // Build label → total heat score map (events in last 24 h only)
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000
+    const scoreByLabel = new Map<string, number>()
+    for (const e of events) {
+      const label = e.location_label
+      if (!label || label === '—') continue
+      const ts = e.published_at ? new Date(e.published_at).getTime() : 0
+      if (ts > 0 && ts < cutoff) continue
+      const heat = e.heat_score ?? 0.1
+      scoreByLabel.set(label, (scoreByLabel.get(label) ?? 0) + heat)
+    }
+    if (scoreByLabel.size === 0) return []
+
+    // Match labels to GeoJSON features (case-insensitive substring)
+    const entries: { geo: THREE.BufferGeometry; color: string; opacity: number }[] = []
+    for (const [label, total] of scoreByLabel) {
+      const lower = label.toLowerCase()
+      const feat = features.find((f) => {
+        const name  = ((f.properties['NAME']  as string) ?? '').toLowerCase()
+        const admin = ((f.properties['ADMIN'] as string) ?? '').toLowerCase()
+        return name === lower || admin === lower ||
+               name.includes(lower) || lower.includes(name)
+      })
+      if (!feat) continue
+      const geo = buildHeatFillGeometry(feat)
+      if (!geo) continue
+      entries.push({ geo, color: heatmapColor(total), opacity: heatmapOpacity(total) })
+    }
+    return entries
+  }, [showHeatmapLayer, showGeoJsonLayer, features, events])
+
   if (!showGeoJsonLayer) return null
 
   return (
@@ -387,6 +476,13 @@ export function GeoJsonLayer({ positionsRef }: Props) {
                 </mesh>
               )}
             </group>
+          ))}
+
+          {/* Heatmap: country fills colored by 24h event heat score */}
+          {heatmapEntries.map(({ geo, color, opacity }, i) => (
+            <mesh key={`heat-${i}`} geometry={geo}>
+              <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
+            </mesh>
           ))}
 
         </group>

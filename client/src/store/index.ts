@@ -71,6 +71,8 @@ interface AppState {
   setShowShipsLayer: (v: boolean) => void
   showConflictLayer: boolean
   setShowConflictLayer: (v: boolean) => void
+  showHeatmapLayer: boolean
+  setShowHeatmapLayer: (v: boolean) => void
 
   // ── Region selection (GeoJSON country click) ──────────────
   selectedCountry: SelectedCountry | null
@@ -218,6 +220,8 @@ export const useAppStore = create<AppState>((set) => ({
   setShowShipsLayer:    (showShipsLayer) => set({ showShipsLayer }),
   showConflictLayer:    false,
   setShowConflictLayer: (showConflictLayer) => set({ showConflictLayer }),
+  showHeatmapLayer:     false,
+  setShowHeatmapLayer:  (showHeatmapLayer) => set({ showHeatmapLayer }),
 
   // Region selection
   selectedCountry:    null,

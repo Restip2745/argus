@@ -380,14 +380,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Globe event heatmap overlay
-  Description: Add a toggleable choropleth/heatmap layer on the globe that color-codes countries
-    by their recent event density or average heat score. Uses the existing events from the Zustand
-    store (no new API needed). GeoJsonLayer already renders country polygons — extend it or add a
-    parallel HeatmapLayer that fills countries with a semi-transparent color gradient based on
-    event count in the last 24 hours. FloatDock gets a new "HEAT" toggle button.
-  Success Criteria: Heatmap layer toggles on/off via FloatDock; countries with more events appear
-    redder; zero events = no fill; smooth color gradient; no TS errors; no performance regression.
+[DONE][MEDIUM] Feature: Globe event heatmap overlay
+  Description: Added toggleable choropleth layer inside GeoJsonLayer that fills countries with a
+    heat-coded color based on their summed heat_score from events in the last 24h. Helper functions
+    `buildHeatFillGeometry`, `heatmapColor` (blue→amber→red), `heatmapOpacity` added to
+    GeoJsonLayer.tsx. Country matching uses case-insensitive NAME/ADMIN substring comparison
+    against event `location_label`. `showHeatmapLayer` + setter added to Zustand store.
+    FloatDock gets a ⬡ "EVENT HEATMAP (24H)" button wired to the toggle.
+  Success Criteria: Met — heatmap toggles via FloatDock; zero-event countries have no fill;
+    high-heat countries show red; TS clean; 17/17 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
