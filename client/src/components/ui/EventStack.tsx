@@ -1,29 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store'
 import type { ArgusEvent } from '../../types'
 
 import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
-
-function relativeTime(iso: string | null | undefined): string {
-  if (!iso) return ''
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60_000)
-  if (m < 1)  return 'just now'
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  const d = Math.floor(h / 24)
-  if (d < 7)  return `${d}d ago`
-  return new Date(iso).toLocaleDateString()
-}
-
-function heatColor(score: number): string {
-  if (score >= 1.5) return '#ff4d4d'
-  if (score >= 1.0) return '#ff9c2a'
-  if (score >= 0.5) return '#00d4ff'
-  if (score >= 0.3) return '#4a9eff'
-  return '#2a4060'
-}
+import { relativeTime, heatColor } from '../../utils/eventUtils'
+import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 
 interface IconItemProps {
   event: ArgusEvent
@@ -132,54 +113,11 @@ function IconItem({ event, animDelay, isNew, nudgeGen }: IconItemProps) {
   )
 }
 
-const TIME_RANGE_MS: Record<string, number> = {
-  '6h':  6  * 60 * 60 * 1000,
-  '12h': 12 * 60 * 60 * 1000,
-  '24h': 24 * 60 * 60 * 1000,
-}
-
-// Returns 0 for null/undefined/invalid ISO strings so sort and filter never produce NaN.
-function safeTs(iso: string | null | undefined): number {
-  if (!iso) return 0
-  const t = new Date(iso).getTime()
-  return isNaN(t) ? 0 : t
-}
-
 const ITEM_H = 30  // 26px icon + 4px flex gap
 const VSCROLL_BUFFER = 8  // extra items rendered above/below visible window
 
 export function EventStack() {
-  const events             = useAppStore((s) => s.events)
-  const hiddenCategories   = useAppStore((s) => s.hiddenCategories)
-  const timeRangeFilter    = useAppStore((s) => s.timeRangeFilter)
-  const searchQuery        = useAppStore((s) => s.searchQuery)
-  const bookmarkedIds      = useAppStore((s) => s.bookmarkedIds)
-  const showWatchlistOnly  = useAppStore((s) => s.showWatchlistOnly)
-
-  // Sort newest-first, apply watchlist / time-range / category / text filters (no hard cap)
-  const filtered = useMemo(() => {
-    const cutoff = timeRangeFilter !== 'all'
-      ? Date.now() - TIME_RANGE_MS[timeRangeFilter]
-      : null
-    const q = searchQuery.trim().toLowerCase()
-    const bookmarkSet = new Set(bookmarkedIds)
-    return [...events]
-      .sort((a, b) => safeTs(b.published_at) - safeTs(a.published_at))
-      .filter((e) => {
-        if (showWatchlistOnly && !bookmarkSet.has(e.id)) return false
-        if (hiddenCategories.includes(e.category)) return false
-        const ts = safeTs(e.published_at)
-        if (cutoff && ts > 0 && ts < cutoff) return false
-        if (q) {
-          const inTitle   = e.title.toLowerCase().includes(q)
-          const inContent = (e.content ?? '').toLowerCase().includes(q)
-          const inActors  = e.actors.some((a) => a.toLowerCase().includes(q))
-          const inTags    = e.tags.some((t) => t.toLowerCase().includes(q))
-          if (!inTitle && !inContent && !inActors && !inTags) return false
-        }
-        return true
-      })
-  }, [events, hiddenCategories, timeRangeFilter, searchQuery, bookmarkedIds, showWatchlistOnly])
+  const filtered = useFilteredEvents()
 
   // ── Virtual scroll ────────────────────────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null)

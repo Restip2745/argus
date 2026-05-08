@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useMemo } from 'react'
+import { useRef, useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { CATEGORY_ICON, CATEGORY_COLOR, CATEGORY_LABEL } from '../../data/categoryConfig'
@@ -139,6 +139,14 @@ export function CategoryFilterBar() {
   const showWatchlistOnly    = useAppStore((s) => s.showWatchlistOnly)
   const setShowWatchlistOnly = useAppStore((s) => s.setShowWatchlistOnly)
 
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const handler = () => searchInputRef.current?.focus()
+    window.addEventListener('argus:focus-search', handler)
+    return () => window.removeEventListener('argus:focus-search', handler)
+  }, [])
+
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const e of events) counts[e.category] = (counts[e.category] ?? 0) + 1
@@ -222,6 +230,7 @@ export function CategoryFilterBar() {
       >
         <span style={{ fontSize: '8px', color: '#2a5070', padding: '3px 4px 3px 6px' }}>⌕</span>
         <input
+          ref={searchInputRef}
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ArgusEvent, CelestialBodyName, AnnotationStroke, PersonEntity } from '../types'
+import type { ArgusEvent, CelestialBodyName, AnnotationStroke } from '../types'
 import type { NavLevelId } from '../config/navLevels'
 import { NAV_LEVELS } from '../config/navLevels'
 import type { BodyDef } from '../data/celestialBodies'
@@ -71,6 +71,8 @@ interface AppState {
   setShowShipsLayer: (v: boolean) => void
   showConflictLayer: boolean
   setShowConflictLayer: (v: boolean) => void
+  showHeatmapLayer: boolean
+  setShowHeatmapLayer: (v: boolean) => void
 
   // ── Region selection (GeoJSON country click) ──────────────
   selectedCountry: SelectedCountry | null
@@ -218,6 +220,8 @@ export const useAppStore = create<AppState>((set) => ({
   setShowShipsLayer:    (showShipsLayer) => set({ showShipsLayer }),
   showConflictLayer:    false,
   setShowConflictLayer: (showConflictLayer) => set({ showConflictLayer }),
+  showHeatmapLayer:     false,
+  setShowHeatmapLayer:  (showHeatmapLayer) => set({ showHeatmapLayer }),
 
   // Region selection
   selectedCountry:    null,

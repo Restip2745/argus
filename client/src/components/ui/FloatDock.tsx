@@ -92,6 +92,8 @@ export function FloatDock() {
   const setShowShipsLayer    = useAppStore((s) => s.setShowShipsLayer)
   const showConflictLayer    = useAppStore((s) => s.showConflictLayer)
   const setShowConflictLayer = useAppStore((s) => s.setShowConflictLayer)
+  const showHeatmapLayer     = useAppStore((s) => s.showHeatmapLayer)
+  const setShowHeatmapLayer  = useAppStore((s) => s.setShowHeatmapLayer)
 
 
   const { alertCount, topCats } = useMemo(() => {
@@ -285,6 +287,13 @@ export function FloatDock() {
         color="#ff6600"
         active={showConflictLayer}
         onClick={() => setShowConflictLayer(!showConflictLayer)}
+      />
+      <DockBtn
+        icon="⬡"
+        label="EVENT HEATMAP (24H)"
+        color="#ff9c2a"
+        active={showHeatmapLayer}
+        onClick={() => setShowHeatmapLayer(!showHeatmapLayer)}
       />
 
       {/* Annotation canvas toggle */}

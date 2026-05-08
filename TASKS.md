@@ -345,6 +345,69 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+---
+
+[DONE][LOW] Bugfix: Remove unused PersonEntity import in store/index.ts
+  Description: store/index.ts imported `PersonEntity` from '../types' but never referenced it,
+    causing a TS6196 "declared but never used" error. Removed PersonEntity from the import list.
+  Success Criteria: Met — `npx tsc --noEmit` in client/ produces zero errors; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Persist LLM and feed config across server restarts
+  Description: `server/src/config/llmConfig.ts` and `feedsConfig.ts` stored user-configured settings
+    in memory only. Any server restart silently reset them to env-var defaults, discarding changes
+    the user made via the Config Modal. Added `server/src/config/configStore.ts` with atomic JSON
+    persistence (write-then-rename) to `server/data/config.json`. Both llmConfig and feedsConfig
+    now load persisted values over env-var defaults on startup and call `persistConfig` on every
+    `set*` call. feedsConfig also merges any new default feeds not yet in the saved list.
+  Success Criteria: Met — server TS clean; 17/17 client tests pass; no crash on missing file;
+    persisted values override defaults after restart.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Refactor: Extract shared event utility functions
+  Description: `relativeTime()` and `heatColor()` were defined identically in both
+    `client/src/components/ui/EventStack.tsx` and `client/src/components/panels/EventPanelBody.tsx`.
+    Moved both to new `client/src/utils/eventUtils.ts`; both files now import from there.
+  Success Criteria: Met — single definition in eventUtils.ts; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Globe event heatmap overlay
+  Description: Added toggleable choropleth layer inside GeoJsonLayer that fills countries with a
+    heat-coded color based on their summed heat_score from events in the last 24h. Helper functions
+    `buildHeatFillGeometry`, `heatmapColor` (blue→amber→red), `heatmapOpacity` added to
+    GeoJsonLayer.tsx. Country matching uses case-insensitive NAME/ADMIN substring comparison
+    against event `location_label`. `showHeatmapLayer` + setter added to Zustand store.
+    FloatDock gets a ⬡ "EVENT HEATMAP (24H)" button wired to the toggle.
+  Success Criteria: Met — heatmap toggles via FloatDock; zero-event countries have no fill;
+    high-heat countries show red; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Feature: Keyboard shortcuts for panel actions
+  Description: Added global keyboard shortcuts in App.tsx:
+    `/` → dispatches `argus:focus-search` custom event; CategoryFilterBar listens and focuses
+    the search input. `Escape` → closes EventPanel, then selectedCountry, then clearSelectedPersons
+    in priority order. `b/B` → toggleBookmark on activePanelId. `[`/`]` → navigate prev/next event
+    in the filtered list (uses new `useFilteredEvents` hook).
+    Also extracted filter logic into `client/src/hooks/useFilteredEvents.ts`; EventStack now uses
+    it too, removing ~30 lines of duplicate useMemo code.
+  Success Criteria: Met — all shortcuts work; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---
