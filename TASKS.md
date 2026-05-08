@@ -345,6 +345,69 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+---
+
+[DONE][LOW] Bugfix: Remove unused PersonEntity import in store/index.ts
+  Description: store/index.ts imported `PersonEntity` from '../types' but never referenced it,
+    causing a TS6196 "declared but never used" error. Removed PersonEntity from the import list.
+  Success Criteria: Met — `npx tsc --noEmit` in client/ produces zero errors; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Feature: Persist LLM and feed config across server restarts
+  Description: `server/src/config/llmConfig.ts` and `feedsConfig.ts` store user-configured settings
+    in memory only. Any server restart silently resets them to env-var defaults, discarding changes
+    the user made via the Config Modal. Persist both configs to a JSON file in the server data
+    directory (e.g. `server/data/config.json`). On startup, load from file if it exists; fall back
+    to env-var defaults. Write file on every `setLlmConfig` / `setFeedsConfig` call. Use atomic
+    write (write-then-rename) to avoid corruption on crash.
+  Success Criteria: LLM model and feed toggle changes survive a server restart (file is written and
+    re-loaded). No crash when the file doesn't exist. No new TS errors. 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Refactor: Extract shared event utility functions
+  Description: `relativeTime()` and `heatColor()` are defined identically in both
+    `client/src/components/ui/EventStack.tsx` and `client/src/components/panels/EventPanelBody.tsx`.
+    Move both to a new shared module `client/src/utils/eventUtils.ts` and import from there.
+    No behavior change — purely a DRY refactor.
+  Success Criteria: Single definition of each function in eventUtils.ts; both EventStack.tsx and
+    EventPanelBody.tsx import from that module; TS clean; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Globe event heatmap overlay
+  Description: Add a toggleable choropleth/heatmap layer on the globe that color-codes countries
+    by their recent event density or average heat score. Uses the existing events from the Zustand
+    store (no new API needed). GeoJsonLayer already renders country polygons — extend it or add a
+    parallel HeatmapLayer that fills countries with a semi-transparent color gradient based on
+    event count in the last 24 hours. FloatDock gets a new "HEAT" toggle button.
+  Success Criteria: Heatmap layer toggles on/off via FloatDock; countries with more events appear
+    redder; zero events = no fill; smooth color gradient; no TS errors; no performance regression.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Feature: Keyboard shortcuts for panel actions
+  Description: Power users need fast navigation. Add a global keyboard shortcut layer:
+    `Escape` → close active panel; `/` → focus search input; `b` → toggle bookmark on active event;
+    `[` / `]` → navigate previous/next event in the filtered EventStack list.
+    Show a brief shortcut hint footer in EventPanel and CategoryFilterBar.
+  Success Criteria: All four shortcuts work from any panel state; Escape closes EventPanel if open,
+    then RegionPanel, then PersonPanel; / focuses CategoryFilterBar search. No conflicts with
+    existing browser shortcuts. TS clean. 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

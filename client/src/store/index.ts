@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ArgusEvent, CelestialBodyName, AnnotationStroke, PersonEntity } from '../types'
+import type { ArgusEvent, CelestialBodyName, AnnotationStroke } from '../types'
 import type { NavLevelId } from '../config/navLevels'
 import { NAV_LEVELS } from '../config/navLevels'
 import type { BodyDef } from '../data/celestialBodies'
