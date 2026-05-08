@@ -370,13 +370,11 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Refactor: Extract shared event utility functions
-  Description: `relativeTime()` and `heatColor()` are defined identically in both
+[DONE][MEDIUM] Refactor: Extract shared event utility functions
+  Description: `relativeTime()` and `heatColor()` were defined identically in both
     `client/src/components/ui/EventStack.tsx` and `client/src/components/panels/EventPanelBody.tsx`.
-    Move both to a new shared module `client/src/utils/eventUtils.ts` and import from there.
-    No behavior change — purely a DRY refactor.
-  Success Criteria: Single definition of each function in eventUtils.ts; both EventStack.tsx and
-    EventPanelBody.tsx import from that module; TS clean; 17/17 tests pass.
+    Moved both to new `client/src/utils/eventUtils.ts`; both files now import from there.
+  Success Criteria: Met — single definition in eventUtils.ts; TS clean; 17/17 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
