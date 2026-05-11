@@ -16,6 +16,7 @@ import { FloatDock } from './components/ui/FloatDock'
 import { CanvasAnalysisPanel } from './components/ui/CanvasAnalysisPanel'
 import { CelestialBodyPanel } from './components/panels/CelestialBodyPanel'
 import { PersonPanel } from './components/panels/PersonPanel'
+import { MultiEntityContextPanel } from './components/panels/MultiEntityContextPanel'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { useAppStore } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
@@ -151,6 +152,7 @@ export default function App() {
             <RegionPanel />
             <CelestialBodyPanel />
             <PersonPanel />
+            <MultiEntityContextPanel />
             <CelestialNavList />
 
             {/* ── Top-right control bar ──────────────────────────────────── */}
@@ -201,6 +203,7 @@ export default function App() {
             <RegionPanel />
             <CelestialBodyPanel />
             <PersonPanel />
+            <MultiEntityContextPanel />
             {showConfig && <ConfigModal />}
             {showCanvasAnalysis && <CanvasAnalysisPanel onClose={() => setShowCanvasAnalysis(false)} />}
           </>
