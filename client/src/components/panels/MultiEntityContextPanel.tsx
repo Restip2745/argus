@@ -3,11 +3,18 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
+import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { Panel } from './Panel'
 import type { ContextEntity, ContextEntityType } from '../../types'
 
 const ACCENT = '#00ffcc'
 const LIMIT = 8
+
+const SINGLE_W = 340
+const CARD_GAP  = 6
+const H_PAD     = 20
+// card content width when single entity; multi-column cards match this
+const CARD_W    = SINGLE_W - H_PAD
 
 const TYPE_ICON: Record<ContextEntityType, string> = {
   event:     '◉',
@@ -23,7 +30,7 @@ const TYPE_COLOR: Record<ContextEntityType, string> = {
   celestial: '#ffd700',
 }
 
-function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemove: () => void }) {
+export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemove: () => void }) {
   const color = TYPE_COLOR[entity.type]
   return (
     <div style={{
@@ -78,6 +85,7 @@ export function MultiEntityContextPanel() {
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
     usePanelDrag({ panelKey: 'context', defaultPos: { x: 100, y: 160 } })
 
+  const { open: popoutOpen, isPopped } = usePopoutWindow('context')
   const { history, loading: agentLoading, error: agentError, ask } = useAgentQuery()
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)
@@ -86,16 +94,27 @@ export function MultiEntityContextPanel() {
     agentScrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [history])
 
+  const maxAvailW  = typeof window !== 'undefined' ? window.innerWidth - 100 : 900
+  const columns    = contextEntities.length <= 1
+    ? 1
+    : Math.min(
+        Math.floor((maxAvailW + CARD_GAP) / (CARD_W + CARD_GAP)),
+        contextEntities.length,
+      )
+  const panelWidth = contextEntities.length <= 1
+    ? SINGLE_W
+    : Math.min(maxAvailW, columns * CARD_W + (columns - 1) * CARD_GAP + H_PAD)
+
   useEffect(() => {
     const onResize = () => {
       setPos(p => ({
-        x: Math.max(0, Math.min(window.innerWidth / uiScale - 340, p.x)),
+        x: Math.max(0, Math.min(window.innerWidth / uiScale - panelWidth, p.x)),
         y: Math.max(0, Math.min(window.innerHeight / uiScale - 60, p.y)),
       }))
     }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [uiScale, setPos])
+  }, [uiScale, setPos, panelWidth])
 
   const agentContext = useMemo(() => {
     if (contextEntities.length === 0) return ''
@@ -133,6 +152,7 @@ export function MultiEntityContextPanel() {
   }
 
   const atLimit = contextEntities.length >= LIMIT
+  const useGrid = contextEntities.length >= 2
 
   return (
     <Panel
@@ -147,19 +167,26 @@ export function MultiEntityContextPanel() {
         </span>
       }
       headerControls={
-        <button
-          onClick={clearContextEntities}
-          title={t('context.clearAll', 'Clear all entities')}
-          style={{
-            background: 'none', border: '1px solid rgba(255,77,77,0.25)',
-            borderRadius: '2px', color: '#4a6070',
-            cursor: 'pointer', fontSize: '8px', padding: '2px 5px',
-            fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#ff4d4d'; e.currentTarget.style.borderColor = 'rgba(255,77,77,0.5)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#4a6070'; e.currentTarget.style.borderColor = 'rgba(255,77,77,0.25)' }}
-        >⊘ {t('context.clear', 'CLEAR')}</button>
+        <>
+          <button
+            onClick={clearContextEntities}
+            title={t('context.clearAll', 'Clear all entities')}
+            style={{
+              background: 'none', border: '1px solid rgba(255,77,77,0.25)',
+              borderRadius: '2px', color: '#4a6070',
+              cursor: 'pointer', fontSize: '8px', padding: '2px 5px',
+              fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#ff4d4d'; e.currentTarget.style.borderColor = 'rgba(255,77,77,0.5)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#4a6070'; e.currentTarget.style.borderColor = 'rgba(255,77,77,0.25)' }}
+          >⊘ {t('context.clear', 'CLEAR')}</button>
+          <button
+            onClick={popoutOpen}
+            title={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
+            style={{ background: 'none', border: 'none', color: isPopped ? ACCENT : '#4a6070', cursor: 'pointer', fontSize: '11px', lineHeight: 1 }}
+          >⊡</button>
+        </>
       }
       onClose={() => useAppStore.getState().setShowContextPanel(false)}
       style={{
@@ -167,14 +194,17 @@ export function MultiEntityContextPanel() {
         left: pos.x,
         top: pos.y,
         zIndex,
-        width: '340px',
+        width: `${panelWidth}px`,
         maxHeight: `calc(${100 / uiScale}vh - 100px)`,
       }}
     >
       {/* Entity list */}
       <div style={{
         flex: 1, overflowY: 'auto', minHeight: 0, padding: '8px 10px',
-        display: 'flex', flexDirection: 'column', gap: '4px',
+        display: useGrid ? 'grid' : 'flex',
+        ...(useGrid
+          ? { gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '6px' }
+          : { flexDirection: 'column' as const, gap: '4px' }),
         scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,255,204,0.15) transparent',
       }}>
         {contextEntities.map(entity => (
@@ -189,6 +219,7 @@ export function MultiEntityContextPanel() {
           <div style={{
             color: '#ff9c2a', fontSize: '7px', letterSpacing: '0.1em',
             textAlign: 'center', padding: '4px 0',
+            ...(useGrid && { gridColumn: '1 / -1' }),
           }}>
             {t('context.limitReached', 'ENTITY LIMIT REACHED')} ({LIMIT})
           </div>

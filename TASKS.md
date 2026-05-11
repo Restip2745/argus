@@ -506,6 +506,54 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Refactor: Remove compare mode from RegionPanel
+  Description: Removed CompareCard component, compareMode/comparedCountries/addComparedCountry/
+    removeComparedCountry from Zustand store, RegionPanel, GeoJsonLayer click handler and highlight
+    logic, usePopoutSync BroadcastChannel sync, and i18n keys. GeoJsonLayer now always uses
+    setSelectedCountry on country click. RegionPanel is single-country only.
+  Success Criteria: Met — no compareMode references remain; GeoJsonLayer click always sets
+    selectedCountry; TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][HIGH] Feature: Multi-column layout for MultiEntityContextPanel
+  Description: Panel width now adapts dynamically: 1 entity = 340px single column, 2+ entities =
+    responsive CSS grid with min card width 160px, gap 6px, columns capped at entity count and
+    screen width. Panel width transition animated with cubic-bezier. Entity limit warning spans
+    full grid width via gridColumn: '1 / -1'.
+  Success Criteria: Met — 1 entity single column; 2+ entities multi-column grid; panel width
+    adapts; scrollable; TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][HIGH] Feature: Add popout support for MultiEntityContextPanel
+  Description: Extended usePopoutWindow to accept 'context' panel key. Added ⊡ popout button to
+    MultiEntityContextPanel headerControls (turns accent green when popped). Created
+    ContextPopoutContent in PopoutPage.tsx with responsive grid (up to 3 columns) in left column
+    and PopoutAIPanel in right column. Added contextEntities sync to usePopoutSync BroadcastChannel
+    (host broadcasts changes, guest receives and applies). Document title set to 'ARGUS — Context
+    Intel'. EntityCard exported from MultiEntityContextPanel for reuse in popout.
+  Success Criteria: Met — ⊡ button in header; popout opens 2-column window; entities and AI sync
+    correctly; TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][LOW] Test: Validate compare mode removal and new context panel features
+  Description: All 27 existing tests pass after changes. No compare mode references remain in
+    test files or any client source. Grep confirms zero matches for compareMode/comparedCountries
+    across client/src.
+  Success Criteria: Met — 27/27 tests pass; no compare mode references remain.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
 ## Completed Tasks
 
 ---

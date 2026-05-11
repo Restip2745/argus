@@ -79,12 +79,6 @@ interface AppState {
   // ── Region selection (GeoJSON country click) ──────────────
   selectedCountry: SelectedCountry | null
   setSelectedCountry: (c: SelectedCountry | null) => void
-  // ── Compare mode ──────────────────────────────────────────
-  compareMode: boolean
-  setCompareMode: (v: boolean) => void
-  comparedCountries: SelectedCountry[]
-  addComparedCountry: (c: SelectedCountry) => void
-  removeComparedCountry: (name: string) => void
   /** Callback registered by GeoJsonLayer; called by Earth mesh onClick */
   onEarthSurfaceClick: ((worldPt: { x: number; y: number; z: number }) => void) | null
   setOnEarthSurfaceClick: (fn: ((worldPt: { x: number; y: number; z: number }) => void) | null) => void
@@ -241,23 +235,6 @@ export const useAppStore = create<AppState>((set) => ({
     panelZ: selectedCountry !== null
       ? { ...s.panelZ, region: Math.max(...Object.values(s.panelZ), 29) + 1 }
       : s.panelZ,
-  })),
-  // Compare mode
-  compareMode: false,
-  setCompareMode: (compareMode) => set((s) => ({
-    compareMode,
-    comparedCountries: compareMode
-      ? (s.selectedCountry && !s.comparedCountries.some(c => c.name === s.selectedCountry!.name)
-          ? [s.selectedCountry]
-          : s.comparedCountries)
-      : [],
-  })),
-  comparedCountries: [],
-  addComparedCountry: (c) => set((s) =>
-    s.comparedCountries.some(e => e.name === c.name) ? s : { comparedCountries: [...s.comparedCountries, c] }
-  ),
-  removeComparedCountry: (name) => set((s) => ({
-    comparedCountries: s.comparedCountries.filter(c => c.name !== name),
   })),
   onEarthSurfaceClick:    null,
   setOnEarthSurfaceClick: (fn) => set({ onEarthSurfaceClick: fn }),
