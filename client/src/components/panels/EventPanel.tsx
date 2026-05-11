@@ -11,6 +11,7 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 
 import { useAppStore }        from '../../store'
+import type { ContextEntity } from '../../types'
 import { useAgentQuery }      from '../../hooks/useAgentQuery'
 import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
 import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
@@ -76,6 +77,8 @@ export function EventPanel() {
   const setSelectedCountry  = useAppStore((s) => s.setSelectedCountry)
   const bookmarkedIds       = useAppStore((s) => s.bookmarkedIds)
   const toggleBookmark      = useAppStore((s) => s.toggleBookmark)
+  const addContextEntity    = useAppStore((s) => s.addContextEntity)
+  const contextEntities     = useAppStore((s) => s.contextEntities)
 
   // ── Drag / position ────────────────────────────────────────────────────────
   const { panelRef, pos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
@@ -294,6 +297,36 @@ export function EventPanel() {
           title={<>{(displayedEvent?.category ?? event.category).replace(/_/g, ' ')}</>}
           headerControls={
             <>
+              {/* Add to context */}
+              {displayedEvent && (() => {
+                const inContext = contextEntities.some(e => e.id === displayedEvent.id)
+                return (
+                  <button
+                    onClick={() => {
+                      const ce: ContextEntity = {
+                        id: displayedEvent.id,
+                        type: 'event',
+                        name: displayedEvent.title,
+                        summary: displayedEvent.summary_zh || displayedEvent.content || displayedEvent.title,
+                      }
+                      addContextEntity(ce)
+                    }}
+                    title={inContext ? 'Already in context' : 'Add to context panel'}
+                    disabled={inContext}
+                    style={{
+                      background: inContext ? 'rgba(0,255,204,0.12)' : 'none',
+                      border: `1px solid ${inContext ? 'rgba(0,255,204,0.4)' : 'transparent'}`,
+                      borderRadius: '2px',
+                      color: inContext ? '#00ffcc' : '#4a6070',
+                      cursor: inContext ? 'default' : 'pointer',
+                      fontSize: '9px', lineHeight: 1,
+                      padding: '1px 4px', transition: 'all 0.15s',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      opacity: inContext ? 0.6 : 1,
+                    }}
+                  >{inContext ? '⊕' : '⊕'}</button>
+                )
+              })()}
               {/* Bookmark toggle */}
               {event && (() => {
                 const isBookmarked = bookmarkedIds.includes(event.id)

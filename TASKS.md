@@ -408,6 +408,104 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Implement MultiEntityContextPanel (base workspace)
+  Description: Created MultiEntityContextPanel.tsx as a dedicated floating workspace for
+    aggregating multiple entities (Event, Person, Region, Celestial). Uses shared Panel base
+    + usePanelDrag. Displays entity cards with type icons/colors, supports removal per entity
+    or clear-all. Integrates AI chat via useAgentQuery with all entities as context.
+  Success Criteria: Met — panel renders correctly; displays multiple entity types; entities
+    can be added/removed; TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Define unified Entity data structure
+  Description: Added ContextEntityType ('event'|'person'|'region'|'celestial') and
+    ContextEntity interface { id, type, name, summary } to client/src/types/index.ts.
+    All four panels map their data to this format when adding to context.
+  Success Criteria: Met — unified type defined; all panels convert data; no inconsistency.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Add "Add to Context" action in all panels
+  Description: Added ⊕ button to headerControls in EventPanel, PersonPanel, RegionPanel,
+    and CelestialBodyPanel. Button turns green (#00ffcc) and disables when entity is already
+    in context. Each panel constructs a ContextEntity with appropriate id/type/name/summary.
+  Success Criteria: Met — button in all 4 panel headers; clicking adds to context; duplicates
+    prevented; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Auto-open or focus MultiEntityContextPanel on first add
+  Description: addContextEntity in Zustand store sets showContextPanel=true when adding
+    the first entity (contextEntities was empty). Also brings context panel z-index to front.
+  Success Criteria: Met — panel auto-opens on first add; no disruption to other panels.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Limit entity count in context panel
+  Description: CONTEXT_ENTITY_LIMIT=8 enforced in store addContextEntity (silently ignores
+    adds beyond limit). Panel shows "ENTITY LIMIT REACHED (8)" warning in amber when at cap.
+  Success Criteria: Met — limit enforced; clear feedback shown.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Feature: Integrate AI chat into MultiEntityContextPanel
+  Description: Full AI agent section with useAgentQuery, suggested queries (context-aware
+    based on entity types and count), streaming chat history, and input. agentContext built
+    from all entities as "[TYPE] Name: Summary" blocks.
+  Success Criteria: Met — AI chat functional; receives all entities; multi-entity reasoning.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Display entity summaries in context panel
+  Description: EntityCard component shows type icon (color-coded), entity name, 2-line
+    summary, and type label. Cards are stacked in a scrollable list.
+  Success Criteria: Met — each entity shows name/summary; layout clear and readable.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Allow removing and clearing context
+  Description: Each EntityCard has ✕ button to remove individual entity. Panel header
+    has "⊘ CLEAR" button to clear all entities (also hides panel). Both call store actions.
+  Success Criteria: Met — individual remove and clear-all work; state updates correctly.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Feature: Prevent duplicate entities in context
+  Description: addContextEntity checks s.contextEntities.some(e => e.id === entity.id)
+    and returns unchanged state if duplicate found.
+  Success Criteria: Met — duplicates silently ignored.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Test: Validate MultiEntityContextPanel behavior
+  Description: Added MultiEntityContextPanel.test.tsx with 10 tests: store logic (add entity
+    + auto-open, prevent duplicates, multiple types, entity limit, remove single, clear all,
+    z-index bump) and rendering (empty state, entity cards, remove entity).
+  Success Criteria: Met — 27/27 tests pass; no regression.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

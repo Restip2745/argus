@@ -1,8 +1,10 @@
 import { create } from 'zustand'
-import type { ArgusEvent, CelestialBodyName, AnnotationStroke } from '../types'
+import type { ArgusEvent, CelestialBodyName, AnnotationStroke, ContextEntity } from '../types'
 import type { NavLevelId } from '../config/navLevels'
 import { NAV_LEVELS } from '../config/navLevels'
 import type { BodyDef } from '../data/celestialBodies'
+
+const CONTEXT_ENTITY_LIMIT = 8
 
 export interface SelectedPerson {
   name: string
@@ -148,6 +150,14 @@ interface AppState {
   addSelectedPerson: (p: SelectedPerson) => void
   removeSelectedPerson: (name: string) => void
   clearSelectedPersons: () => void
+
+  // ── Multi-entity context panel ─────────────────────────────
+  contextEntities: ContextEntity[]
+  showContextPanel: boolean
+  setShowContextPanel: (v: boolean) => void
+  addContextEntity: (e: ContextEntity) => void
+  removeContextEntity: (id: string) => void
+  clearContextEntities: () => void
 
   // ── Panel z-order (click to bring to front) ───────────────
   panelZ: Record<string, number>
@@ -332,8 +342,27 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   clearSelectedPersons: () => set({ selectedPersons: [] }),
 
+  // Multi-entity context panel
+  contextEntities: [],
+  showContextPanel: false,
+  setShowContextPanel: (showContextPanel) => set({ showContextPanel }),
+  addContextEntity: (entity) => set((s) => {
+    if (s.contextEntities.some(e => e.id === entity.id)) return s
+    if (s.contextEntities.length >= CONTEXT_ENTITY_LIMIT) return s
+    const wasEmpty = s.contextEntities.length === 0
+    return {
+      contextEntities: [...s.contextEntities, entity],
+      showContextPanel: wasEmpty ? true : s.showContextPanel,
+      panelZ: { ...s.panelZ, context: Math.max(...Object.values(s.panelZ), 29) + 1 },
+    }
+  }),
+  removeContextEntity: (id) => set((s) => ({
+    contextEntities: s.contextEntities.filter(e => e.id !== id),
+  })),
+  clearContextEntities: () => set({ contextEntities: [], showContextPanel: false }),
+
   // Panel z-order — each call gives the clicked panel the current highest z
-  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33, person: 34 },
+  panelZ:       { event: 30, region: 31, body: 32, canvasAnalysis: 33, person: 34, context: 35 },
   bringToFront: (key) => set((s) => {
     const max = Math.max(...Object.values(s.panelZ), 29)
     return { panelZ: { ...s.panelZ, [key]: max + 1 } }

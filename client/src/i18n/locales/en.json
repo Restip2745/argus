@@ -62,6 +62,16 @@
     "askAgent":          "Ask about this person…",
     "keyFigures":        "KEY FIGURES"
   },
+  "context": {
+    "title":        "MULTI-ENTITY CONTEXT",
+    "agent":        "◈ CROSS-ENTITY INTELLIGENCE",
+    "askAgent":     "Ask cross-entity intelligence analysis…",
+    "clear":        "CLEAR",
+    "clearAll":     "Clear all entities",
+    "limitReached": "ENTITY LIMIT REACHED",
+    "addToContext":  "Add to context panel",
+    "inContext":     "Already in context"
+  },
   "ui": {
     "solarSystem": "Solar System",
     "earth":       "Earth",

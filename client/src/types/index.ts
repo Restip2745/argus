@@ -88,6 +88,19 @@ export interface PersonEntity {
 }
 
 // ────────────────────────────────────────────────────────────
+// Context entity (unified type for MultiEntityContextPanel)
+// ────────────────────────────────────────────────────────────
+
+export type ContextEntityType = 'event' | 'person' | 'region' | 'celestial'
+
+export interface ContextEntity {
+  id:      string
+  type:    ContextEntityType
+  name:    string
+  summary: string
+}
+
+// ────────────────────────────────────────────────────────────
 // Annotation canvas
 // ────────────────────────────────────────────────────────────
 

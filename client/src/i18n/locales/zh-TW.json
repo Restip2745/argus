@@ -62,6 +62,16 @@
     "askAgent":          "詢問人物情報…",
     "keyFigures":        "關鍵人物"
   },
+  "context": {
+    "title":        "多實體情境",
+    "agent":        "◈ 跨實體情報分析",
+    "askAgent":     "詢問跨實體情報分析…",
+    "clear":        "清除",
+    "clearAll":     "清除所有實體",
+    "limitReached": "已達實體上限",
+    "addToContext":  "加入情境面板",
+    "inContext":     "已在情境中"
+  },
   "ui": {
     "solarSystem": "太陽系",
     "earth":       "地球",

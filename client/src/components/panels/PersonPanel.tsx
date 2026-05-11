@@ -6,6 +6,7 @@ import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { Panel } from './Panel'
 import { PersonPanelBody } from './PersonPanelBody'
+import type { ContextEntity } from '../../types'
 
 const ACCENT = '#c084fc'
 
@@ -60,6 +61,9 @@ export function PersonPanel() {
   const addSelectedPerson = useAppStore(s => s.addSelectedPerson)
   const removeSelectedPerson = useAppStore(s => s.removeSelectedPerson)
   const clearSelectedPersons = useAppStore(s => s.clearSelectedPersons)
+
+  const addContextEntity    = useAppStore(s => s.addContextEntity)
+  const contextEntities     = useAppStore(s => s.contextEntities)
 
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
     usePanelDrag({ panelKey: 'person', defaultPos: { x: 60, y: 120 } })
@@ -136,6 +140,38 @@ export function PersonPanel() {
       }
       headerControls={
         <>
+          {/* Add persons to context */}
+          {(() => {
+            const allInContext = selectedPersons.every(p => contextEntities.some(e => e.id === `person-${p.name}`))
+            return (
+              <button
+                onClick={() => {
+                  for (const p of selectedPersons) {
+                    const ce: ContextEntity = {
+                      id: `person-${p.name}`,
+                      type: 'person',
+                      name: p.name,
+                      summary: p.wikiTitle ? `Wikipedia: ${p.wikiTitle}` : p.name,
+                    }
+                    addContextEntity(ce)
+                  }
+                }}
+                title={allInContext ? 'Already in context' : 'Add to context panel'}
+                disabled={allInContext}
+                style={{
+                  background: allInContext ? 'rgba(0,255,204,0.12)' : 'none',
+                  border: `1px solid ${allInContext ? 'rgba(0,255,204,0.4)' : 'transparent'}`,
+                  borderRadius: '2px',
+                  color: allInContext ? '#00ffcc' : '#4a6070',
+                  cursor: allInContext ? 'default' : 'pointer',
+                  fontSize: '9px', lineHeight: 1,
+                  padding: '1px 4px', transition: 'all 0.15s',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  opacity: allInContext ? 0.6 : 1,
+                }}
+              >⊕</button>
+            )
+          })()}
           <button
             onClick={() => setShowSearch(v => !v)}
             title={t('person.search', 'Search person')}

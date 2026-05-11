@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppStore } from '../../store'
 import { CATEGORY_COLOR, CATEGORY_ICON, CATEGORY_LABEL } from '../../data/categoryConfig'
-import type { ArgusEvent } from '../../types'
+import type { ArgusEvent, ContextEntity } from '../../types'
 import { useTranslation } from 'react-i18next'
 import { getCountryInfo, getDynamicTags } from '../../data/countryData'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
@@ -263,6 +263,8 @@ export function RegionPanel() {
   const setCompareMode        = useAppStore((s) => s.setCompareMode)
   const comparedCountries     = useAppStore((s) => s.comparedCountries)
   const removeComparedCountry = useAppStore((s) => s.removeComparedCountry)
+  const addContextEntity      = useAppStore((s) => s.addContextEntity)
+  const contextEntities       = useAppStore((s) => s.contextEntities)
 
   // ── Drag / position ──────────────────────────────────────────────────────────
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
@@ -496,6 +498,39 @@ export function RegionPanel() {
         }
         headerControls={
           <>
+            {/* Add to context */}
+            {displayedCountry && !compareMode && (() => {
+              const regionId = `region-${displayedCountry.name}`
+              const inContext = contextEntities.some(e => e.id === regionId)
+              return (
+                <button
+                  onClick={() => {
+                    const ce: ContextEntity = {
+                      id: regionId,
+                      type: 'region',
+                      name: displayedCountry.name,
+                      summary: info
+                        ? `${info.capital} · Pop ${formatPop(info.populationM)} · GDP ${formatGdp(info.gdpB)} · Stability ${info.stability}/100`
+                        : displayedCountry.name,
+                    }
+                    addContextEntity(ce)
+                  }}
+                  title={inContext ? 'Already in context' : 'Add to context panel'}
+                  disabled={inContext}
+                  style={{
+                    background: inContext ? 'rgba(0,255,204,0.12)' : 'none',
+                    border: `1px solid ${inContext ? 'rgba(0,255,204,0.4)' : 'transparent'}`,
+                    borderRadius: '2px',
+                    color: inContext ? '#00ffcc' : '#4a6070',
+                    cursor: inContext ? 'default' : 'pointer',
+                    fontSize: '9px', lineHeight: 1,
+                    padding: '1px 4px', transition: 'all 0.15s',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    opacity: inContext ? 0.6 : 1,
+                  }}
+                >⊕</button>
+              )
+            })()}
             <button
               onClick={() => setCompareMode(!compareMode)}
               title={compareMode ? 'Exit compare mode' : 'Enter compare mode'}

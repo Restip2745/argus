@@ -5,6 +5,7 @@ import { BODIES } from '../../data/celestialBodies'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { Panel } from './Panel'
 import { LinkedText } from '../../utils/entityLinker'
+import type { ContextEntity } from '../../types'
 
 // ── Wikipedia title disambiguation ────────────────────────────────────────────
 const WIKI_TITLE: Record<string, string> = {
@@ -170,8 +171,10 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 export function CelestialBodyPanel() {
-  const selectedBody    = useAppStore((s) => s.selectedBody)
-  const setSelectedBody = useAppStore((s) => s.setSelectedBody)
+  const selectedBody      = useAppStore((s) => s.selectedBody)
+  const setSelectedBody   = useAppStore((s) => s.setSelectedBody)
+  const addContextEntity  = useAppStore((s) => s.addContextEntity)
+  const contextEntities   = useAppStore((s) => s.contextEntities)
 
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront } =
     usePanelDrag({
@@ -201,6 +204,36 @@ export function CelestialBodyPanel() {
       dragging={dragging}
       onHeaderMouseDown={onHeaderMouseDown}
       title="◈ CELESTIAL BODY"
+      headerControls={(() => {
+        const bodyId = `celestial-${selectedBody}`
+        const inContext = contextEntities.some(e => e.id === bodyId)
+        return (
+          <button
+            onClick={() => {
+              const ce: ContextEntity = {
+                id: bodyId,
+                type: 'celestial',
+                name: def?.label ?? selectedBody,
+                summary: stats ? `${stats.type} · ${stats.diameter} · ${stats.mass}` : def?.label ?? selectedBody,
+              }
+              addContextEntity(ce)
+            }}
+            title={inContext ? 'Already in context' : 'Add to context panel'}
+            disabled={inContext}
+            style={{
+              background: inContext ? 'rgba(0,255,204,0.12)' : 'none',
+              border: `1px solid ${inContext ? 'rgba(0,255,204,0.4)' : 'transparent'}`,
+              borderRadius: '2px',
+              color: inContext ? '#00ffcc' : '#4a6070',
+              cursor: inContext ? 'default' : 'pointer',
+              fontSize: '9px', lineHeight: 1,
+              padding: '1px 4px', transition: 'all 0.15s',
+              fontFamily: 'JetBrains Mono, monospace',
+              opacity: inContext ? 0.6 : 1,
+            }}
+          >⊕</button>
+        )
+      })()}
       headerLeft={stats && (
         <span style={{
           fontSize: '6px', letterSpacing: '0.08em', padding: '1px 5px',
