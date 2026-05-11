@@ -59,6 +59,18 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase F — Resilience & Polish
+
+> Harden edge cases, improve observability, and close remaining UX gaps.
+
+- [x] **Panel Position Persistence** — `usePanelDrag` reads saved pos from `localStorage` on mount (bounds-clamped for window-resize safety); writes on change via `useEffect`
+- [ ] **Tracking Layer Error Feedback** — show visible "Data unavailable" indicator instead of silently empty layers when aircraft/satellite/ship/conflict fetches fail
+- [ ] **Loading States** — skeleton/spinner states for EventStack initial load, tracking layer fetches, and agent streaming
+- [ ] **Agent Context Size Guard** — validate total context character count before sending to Ollama; show user-visible warning when truncation occurs
+- [ ] **Keyboard Accessibility** — arrow-key navigation for CategoryFilterBar filter chips; space/enter to toggle; focus-visible ring on all interactive panel elements
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

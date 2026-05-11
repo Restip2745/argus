@@ -554,6 +554,69 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Persist panel positions to localStorage
+  Description: usePanelDrag now loads saved position from localStorage('argus-panel-pos-{panelKey}')
+    on mount via lazy useState initializer. Positions are bounds-clamped (x ≤ innerWidth-100,
+    y ≤ innerHeight-40) to keep panels visible after window resize. A useEffect persists pos on
+    every change. Applies to all 5 panels: event, region, person, context, body.
+  Success Criteria: Met — dragging a panel and reloading the page keeps the panel at the dragged
+    position; TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Feature: Tracking layer error feedback
+  Description: Aircraft, satellite, ship, and conflict-front fetches currently return [] on failure
+    with only a console warning. Users see an empty layer with no indication that data failed to load.
+    Add a visible error indicator (e.g., a FloatDock badge or toast-style banner) that shows
+    "Layer data unavailable" when a fetch fails, and clears when the next successful fetch arrives.
+    Each tracking hook (useTrackingLayers.ts, useConflictLayer.ts) should expose an `error` state.
+  Success Criteria: Simulating a network failure (or pointing to a bad endpoint) causes a visible
+    UI indicator. Indicator clears on subsequent successful fetch. TS clean; all tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Loading states for EventStack and tracking layers
+  Description: EventStack shows no loading indicator while the initial WebSocket data arrives —
+    the list is simply empty. Tracking layer buttons in FloatDock show no activity while fetching.
+    Add: (1) a subtle "loading…" skeleton or spinner row in EventStack when events array is empty
+    and socket is not yet connected; (2) a pulsing dot on FloatDock layer toggle buttons while
+    the corresponding fetch is in-flight.
+  Success Criteria: On first load, EventStack shows a loading indicator until the first batch
+    of events arrives. FloatDock buttons pulse while their layer data is being fetched. TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Agent context size guard
+  Description: useAgentQuery sends agentContext to the Ollama endpoint without validating size.
+    Very large contexts (many entities, long event summaries) can cause Ollama to reject the request
+    or silently truncate. Add a MAX_CONTEXT_CHARS = 8000 guard: if the combined context string
+    exceeds the limit, truncate with a visible "[context truncated]" notice in the chat panel so
+    the user knows what happened.
+  Success Criteria: With a context string > 8000 chars, the UI shows a truncation notice and the
+    request succeeds (sends ≤ 8000 chars). TS clean; existing tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Bugfix: Fix hardcoded Chinese strings in PopoutPage suggested queries
+  Description: PopoutPage.tsx computes suggestedQueries with hardcoded Traditional Chinese strings
+    (e.g., "分析當前局勢") that do not go through the i18n system. These should use t() keys so
+    they switch language with the rest of the UI. Add keys to en.json and zh-TW.json and replace
+    the hardcoded strings.
+  Success Criteria: Switching language in Config Modal changes popout suggested query labels.
+    TS clean; all tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---
