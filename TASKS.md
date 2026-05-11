@@ -621,6 +621,23 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][LOW] UX: Clamp panel initial position to viewport on open
+  Description: All floating panels (EventPanel, RegionPanel, PersonPanel, CelestialBodyPanel,
+    MultiEntityContextPanel) use hardcoded or window-size-based defaultPos values that do not
+    account for the panel's actual rendered height. On typical screens this causes panels to open
+    with content below (or outside) the visible viewport, requiring the user to drag the panel
+    into view before they can interact. Fix: in usePanelDrag, add a useLayoutEffect that fires
+    once after first mount, reads the panel's actual offsetWidth/offsetHeight, and clamps pos
+    so the entire panel fits within the viewport. Applies to all panels without changing any
+    individual defaultPos values.
+  Success Criteria: Met — useLayoutEffect in usePanelDrag clamps initial pos to viewport bounds
+    using actual offsetWidth/offsetHeight; applies to all 5 panels with no per-panel changes;
+    TS clean; no regressions.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
 [DONE][HIGH] UI: Heat Score Visualization
   Description: Added heat-score bar + numeric value + expiry label to EventPanelBody. Added
     heat score badge (value + HEAT label) to EventStack hover tooltip. Color-coded by intensity

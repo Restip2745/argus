@@ -64,14 +64,25 @@ export function usePanelDrag({ panelKey, defaultPos }: UsePanelDragOptions): Use
   const posRef = useRef(pos)
   posRef.current = pos
 
-  // Persist position to localStorage whenever it changes.
+  // One-shot viewport clamp: runs after each render until the ref element is
+  // available and has layout dimensions, then sets hasClamped and stops.
+  // useLayoutEffect with [] would fire before some panels render their ref div
+  // (e.g. EventPanel returns null until an event is selected), so we use a
+  // depless useEffect + guard ref instead.
+  const hasClamped = useRef(false)
   useEffect(() => {
-    try {
-      localStorage.setItem(PANEL_POS_KEY(panelKey), JSON.stringify(pos))
-    } catch {
-      // Ignore storage quota errors.
-    }
-  }, [panelKey, pos])
+    if (hasClamped.current) return
+    const el = panelRef.current
+    if (!el || el.offsetWidth === 0) return
+    hasClamped.current = true
+    const s  = uiScaleRef.current
+    const pw = el.offsetWidth
+    const ph = el.offsetHeight
+    setPos(p => ({
+      x: Math.max(0, Math.min(window.innerWidth  / s - pw, p.x)),
+      y: Math.max(0, Math.min(window.innerHeight / s - ph, p.y)),
+    }))
+  })
 
   const onHeaderMouseDown = useCallback((e: React.MouseEvent) => {
     const scale = uiScaleRef.current
