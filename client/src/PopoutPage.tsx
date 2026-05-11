@@ -19,6 +19,7 @@ import './i18n'
 import { EventPanelBody }      from './components/panels/EventPanelBody'
 import { RegionPanelOverview } from './components/panels/RegionPanelOverview'
 import { PersonPanelBody }     from './components/panels/PersonPanelBody'
+import { EntityCard }          from './components/panels/MultiEntityContextPanel'
 import { useWikiSummary }      from './hooks/useWikiSummary'
 import type { ArgusEvent }     from './types'
 
@@ -168,6 +169,40 @@ function PersonPopoutContent() {
   )
 }
 
+// ── Context popout ────────────────────────────────────────────────────────────
+
+function ContextPopoutContent() {
+  const contextEntities     = useAppStore((s) => s.contextEntities)
+  const removeContextEntity = useAppStore((s) => s.removeContextEntity)
+
+  if (contextEntities.length === 0) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>
+        NO ENTITIES IN CONTEXT
+      </div>
+    )
+  }
+
+  const cols = contextEntities.length <= 1 ? 1 : Math.min(3, contextEntities.length)
+
+  return (
+    <div style={{
+      flex: 1, overflowY: 'auto', padding: '12px 14px',
+      display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '8px',
+      alignContent: 'start',
+      scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,255,204,0.15) transparent',
+    }}>
+      {contextEntities.map(entity => (
+        <EntityCard
+          key={entity.id}
+          entity={entity}
+          onRemove={() => removeContextEntity(entity.id)}
+        />
+      ))}
+    </div>
+  )
+}
+
 // ── Root ───────────────────────────────────────────────────────────────────────
 
 export default function PopoutPage() {
@@ -177,11 +212,13 @@ export default function PopoutPage() {
   const events           = useAppStore((s) => s.events)
   const selectedCountry  = useAppStore((s) => s.selectedCountry)
   const selectedPersons  = useAppStore((s) => s.selectedPersons)
+  const contextEntities  = useAppStore((s) => s.contextEntities)
 
   useEffect(() => {
     const titles: Record<string, string> = {
-      region: 'ARGUS — Region Intel',
-      person: 'ARGUS — Person Intel',
+      region:  'ARGUS — Region Intel',
+      person:  'ARGUS — Person Intel',
+      context: 'ARGUS — Context Intel',
     }
     document.title = titles[popoutType] ?? 'ARGUS — Event Intel'
     document.body.style.background = '#04090e'
@@ -248,9 +285,28 @@ export default function PopoutPage() {
     return [`${names.join(' 與 ')} 的關係分析`, `${names.join(' 和 ')} 的政治立場比較`, '二者在國際事務上的角色']
   }, [selectedPersons])
 
-  const agentContext     = popoutType === 'region' ? regionAgentContext  : popoutType === 'person' ? personAgentContext : eventAgentContext
-  const suggestedQueries = popoutType === 'region' ? regionQueries       : popoutType === 'person' ? personQueries     : eventQueries
-  const agentLabel       = popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'person' ? 'PERSON AGENT'    : 'EVENT AGENT'
+  const contextAgentContext = useMemo(() => {
+    if (contextEntities.length === 0) return ''
+    return contextEntities.map(e =>
+      `[${e.type.toUpperCase()}] ${e.name}: ${e.summary}`
+    ).join('\n\n')
+  }, [contextEntities])
+
+  const contextQueries = useMemo(() => {
+    if (contextEntities.length === 0) return []
+    const types = new Set(contextEntities.map(e => e.type))
+    const names = contextEntities.slice(0, 3).map(e => e.name)
+    const queries: string[] = []
+    if (contextEntities.length >= 2) queries.push(`分析 ${names.slice(0, 2).join(' 與 ')} 之間的關聯`)
+    if (types.has('event') && types.has('person')) queries.push('這些人物在這些事件中扮演什麼角色？')
+    if (types.has('event') && types.has('region')) queries.push('這些事件對該地區的影響評估')
+    queries.push('綜合情報摘要')
+    return queries.slice(0, 4)
+  }, [contextEntities])
+
+  const agentContext     = popoutType === 'context' ? contextAgentContext : popoutType === 'region' ? regionAgentContext  : popoutType === 'person' ? personAgentContext : eventAgentContext
+  const suggestedQueries = popoutType === 'context' ? contextQueries     : popoutType === 'region' ? regionQueries       : popoutType === 'person' ? personQueries     : eventQueries
+  const agentLabel       = popoutType === 'context' ? 'CONTEXT AGENT'    : popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'person' ? 'PERSON AGENT'    : 'EVENT AGENT'
 
   return (
     <div style={{
@@ -264,11 +320,11 @@ export default function PopoutPage() {
       <div style={{ ...COL_STYLE, flex: '0 0 60%', background: 'rgba(4,9,22,0.97)', borderRight: '1px solid rgba(0,180,255,0.12)' }}>
         {/* Column header */}
         <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(0,180,255,0.1)', background: 'linear-gradient(90deg, rgba(0,212,255,0.04) 0%, transparent 100%)', flexShrink: 0 }}>
-          <span style={{ color: '#00d4ff', fontSize: '9px', letterSpacing: '0.15em' }}>
-            {popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'person' ? '◈ PERSON INTEL' : '◈ EVENT INTEL'}
+          <span style={{ color: popoutType === 'context' ? '#00ffcc' : '#00d4ff', fontSize: '9px', letterSpacing: '0.15em' }}>
+            {popoutType === 'context' ? '◈ CONTEXT INTEL' : popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'person' ? '◈ PERSON INTEL' : '◈ EVENT INTEL'}
           </span>
         </div>
-        {popoutType === 'region' ? <RegionPopoutContent /> : popoutType === 'person' ? <PersonPopoutContent /> : <EventPopoutContent />}
+        {popoutType === 'context' ? <ContextPopoutContent /> : popoutType === 'region' ? <RegionPopoutContent /> : popoutType === 'person' ? <PersonPopoutContent /> : <EventPopoutContent />}
       </div>
 
       {/* ── Right column: AI agent (40%) ── */}

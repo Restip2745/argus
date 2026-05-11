@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '../store'
-import type { ArgusEvent } from '../types'
+import type { ArgusEvent, ContextEntity } from '../types'
 import type { SelectedCountry, SelectedPerson } from '../store'
 
 const CHANNEL = 'argus-popout'
@@ -9,9 +9,8 @@ type SyncMsg =
   | { type: 'events';           data: ArgusEvent[] }
   | { type: 'selectedCountry';  data: SelectedCountry | null }
   | { type: 'activePanelId';    data: string | null }
-  | { type: 'compareMode';      data: boolean }
-  | { type: 'comparedCountries'; data: SelectedCountry[] }
   | { type: 'selectedPersons';  data: SelectedPerson[] }
+  | { type: 'contextEntities'; data: ContextEntity[] }
 
 /**
  * Broadcast store slices to popout windows and receive updates from the main window.
@@ -25,14 +24,12 @@ export function usePopoutSync(role: 'host' | 'guest') {
   const events             = useAppStore((s) => s.events)
   const selectedCountry    = useAppStore((s) => s.selectedCountry)
   const activePanelId      = useAppStore((s) => s.activePanelId)
-  const compareMode        = useAppStore((s) => s.compareMode)
-  const comparedCountries  = useAppStore((s) => s.comparedCountries)
   const selectedPersons    = useAppStore((s) => s.selectedPersons)
+  const contextEntities    = useAppStore((s) => s.contextEntities)
 
   const setEvents            = useAppStore((s) => s.setEvents)
   const setSelectedCountry   = useAppStore((s) => s.setSelectedCountry)
   const setActivePanelId     = useAppStore((s) => s.setActivePanelId)
-  const setCompareMode       = useAppStore((s) => s.setCompareMode)
   const clearSelectedPersons = useAppStore((s) => s.clearSelectedPersons)
   const addSelectedPerson    = useAppStore((s) => s.addSelectedPerson)
 
@@ -47,14 +44,15 @@ export function usePopoutSync(role: 'host' | 'guest') {
         if (msg.type === 'events')            setEvents(msg.data)
         if (msg.type === 'selectedCountry')   setSelectedCountry(msg.data)
         if (msg.type === 'activePanelId')     setActivePanelId(msg.data)
-        if (msg.type === 'compareMode')       setCompareMode(msg.data)
-        if (msg.type === 'comparedCountries') {
-          const store = useAppStore.getState()
-          msg.data.forEach(c => store.addComparedCountry(c))
-        }
         if (msg.type === 'selectedPersons') {
           clearSelectedPersons()
           msg.data.forEach(p => addSelectedPerson(p))
+        }
+        if (msg.type === 'contextEntities') {
+          const store = useAppStore.getState()
+          store.clearContextEntities()
+          msg.data.forEach(e => store.addContextEntity(e))
+          store.setShowContextPanel(msg.data.length > 0)
         }
       }
       // Ask host to re-broadcast current state
@@ -82,14 +80,13 @@ export function usePopoutSync(role: 'host' | 'guest') {
 
   useEffect(() => {
     if (role !== 'host' || !channelRef.current) return
-    channelRef.current.postMessage({ type: 'compareMode', data: compareMode } satisfies SyncMsg)
-    channelRef.current.postMessage({ type: 'comparedCountries', data: comparedCountries } satisfies SyncMsg)
-  }, [role, compareMode, comparedCountries])
+    channelRef.current.postMessage({ type: 'selectedPersons', data: selectedPersons } satisfies SyncMsg)
+  }, [role, selectedPersons])
 
   useEffect(() => {
     if (role !== 'host' || !channelRef.current) return
-    channelRef.current.postMessage({ type: 'selectedPersons', data: selectedPersons } satisfies SyncMsg)
-  }, [role, selectedPersons])
+    channelRef.current.postMessage({ type: 'contextEntities', data: contextEntities } satisfies SyncMsg)
+  }, [role, contextEntities])
 
   // Host: handle re-sync requests from guest
   useEffect(() => {
@@ -101,9 +98,8 @@ export function usePopoutSync(role: 'host' | 'guest') {
         ch.postMessage({ type: 'events',            data: s.events })
         ch.postMessage({ type: 'selectedCountry',   data: s.selectedCountry })
         ch.postMessage({ type: 'activePanelId',     data: s.activePanelId })
-        ch.postMessage({ type: 'compareMode',       data: s.compareMode })
-        ch.postMessage({ type: 'comparedCountries', data: s.comparedCountries })
         ch.postMessage({ type: 'selectedPersons',   data: s.selectedPersons })
+        ch.postMessage({ type: 'contextEntities',  data: s.contextEntities })
       }
     }
     ch.addEventListener('message', handler)

@@ -178,7 +178,6 @@ function buildHighlightFillGeometry(feature: GeoFeature): THREE.BufferGeometry |
   return geo
 }
 
-const COMPARE_COLORS = ['#00ffcc', '#ff9c2a', '#9b6dff', '#39ff8a', '#ff4d4d', '#00d4ff']
 
 const HEATMAP_FILL_RADIUS = 1.003
 
@@ -243,18 +242,8 @@ export function GeoJsonLayer({ positionsRef }: Props) {
   const setSelectedCountry     = useAppStore((s) => s.setSelectedCountry)
   const selectedCountry        = useAppStore((s) => s.selectedCountry)
   const setOnEarthSurfaceClick = useAppStore((s) => s.setOnEarthSurfaceClick)
-  const compareMode            = useAppStore((s) => s.compareMode)
-  const comparedCountries      = useAppStore((s) => s.comparedCountries)
-  const addComparedCountry     = useAppStore((s) => s.addComparedCountry)
-  const removeComparedCountry  = useAppStore((s) => s.removeComparedCountry)
   const showHeatmapLayer       = useAppStore((s) => s.showHeatmapLayer)
   const events                 = useAppStore((s) => s.events)
-
-  // Refs so handleSurfaceClick stays stable across compare state changes
-  const compareModeRef       = useRef(compareMode)
-  const comparedCountriesRef = useRef(comparedCountries)
-  useEffect(() => { compareModeRef.current = compareMode },       [compareMode])
-  useEffect(() => { comparedCountriesRef.current = comparedCountries }, [comparedCountries])
 
   const outerRef = useRef<THREE.Group>(null)   // Earth position + axial tilt
   const gastRef  = useRef<THREE.Group>(null)   // GAST rotation
@@ -308,19 +297,13 @@ export function GeoJsonLayer({ positionsRef }: Props) {
             (feature.properties['NAME'] as string) ??
             (feature.properties['ADMIN'] as string) ??
             'Unknown'
-          if (compareModeRef.current) {
-            const already = comparedCountriesRef.current.some(c => c.name === name)
-            if (already) removeComparedCountry(name)
-            else         addComparedCountry({ name, lat, lng })
-          } else {
-            setSelectedCountry({ name, lat, lng })
-          }
+          setSelectedCountry({ name, lat, lng })
           return
         }
       }
-      if (!compareModeRef.current) setSelectedCountry(null)
+      setSelectedCountry(null)
     },
-    [features, setSelectedCountry, addComparedCountry, removeComparedCountry],
+    [features, setSelectedCountry],
   )
 
   // Register/unregister the handler so CelestialBody can call it on Earth clicks
@@ -356,11 +339,11 @@ export function GeoJsonLayer({ positionsRef }: Props) {
 
   // ── Highlight geometries (rebuilt when selectedCountry or features change) ────
   const highlightFeature = useMemo(() => {
-    if (compareMode || !selectedCountry || features.length === 0) return null
+    if (!selectedCountry || features.length === 0) return null
     return features.find((f) =>
       pointInPolygon(selectedCountry.lat, selectedCountry.lng, f.geometry),
     ) ?? null
-  }, [compareMode, selectedCountry, features])
+  }, [selectedCountry, features])
 
   const highlightBorderGeo = useMemo(
     () => (highlightFeature ? buildHighlightBorderGeometry(highlightFeature) : null),
@@ -373,20 +356,6 @@ export function GeoJsonLayer({ positionsRef }: Props) {
   )
 
   // ── Compare mode: highlight all compared countries ────────────────────────────
-  const compareHighlightGeos = useMemo(() => {
-    if (!compareMode || features.length === 0) return []
-    return comparedCountries.map((c, i) => {
-      const feat = features.find(f => pointInPolygon(c.lat, c.lng, f.geometry))
-      if (!feat) return null
-      return {
-        key: c.name,
-        color: COMPARE_COLORS[i % COMPARE_COLORS.length],
-        borderGeo: buildHighlightBorderGeometry(feat),
-        fillGeo:   buildHighlightFillGeometry(feat),
-      }
-    }).filter((x): x is NonNullable<typeof x> => x !== null)
-  }, [compareMode, comparedCountries, features])
-
   // ── Heatmap: per-country total heat score from events ────────────────────────
   const heatmapEntries = useMemo(() => {
     if (!showHeatmapLayer || !showGeoJsonLayer || features.length === 0) return []
@@ -463,20 +432,6 @@ export function GeoJsonLayer({ positionsRef }: Props) {
               <meshBasicMaterial color="#00ffcc" transparent opacity={0.08} side={THREE.DoubleSide} depthWrite={false} />
             </mesh>
           )}
-
-          {/* Compare mode: highlight each compared country */}
-          {compareHighlightGeos.map(({ key, color, borderGeo, fillGeo }) => (
-            <group key={key}>
-              <lineSegments geometry={borderGeo}>
-                <lineBasicMaterial color={color} transparent opacity={0.9} depthWrite={false} />
-              </lineSegments>
-              {fillGeo && (
-                <mesh geometry={fillGeo}>
-                  <meshBasicMaterial color={color} transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
-                </mesh>
-              )}
-            </group>
-          ))}
 
           {/* Heatmap: country fills colored by 24h event heat score */}
           {heatmapEntries.map(({ geo, color, opacity }, i) => (
