@@ -12,7 +12,7 @@
  * Satellites use satellite.js TLE propagation, so their icons orbit in real-time.
  */
 
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -256,10 +256,15 @@ export function TrackingLayer({ positionsRef }: Props) {
   const showAircraftLayer   = useAppStore((s) => s.showAircraftLayer)
   const showSatellitesLayer = useAppStore((s) => s.showSatellitesLayer)
   const showShipsLayer      = useAppStore((s) => s.showShipsLayer)
+  const setLayerError       = useAppStore((s) => s.setLayerError)
 
-  const aircraft = useAircraftLayer(showAircraftLayer)
-  const ships    = useShipsLayer(showShipsLayer)
-  const tleData  = useSatelliteLayer(showSatellitesLayer)
+  const { data: aircraft,  error: aircraftErr  } = useAircraftLayer(showAircraftLayer)
+  const { data: ships,     error: shipsErr     } = useShipsLayer(showShipsLayer)
+  const { data: tleData,   error: satelliteErr } = useSatelliteLayer(showSatellitesLayer)
+
+  useEffect(() => { setLayerError('aircraft',   aircraftErr)  }, [aircraftErr,  setLayerError])
+  useEffect(() => { setLayerError('ships',       shipsErr)    }, [shipsErr,     setLayerError])
+  useEffect(() => { setLayerError('satellites',  satelliteErr) }, [satelliteErr, setLayerError])
 
   // Shared refs updated every frame by DistanceTracker
   const distRef   = useRef<number>(Infinity)

@@ -566,14 +566,17 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Feature: Tracking layer error feedback
-  Description: Aircraft, satellite, ship, and conflict-front fetches currently return [] on failure
-    with only a console warning. Users see an empty layer with no indication that data failed to load.
-    Add a visible error indicator (e.g., a FloatDock badge or toast-style banner) that shows
-    "Layer data unavailable" when a fetch fails, and clears when the next successful fetch arrives.
-    Each tracking hook (useTrackingLayers.ts, useConflictLayer.ts) should expose an `error` state.
-  Success Criteria: Simulating a network failure (or pointing to a bad endpoint) causes a visible
-    UI indicator. Indicator clears on subsequent successful fetch. TS clean; all tests pass.
+[DONE][HIGH] Feature: Tracking layer error feedback
+  Description: usePoll now tracks error state: error=true on non-ok response or fetch exception,
+    error=false on successful data receipt. useConflictLayer similarly exposes error. Public hooks
+    return { data, error } instead of bare arrays/null. Zustand store gains layerErrors record +
+    setLayerError action. TrackingLayer and ConflictLayer sync hook errors to the store via
+    useEffect. FloatDock DockBtn gains optional error prop that renders an amber '!' badge
+    (top-left corner) distinct from the red count badge. Aircraft/satellite/ships/conflict
+    buttons pass error={layerActive && layerErrors[key]} so the badge only shows while the
+    layer is toggled on and its last fetch failed. Clears automatically on next success.
+  Success Criteria: Met — error badge appears on layer buttons when fetch fails; clears on
+    success; badge only shows when layer is active; TS clean; 27/27 tests pass.
   Retry Count: 0
   Source: ROADMAP
 

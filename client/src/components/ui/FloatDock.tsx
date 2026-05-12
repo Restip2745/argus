@@ -7,12 +7,13 @@ interface DockBtnProps {
   icon: string
   label: string
   badge?: number | string
+  error?: boolean
   color?: string
   active?: boolean
   onClick: () => void
 }
 
-function DockBtn({ icon, label, badge, color = '#4a6070', active, onClick }: DockBtnProps) {
+function DockBtn({ icon, label, badge, error, color = '#4a6070', active, onClick }: DockBtnProps) {
   const [hovered, setHovered] = useState(false)
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -55,6 +56,15 @@ function DockBtn({ icon, label, badge, color = '#4a6070', active, onClick }: Doc
             {typeof badge === 'number' && badge > 99 ? '99+' : badge}
           </span>
         )}
+        {error && (
+          <span style={{
+            position: 'absolute', top: '2px', left: '2px',
+            background: '#ff8c00', color: '#fff',
+            fontSize: '6px', fontWeight: 700,
+            borderRadius: '2px', padding: '0 2px',
+            lineHeight: '9px', minWidth: '9px', textAlign: 'center',
+          }}>!</span>
+        )}
       </button>
     </div>
   )
@@ -94,6 +104,7 @@ export function FloatDock() {
   const setShowConflictLayer = useAppStore((s) => s.setShowConflictLayer)
   const showHeatmapLayer     = useAppStore((s) => s.showHeatmapLayer)
   const setShowHeatmapLayer  = useAppStore((s) => s.setShowHeatmapLayer)
+  const layerErrors          = useAppStore((s) => s.layerErrors)
 
 
   const { alertCount, topCats } = useMemo(() => {
@@ -265,6 +276,7 @@ export function FloatDock() {
         label="AIRCRAFT (ADS-B)"
         color="#a0c4ff"
         active={showAircraftLayer}
+        error={showAircraftLayer && layerErrors.aircraft}
         onClick={() => setShowAircraftLayer(!showAircraftLayer)}
       />
       <DockBtn
@@ -272,6 +284,7 @@ export function FloatDock() {
         label="SATELLITES (TLE)"
         color="#00d4ff"
         active={showSatellitesLayer}
+        error={showSatellitesLayer && layerErrors.satellites}
         onClick={() => setShowSatellitesLayer(!showSatellitesLayer)}
       />
       <DockBtn
@@ -279,6 +292,7 @@ export function FloatDock() {
         label="VESSELS (AIS)"
         color="#39ff8a"
         active={showShipsLayer}
+        error={showShipsLayer && layerErrors.ships}
         onClick={() => setShowShipsLayer(!showShipsLayer)}
       />
       <DockBtn
@@ -286,6 +300,7 @@ export function FloatDock() {
         label={t('conflictLayer.toggle', 'CONFLICT FRONTS')}
         color="#ff6600"
         active={showConflictLayer}
+        error={showConflictLayer && layerErrors.conflict}
         onClick={() => setShowConflictLayer(!showConflictLayer)}
       />
       <DockBtn

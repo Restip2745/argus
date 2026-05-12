@@ -36,13 +36,14 @@ export interface ShipState {
 
 // ── Polling hook helper ───────────────────────────────────────────────────────
 
-function usePoll<T>(url: string, intervalMs: number, enabled: boolean): T[] {
+function usePoll<T>(url: string, intervalMs: number, enabled: boolean): { data: T[]; error: boolean } {
   const [data, setData] = useState<T[]>([])
+  const [error, setError] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeRef = useRef(false)
 
   useEffect(() => {
-    if (!enabled) { setData([]); return }
+    if (!enabled) { setData([]); setError(false); return }
 
     let cancelled = false
 
@@ -50,11 +51,17 @@ function usePoll<T>(url: string, intervalMs: number, enabled: boolean): T[] {
       try {
         activeRef.current = true
         const r = await fetch(url)
-        if (!cancelled && r.ok) {
-          const json = await r.json()
-          if (Array.isArray(json)) setData(json as T[])
+        if (!cancelled) {
+          if (r.ok) {
+            const json = await r.json()
+            if (Array.isArray(json)) { setData(json as T[]); setError(false) }
+          } else {
+            setError(true)
+          }
         }
-      } catch { /* network errors silently ignored */ } finally {
+      } catch {
+        if (!cancelled) setError(true)
+      } finally {
         activeRef.current = false
         if (!cancelled) timerRef.current = setTimeout(load, intervalMs)
       }
@@ -67,13 +74,13 @@ function usePoll<T>(url: string, intervalMs: number, enabled: boolean): T[] {
     }
   }, [url, intervalMs, enabled])
 
-  return data
+  return { data, error }
 }
 
 // ── Public hooks ──────────────────────────────────────────────────────────────
 
 /** Live aircraft positions from OpenSky Network (refreshes every 45 s). */
-export function useAircraftLayer(enabled: boolean): AircraftState[] {
+export function useAircraftLayer(enabled: boolean): { data: AircraftState[]; error: boolean } {
   return usePoll<AircraftState>(
     `${API}/api/tracking/aircraft`,
     45_000,
@@ -85,7 +92,7 @@ export function useAircraftLayer(enabled: boolean): AircraftState[] {
 export function useSatelliteLayer(
   enabled: boolean,
   groups = 'stations,visual',
-): TleSatellite[] {
+): { data: TleSatellite[]; error: boolean } {
   return usePoll<TleSatellite>(
     `${API}/api/tracking/tle?groups=${groups}`,
     600_000,
@@ -95,7 +102,7 @@ export function useSatelliteLayer(
 
 /** Live vessel positions from aisstream.io (refreshes every 60 s).
  *  Returns [] immediately if AISSTREAM_API_KEY is not set on the server. */
-export function useShipsLayer(enabled: boolean): ShipState[] {
+export function useShipsLayer(enabled: boolean): { data: ShipState[]; error: boolean } {
   return usePoll<ShipState>(
     `${API}/api/tracking/ships`,
     60_000,

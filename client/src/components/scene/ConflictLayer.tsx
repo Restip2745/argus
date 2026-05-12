@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useAppStore } from '../../store'
@@ -145,11 +145,14 @@ interface Props {
 
 export function ConflictLayer({ positionsRef }: Props) {
   const showConflictLayer = useAppStore((s) => s.showConflictLayer)
+  const setLayerError     = useAppStore((s) => s.setLayerError)
   const outerRef = useRef<THREE.Group>(null)
   const gastRef  = useRef<THREE.Group>(null)
   const visRef   = useRef<THREE.Group>(null)
 
-  const data = useConflictLayer(showConflictLayer)
+  const { data, error: conflictErr } = useConflictLayer(showConflictLayer)
+
+  useEffect(() => { setLayerError('conflict', conflictErr) }, [conflictErr, setLayerError])
 
   const rendered = useMemo(
     () => (data ? buildRenderedFeatures(data.features) : []),

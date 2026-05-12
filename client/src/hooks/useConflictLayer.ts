@@ -28,24 +28,31 @@ export interface ConflictFeatureCollection {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 /** Fetches conflict front GeoJSON from the server (24-hour refresh).
- *  Returns null while loading; returns empty FeatureCollection on error. */
-export function useConflictLayer(enabled: boolean): ConflictFeatureCollection | null {
+ *  data is null while loading; error is true if the last fetch failed. */
+export function useConflictLayer(enabled: boolean): { data: ConflictFeatureCollection | null; error: boolean } {
   const [data, setData] = useState<ConflictFeatureCollection | null>(null)
+  const [error, setError] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!enabled) { setData(null); return }
+    if (!enabled) { setData(null); setError(false); return }
 
     let cancelled = false
 
     async function load() {
       try {
         const r = await fetch(`${API}/api/conflict/fronts`)
-        if (!cancelled && r.ok) {
-          const json = await r.json() as ConflictFeatureCollection
-          if (json?.type === 'FeatureCollection') setData(json)
+        if (!cancelled) {
+          if (r.ok) {
+            const json = await r.json() as ConflictFeatureCollection
+            if (json?.type === 'FeatureCollection') { setData(json); setError(false) }
+          } else {
+            setError(true)
+          }
         }
-      } catch { /* network errors silently ignored */ } finally {
+      } catch {
+        if (!cancelled) setError(true)
+      } finally {
         if (!cancelled) timerRef.current = setTimeout(load, 24 * 60 * 60 * 1000)
       }
     }
@@ -57,5 +64,5 @@ export function useConflictLayer(enabled: boolean): ConflictFeatureCollection | 
     }
   }, [enabled])
 
-  return data
+  return { data, error }
 }
