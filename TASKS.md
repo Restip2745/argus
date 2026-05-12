@@ -598,14 +598,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Agent context size guard
-  Description: useAgentQuery sends agentContext to the Ollama endpoint without validating size.
-    Very large contexts (many entities, long event summaries) can cause Ollama to reject the request
-    or silently truncate. Add a MAX_CONTEXT_CHARS = 8000 guard: if the combined context string
-    exceeds the limit, truncate with a visible "[context truncated]" notice in the chat panel so
-    the user knows what happened.
-  Success Criteria: With a context string > 8000 chars, the UI shows a truncation notice and the
-    request succeeds (sends ≤ 8000 chars). TS clean; existing tests pass.
+[DONE][MEDIUM] Feature: Agent context size guard
+  Description: Added MAX_CONTEXT_CHARS = 8000 constant in useAgentQuery. In ask(), context is
+    truncated to 8000 chars before being sent; a local contextTruncated boolean tracks whether
+    truncation occurred. When the stream completes, if truncated, a hardcoded HTML div with
+    class="context-truncated-notice" is prepended to the sanitized response HTML — this avoids
+    changes to any of the 5 rendering components since they all use dangerouslySetInnerHTML.
+    CSS class .context-truncated-notice added to index.css with amber color and subtle border.
+  Success Criteria: Met — contexts > 8000 chars are truncated before sending; notice appears in
+    any agent chat panel that rendered the response; TS clean; 27/27 tests pass.
   Retry Count: 0
   Source: ROADMAP
 

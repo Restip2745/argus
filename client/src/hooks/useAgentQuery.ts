@@ -33,6 +33,8 @@ export interface AgentEntry {
   streaming: boolean  // true while tokens are arriving
 }
 
+const MAX_CONTEXT_CHARS = 8000
+
 export function useAgentQuery() {
   const [history, setHistory] = useState<AgentEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -50,6 +52,10 @@ export function useAgentQuery() {
     setLoading(true)
     setError(null)
 
+    // Guard context size — truncate and note for the user
+    const contextTruncated = context.length > MAX_CONTEXT_CHARS
+    const effectiveContext = contextTruncated ? context.slice(0, MAX_CONTEXT_CHARS) : context
+
     // Add a streaming placeholder entry; use a stable ID to avoid index collisions
     const entryId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     setHistory(h => [...h, { id: entryId, question: question.trim(), html: '', streaming: true }])
@@ -58,7 +64,7 @@ export function useAgentQuery() {
       const res = await fetch(`${API_BASE}/api/agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: question.trim(), context }),
+        body: JSON.stringify({ question: question.trim(), context: effectiveContext }),
         signal: ctrl.signal,
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -95,7 +101,10 @@ export function useAgentQuery() {
       }
 
       // Stream done: sanitize full HTML and mark complete
-      const safe = sanitizeHtml(rawText)
+      const truncationNotice = contextTruncated
+        ? '<div class="context-truncated-notice">⚠ Context truncated to 8 000 chars</div>'
+        : ''
+      const safe = truncationNotice + sanitizeHtml(rawText)
       setHistory(h => h.map((e) =>
         e.id === entryId ? { ...e, html: safe, streaming: false } : e
       ))
