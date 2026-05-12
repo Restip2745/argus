@@ -48,6 +48,11 @@ function usePoll<T>(url: string, intervalMs: number, enabled: boolean): { data: 
     let cancelled = false
 
     async function load() {
+      if (document.hidden) {
+        // Tab hidden — skip fetch, reschedule
+        if (!cancelled) timerRef.current = setTimeout(load, intervalMs)
+        return
+      }
       if (!cancelled) setLoading(true)
       try {
         const r = await fetch(url)
@@ -66,9 +71,19 @@ function usePoll<T>(url: string, intervalMs: number, enabled: boolean): { data: 
       }
     }
 
+    // Resume immediately when tab becomes visible
+    function onVisible() {
+      if (!document.hidden && !cancelled) {
+        if (timerRef.current) clearTimeout(timerRef.current)
+        void load()
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisible)
     load()
     return () => {
       cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [url, intervalMs, enabled])

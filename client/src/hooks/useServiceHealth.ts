@@ -25,35 +25,43 @@ export function useServiceHealth(): ServiceHealth {
     let cancelled = false
 
     async function poll() {
-      try {
-        const r = await fetch(`${API_BASE}/api/health`)
-        if (!r.ok || cancelled) return
-        const data = await r.json() as {
-          ollamaOnline?: boolean
-          lastScraperRun?: string | null
-          analyzedCount?: number
-        }
-        if (cancelled) return
+      if (!document.hidden) {
+        try {
+          const r = await fetch(`${API_BASE}/api/health`)
+          if (!r.ok || cancelled) { /* keep previous state */ }
+          else {
+            const data = await r.json() as {
+              ollamaOnline?: boolean
+              lastScraperRun?: string | null
+              analyzedCount?: number
+            }
+            if (!cancelled) {
+              const ollamaOnline   = data.ollamaOnline !== false
+              const lastScraperRun = data.lastScraperRun ?? null
+              const analyzedCount  = data.analyzedCount ?? 0
+              const scraperStale = lastScraperRun != null
+                ? (Date.now() - new Date(lastScraperRun).getTime()) > STALE_SCRAPER_MS
+                : false
+              setHealth({ ollamaOnline, lastScraperRun, analyzedCount, healthy: ollamaOnline && !scraperStale })
+            }
+          }
+        } catch { /* network error — keep previous health state */ }
+      }
+      if (!cancelled) timerRef.current = setTimeout(poll, POLL_INTERVAL)
+    }
 
-        const ollamaOnline   = data.ollamaOnline !== false
-        const lastScraperRun = data.lastScraperRun ?? null
-        const analyzedCount  = data.analyzedCount ?? 0
-
-        const scraperStale = lastScraperRun != null
-          ? (Date.now() - new Date(lastScraperRun).getTime()) > STALE_SCRAPER_MS
-          : false
-        const healthy = ollamaOnline && !scraperStale
-
-        setHealth({ ollamaOnline, lastScraperRun, analyzedCount, healthy })
-      } catch { /* network error — keep previous health state */ }
-      finally {
-        if (!cancelled) timerRef.current = setTimeout(poll, POLL_INTERVAL)
+    function onVisible() {
+      if (!document.hidden && !cancelled) {
+        if (timerRef.current) clearTimeout(timerRef.current)
+        void poll()
       }
     }
 
+    document.addEventListener('visibilitychange', onVisible)
     poll()
     return () => {
       cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [])

@@ -103,6 +103,17 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase J — Efficiency & Integration
+
+> Reduce unnecessary resource usage and open ARGUS to external integrations.
+
+- [ ] **Page Visibility Polling Pause** — stop tracking layer polls and health polls when the browser tab is hidden (Page Visibility API); resume automatically when tab becomes visible
+- [ ] **Webhook Event Ingestion** — `POST /api/events/webhook` with configurable API key auth allows external systems to push events directly into ARGUS
+- [ ] **Event Search Highlighting** — highlight matched query terms in EventStack tooltip titles and EventPanelBody summary text using `<mark>` elements
+- [ ] **Server Test Suite** — add Vitest to server package, write unit tests for rateLimiter, healthTracker, and the Ollama classification validation logic
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

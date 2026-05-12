@@ -795,6 +795,53 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][MEDIUM] Feature: Page Visibility polling pause
+  Description: useTrackingLayers.ts usePoll() and useConflictLayer.ts continue polling their
+    respective endpoints while the browser tab is in the background. This wastes network
+    bandwidth. Add a Page Visibility API listener: when document.hidden is true, skip the
+    scheduled fetch and delay; resume when the tab becomes visible again.
+  Success Criteria: Switching to a background tab stops fetch calls; returning to the tab
+    resumes polling. TS clean; 43 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Webhook event ingestion endpoint
+  Description: Add POST /api/events/webhook endpoint. Accepts { title, category, intensity,
+    location_label, actors, tags, source, url, published_at } payload. Validates required
+    fields, generates an id, and inserts directly into the analyzed articles table (bypassing
+    Ollama classification). Requires X-Webhook-Key header matching WEBHOOK_SECRET env var.
+    Returns 401 if key missing/wrong; 200 with the created event id on success.
+  Success Criteria: Correctly keyed POST creates an event visible in ARGUS feed. Wrong key
+    returns 401. Missing required fields return 400. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] UX: Event search term highlighting
+  Description: When a searchQuery is active, the matched terms in EventStack tooltip titles
+    and in EventPanelBody title + summary text should be visually highlighted. Wrap matched
+    substrings in <mark class="search-highlight"> elements. Add .search-highlight CSS class.
+  Success Criteria: Typing a query shows highlighted matches in tooltips and event panel
+    title. Clears when query is cleared. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Test: Server-side unit tests setup
+  Description: Server has no test suite. Add vitest as a dev dependency to server/package.json.
+    Add test script. Write tests for: rateLimiter (token bucket logic, window reset, expiry
+    cleanup), healthTracker (recordFeedSuccess/Error, getHealthSnapshot output), and
+    useAgentQuery equivalent server validation (context slice).
+  Success Criteria: npm test in server/ runs and ≥8 server tests pass. TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

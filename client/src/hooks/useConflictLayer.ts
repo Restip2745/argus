@@ -40,7 +40,13 @@ export function useConflictLayer(enabled: boolean): { data: ConflictFeatureColle
 
     let cancelled = false
 
+    const REFRESH_MS = 24 * 60 * 60 * 1000
+
     async function load() {
+      if (document.hidden) {
+        if (!cancelled) timerRef.current = setTimeout(load, REFRESH_MS)
+        return
+      }
       if (!cancelled) setLoading(true)
       try {
         const r = await fetch(`${API}/api/conflict/fronts`)
@@ -55,13 +61,22 @@ export function useConflictLayer(enabled: boolean): { data: ConflictFeatureColle
       } catch {
         if (!cancelled) setError(true)
       } finally {
-        if (!cancelled) { setLoading(false); timerRef.current = setTimeout(load, 24 * 60 * 60 * 1000) }
+        if (!cancelled) { setLoading(false); timerRef.current = setTimeout(load, REFRESH_MS) }
       }
     }
 
+    function onVisible() {
+      if (!document.hidden && !cancelled) {
+        if (timerRef.current) clearTimeout(timerRef.current)
+        void load()
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisible)
     load()
     return () => {
       cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [enabled])
