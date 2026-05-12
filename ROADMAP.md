@@ -64,10 +64,10 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 > Harden edge cases, improve observability, and close remaining UX gaps.
 
 - [x] **Panel Position Persistence** — `usePanelDrag` reads saved pos from `localStorage` on mount (bounds-clamped for window-resize safety); writes on change via `useEffect`
-- [ ] **Tracking Layer Error Feedback** — show visible "Data unavailable" indicator instead of silently empty layers when aircraft/satellite/ship/conflict fetches fail
-- [ ] **Loading States** — skeleton/spinner states for EventStack initial load, tracking layer fetches, and agent streaming
-- [ ] **Agent Context Size Guard** — validate total context character count before sending to Ollama; show user-visible warning when truncation occurs
-- [ ] **Keyboard Accessibility** — arrow-key navigation for CategoryFilterBar filter chips; space/enter to toggle; focus-visible ring on all interactive panel elements
+- [x] **Tracking Layer Error Feedback** — amber `!` badge on FloatDock layer buttons when fetch fails; clears on next success; error state in `usePoll` and `useConflictLayer`
+- [x] **Loading States** — EventStack shows pulsing skeleton on first load; FloatDock layer buttons animate `loadingRing` while fetch is in-flight
+- [x] **Agent Context Size Guard** — `MAX_CONTEXT_CHARS=8000` in `useAgentQuery`; truncated contexts prepend amber `.context-truncated-notice` HTML badge to response
+- [x] **Keyboard Accessibility** — ArrowLeft/ArrowRight navigate filter chips; `aria-pressed` + `aria-label` on chips; global `:focus-visible` ring in CSS
 
 ---
 
