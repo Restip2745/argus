@@ -831,7 +831,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Test: Server-side unit tests setup
+[DONE][LOW] Test: Server-side unit tests setup
   Description: Server has no test suite. Add vitest as a dev dependency to server/package.json.
     Add test script. Write tests for: rateLimiter (token bucket logic, window reset, expiry
     cleanup), healthTracker (recordFeedSuccess/Error, getHealthSnapshot output), and
