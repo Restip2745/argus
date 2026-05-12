@@ -8,14 +8,23 @@ const SHORTCUTS: { key: string; description: string }[] = [
   { key: '?',         description: 'Show this keyboard shortcuts overlay' },
 ]
 
+import { useRef } from 'react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
+
 interface Props {
   onClose: () => void
 }
 
 export function KeyboardShortcutsModal({ onClose }: Props) {
+  const modalRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(modalRef, true)
+
   return (
     <div
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Keyboard Shortcuts"
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(4,9,22,0.75)',
@@ -26,6 +35,7 @@ export function KeyboardShortcutsModal({ onClose }: Props) {
       }}
     >
       <div
+        ref={modalRef}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'rgba(4,9,22,0.97)',

@@ -147,6 +147,17 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase N — Accessibility & Test Depth
+
+> Improve keyboard/screen-reader accessibility and expand automated test coverage.
+
+- [x] **Modal Focus Trapping** — `useFocusTrap` hook traps Tab/Shift+Tab within Config Modal, KeyboardShortcutsModal, and Intel Brief modal; `role="dialog"` + `aria-modal="true"` on all three; restores focus on close
+- [x] **Panel ARIA Roles** — Panel.tsx base component adds `role="dialog"` + `aria-modal="true"` + `aria-labelledby` (auto-generated via `useId()`) to all 5 floating panels (EventPanel, RegionPanel, PersonPanel, CelestialBodyPanel, MultiEntityContextPanel)
+- [x] **Hook Integration Tests** — 7 tests for `useServiceHealth` (healthy/unhealthy states, stale scraper, fetch error, document.hidden, visibilitychange) + 8 tests for `useConflictLayer` (loading, success, error, disable/re-enable, document.hidden, visibilitychange); 58 client tests pass
+- [x] **Server SQLite Integration Test** — 9 tests using in-memory SQLite DB covering `insertWebhookEvent` (insert, dedup, JSON actors/tags), `getRelatedEvents` (actor/tag/location overlap scoring), and `deleteExpiredArticles` (expiry conditions); 19 server tests pass
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.
