@@ -19,6 +19,7 @@ import { PersonPanel } from './components/panels/PersonPanel'
 import { MultiEntityContextPanel } from './components/panels/MultiEntityContextPanel'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
+import { KeyboardShortcutsModal } from './components/ui/KeyboardShortcutsModal'
 import { useAppStore } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
 import { usePopoutSync } from './hooks/usePopoutSync'
@@ -37,6 +38,7 @@ export default function App() {
   const immersiveMode    = useAppStore((s) => s.immersiveMode)
   const setImmersiveMode = useAppStore((s) => s.setImmersiveMode)
   const [showCanvasAnalysis, setShowCanvasAnalysis] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const activePanelId       = useAppStore((s) => s.activePanelId)
   const setActivePanelId    = useAppStore((s) => s.setActivePanelId)
@@ -50,6 +52,13 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName
       const inInput = tag === 'INPUT' || tag === 'TEXTAREA'
+
+      // ? → keyboard shortcuts overlay
+      if (e.key === '?' && !inInput) {
+        e.preventDefault()
+        setShowShortcuts((v) => !v)
+        return
+      }
 
       // / → focus search (works even from outside inputs)
       if (e.key === '/' && !inInput) {
@@ -100,7 +109,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [immersiveMode, setImmersiveMode, setLiteMode,
       activePanelId, setActivePanelId, setSelectedCountry, clearSelectedPersons,
-      toggleBookmark, filteredEvents])
+      toggleBookmark, filteredEvents, showShortcuts])
 
   const hudVisible = !immersiveMode
 
@@ -124,6 +133,9 @@ export default function App() {
 
       {/* ── Toast notifications (outside HUD scale, always visible) ─────── */}
       <ToastContainer />
+
+      {/* ── Keyboard shortcuts overlay ───────────────────────────────────── */}
+      {showShortcuts && <KeyboardShortcutsModal onClose={() => setShowShortcuts(false)} />}
 
       {/* ── Scaled HUD layer ─────────────────────────────────────────────── */}
       <ErrorBoundary label="HUD">

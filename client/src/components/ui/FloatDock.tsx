@@ -430,6 +430,14 @@ export function FloatDock() {
         onClick={() => setShowConfig(!showConfig)}
       />
 
+      {/* Keyboard shortcuts */}
+      <DockBtn
+        icon="?"
+        label="KEYBOARD SHORTCUTS"
+        color="#4a6070"
+        onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }))}
+      />
+
       {/* Divider */}
       <div style={{ width: '1px', height: '16px', background: 'rgba(0,180,255,0.12)', margin: '0 2px' }} />
 

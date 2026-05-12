@@ -948,7 +948,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Keyboard shortcuts help overlay
+[DONE][MEDIUM] Feature: Keyboard shortcuts help overlay
   Description: Currently the only way to know about keyboard shortcuts (/, Escape, b, [, ],
     i) is to read the source code. Add a keyboard shortcut help overlay triggered by pressing
     '?' when not in an input. Show as a floating modal with all shortcuts listed. Also add a
