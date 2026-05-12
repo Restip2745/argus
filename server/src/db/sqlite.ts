@@ -58,6 +58,43 @@ export function insertRawArticle(article: RawArticleInput): boolean {
   return result.changes > 0
 }
 
+export interface WebhookEventInput {
+  id:             string
+  title:          string
+  category:       string
+  intensity:      string
+  location_label: string | null
+  location_type:  string | null
+  lat:            number | null
+  lng:            number | null
+  actors:         string[]
+  tags:           string[]
+  source:         string
+  url:            string
+  published_at:   string
+  heat_score:     number
+  expires_at:     string
+}
+
+export function insertWebhookEvent(e: WebhookEventInput): void {
+  getDb().prepare(
+    `INSERT OR IGNORE INTO articles
+      (id, source, title, content, url, published_at, is_analyzed,
+       category, title_zh, summary_zh, intensity,
+       location_type, location_label, lat, lng, body,
+       actors, tags, sources_count, reliability, heat_score, expires_at)
+     VALUES
+      (@id, @source, @title, NULL, @url, @published_at, 1,
+       @category, @title, '', @intensity,
+       @location_type, @location_label, @lat, @lng, NULL,
+       @actors, @tags, 1, 'MEDIUM', @heat_score, @expires_at)`
+  ).run({
+    ...e,
+    actors: JSON.stringify(e.actors),
+    tags:   JSON.stringify(e.tags),
+  })
+}
+
 // ── Query helpers ───────────────────────────────────────
 
 export function getPendingArticles(limit = 10): Article[] {

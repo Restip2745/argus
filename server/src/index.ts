@@ -6,7 +6,7 @@ import cors from 'cors'
 import { Ollama } from 'ollama'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { initDb, getAnalyzedArticles, getRelatedEvents } from './db/sqlite'
+import { initDb, getAnalyzedArticles, getRelatedEvents, insertWebhookEvent, articleToClientEvent, type WebhookEventInput } from './db/sqlite'
 import { startSummaryWorker } from './workers/summary'
 import { initSocket } from './services/socket'
 import { startScraper } from './services/scraper'
@@ -16,6 +16,7 @@ import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
+import type { EventCategory, EventIntensity } from './types'
 
 
 const app        = express()
@@ -38,6 +39,82 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/events', (_req, res) => {
   try {
     res.json(getAnalyzedArticles())
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message })
+  }
+})
+
+// ── Webhook event ingestion ──────────────────────────────
+
+const VALID_CATEGORY_SET = new Set<EventCategory>([
+  'ARMED_CONFLICT','POLITICAL','ECONOMIC','SOCIAL',
+  'SCIENCE_TECH','ENVIRONMENT','HEALTH','CRIME_SECURITY','SPACE',
+])
+const VALID_INTENSITY_SET = new Set<EventIntensity>(['LOW','MODERATE','HIGH','CRITICAL'])
+
+app.post('/api/events/webhook', (req, res) => {
+  const secret = process.env.WEBHOOK_SECRET
+  if (!secret) { res.status(503).json({ error: 'Webhook endpoint not configured' }); return }
+  if (req.headers['x-webhook-key'] !== secret) {
+    res.status(401).json({ error: 'Invalid or missing X-Webhook-Key' }); return
+  }
+
+  const b = req.body as {
+    title?: string; category?: string; intensity?: string
+    location_label?: string; lat?: number; lng?: number
+    actors?: string[]; tags?: string[]
+    source?: string; url?: string; published_at?: string
+  }
+
+  if (!b.title || typeof b.title !== 'string') {
+    res.status(400).json({ error: 'title required' }); return
+  }
+  if (!VALID_CATEGORY_SET.has(b.category as EventCategory)) {
+    res.status(400).json({ error: `category must be one of: ${[...VALID_CATEGORY_SET].join(', ')}` }); return
+  }
+  if (!VALID_INTENSITY_SET.has(b.intensity as EventIntensity)) {
+    res.status(400).json({ error: `intensity must be one of: ${[...VALID_INTENSITY_SET].join(', ')}` }); return
+  }
+
+  const id = `wh-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  const now = new Date().toISOString()
+  const event: WebhookEventInput = {
+    id,
+    title:          b.title.slice(0, 300),
+    category:       b.category!,
+    intensity:      b.intensity!,
+    location_label: b.location_label ?? null,
+    location_type:  b.lat != null ? 'geo' : null,
+    lat:            b.lat ?? null,
+    lng:            b.lng ?? null,
+    actors:         Array.isArray(b.actors) ? b.actors.map(String).slice(0, 20) : [],
+    tags:           Array.isArray(b.tags)   ? b.tags.map(String).slice(0, 20)   : [],
+    source:         (b.source ?? 'Webhook').slice(0, 100),
+    url:            (b.url ?? '').slice(0, 2000),
+    published_at:   b.published_at ?? now,
+    heat_score:     b.intensity === 'CRITICAL' ? 2.0 : b.intensity === 'HIGH' ? 1.5 : b.intensity === 'MODERATE' ? 1.0 : 0.5,
+    expires_at:     new Date(Date.now() + 48 * 3600_000).toISOString(),
+  }
+
+  try {
+    insertWebhookEvent(event)
+    const clientEvent = articleToClientEvent({
+      id, source: event.source, title: event.title, content: null,
+      url: event.url, published_at: event.published_at, fetched_at: now,
+      is_analyzed: 1 as 0 | 1 | -1,
+      category:      event.category as EventCategory,
+      title_zh:      event.title,
+      summary_zh:    '',
+      intensity:     event.intensity as EventIntensity,
+      location_type: (event.location_type ?? null) as 'geo' | 'orbital' | null,
+      location_label: event.location_label,
+      lat: event.lat, lng: event.lng, body: null,
+      actors: JSON.stringify(event.actors), tags: JSON.stringify(event.tags),
+      sources_count: 1, reliability: 'MEDIUM',
+      heat_score: event.heat_score, expires_at: event.expires_at, last_referenced: null,
+    })
+    io.emit('new_event', clientEvent)
+    res.json({ id, message: 'Event ingested' })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
   }

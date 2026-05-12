@@ -807,7 +807,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Webhook event ingestion endpoint
+[DONE][MEDIUM] Feature: Webhook event ingestion endpoint
   Description: Add POST /api/events/webhook endpoint. Accepts { title, category, intensity,
     location_label, actors, tags, source, url, published_at } payload. Validates required
     fields, generates an id, and inserts directly into the analyzed articles table (bypassing
