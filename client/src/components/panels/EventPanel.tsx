@@ -17,6 +17,7 @@ import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
 import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
 import { usePanelDrag }       from '../../hooks/usePanelDrag'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
+import { copyToClipboard } from '../../utils/clipboard'
 import { EventTimeline }      from './EventTimeline'
 import { EventPanelBody }     from './EventPanelBody'
 import { Panel }              from './Panel'
@@ -187,7 +188,7 @@ export function EventPanel() {
       e.tags?.length   ? `\n## Tags\n\n${e.tags.join(', ')}`   : '',
       '', `## Source\n\n[${e.source}](${e.url})`,
     ].filter((l) => l !== null).join('\n').trim()
-    navigator.clipboard.writeText(md).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }).catch(() => {})
+    void copyToClipboard(md).then((ok) => { if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000) } })
   }, [displayedEvent])
 
   // ── Focus ──────────────────────────────────────────────────────────────────

@@ -769,7 +769,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Clipboard write fallback
+[DONE][MEDIUM] Feature: Clipboard write fallback
   Description: EventPanel.tsx export button calls navigator.clipboard.writeText() with
     .catch(() => {}). In non-HTTPS contexts (e.g. local network deployments) the clipboard
     API is unavailable and the copy silently fails. Add a fallback: if clipboard throws,
