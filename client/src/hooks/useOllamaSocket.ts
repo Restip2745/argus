@@ -15,9 +15,10 @@ interface IntelBriefPayload {
 }
 
 export function useOllamaSocket() {
-  const addEvent      = useAppStore((s) => s.addEvent)
-  const setEvents     = useAppStore((s) => s.setEvents)
-  const setIntelBrief = useAppStore((s) => s.setIntelBrief)
+  const addEvent        = useAppStore((s) => s.addEvent)
+  const setEvents       = useAppStore((s) => s.setEvents)
+  const setIntelBrief   = useAppStore((s) => s.setIntelBrief)
+  const setEventsLoaded = useAppStore((s) => s.setEventsLoaded)
 
   useEffect(() => {
     // Fetch existing analyzed articles on mount
@@ -27,6 +28,7 @@ export function useOllamaSocket() {
         if (Array.isArray(data)) setEvents(data)
       })
       .catch((err) => console.warn('[REST] Failed to fetch events:', err))
+      .finally(() => setEventsLoaded(true))
 
     // Connect Socket.io for real-time updates
     socket = io(API_BASE, { path: '/socket.io' })

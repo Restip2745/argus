@@ -582,14 +582,17 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Loading states for EventStack and tracking layers
-  Description: EventStack shows no loading indicator while the initial WebSocket data arrives —
-    the list is simply empty. Tracking layer buttons in FloatDock show no activity while fetching.
-    Add: (1) a subtle "loading…" skeleton or spinner row in EventStack when events array is empty
-    and socket is not yet connected; (2) a pulsing dot on FloatDock layer toggle buttons while
-    the corresponding fetch is in-flight.
-  Success Criteria: On first load, EventStack shows a loading indicator until the first batch
-    of events arrives. FloatDock buttons pulse while their layer data is being fetched. TS clean.
+[DONE][MEDIUM] Feature: Loading states for EventStack and tracking layers
+  Description: (1) EventStack: eventsLoaded boolean added to Zustand store; useOllamaSocket
+    sets it true in .finally() of the initial REST fetch. EventStack renders 4 pulsing
+    skeleton placeholder boxes (skeletonPulse keyframe) when filtered.length===0 && !eventsLoaded.
+    (2) Tracking layers: usePoll and useConflictLayer each gain a loading boolean state
+    (true during fetch, false after). TrackingLayer and ConflictLayer sync loading to
+    layerLoading store record via useEffect. DockBtn gains optional loading prop that applies
+    a loadingRing pulsing box-shadow animation when active layer is fetching.
+    Both keyframes added to index.css.
+  Success Criteria: Met — EventStack shows skeleton on first load until data arrives;
+    FloatDock layer buttons pulse while fetching; TS clean; 27/27 tests pass.
   Retry Count: 0
   Source: ROADMAP
 

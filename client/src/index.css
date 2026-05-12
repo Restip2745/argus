@@ -184,6 +184,18 @@ canvas {
   50%       { opacity: 0; }
 }
 
+/* ── EventStack skeleton loader ────────────────────────────── */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.25; }
+  50%       { opacity: 0.6; }
+}
+
+/* ── FloatDock layer loading ring ──────────────────────────── */
+@keyframes loadingRing {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(0,212,255,0.1), inset 0 0 0 1px rgba(0,212,255,0.05); }
+  50%       { box-shadow: 0 0 0 2px rgba(0,212,255,0.45), inset 0 0 4px rgba(0,212,255,0.15); }
+}
+
 /* ── EventStack icon fall-in animation ────────────────────── */
 @keyframes iconFallIn {
   0%   { opacity: 0; transform: translateY(-28px) scale(0.6); }

@@ -77,6 +77,12 @@ interface AppState {
   setShowHeatmapLayer: (v: boolean) => void
   layerErrors: { aircraft: boolean; satellites: boolean; ships: boolean; conflict: boolean }
   setLayerError: (layer: 'aircraft' | 'satellites' | 'ships' | 'conflict', error: boolean) => void
+  layerLoading: { aircraft: boolean; satellites: boolean; ships: boolean; conflict: boolean }
+  setLayerLoading: (layer: 'aircraft' | 'satellites' | 'ships' | 'conflict', loading: boolean) => void
+
+  // ── Events loaded state ───────────────────────────────────
+  eventsLoaded: boolean
+  setEventsLoaded: (v: boolean) => void
 
   // ── Region selection (GeoJSON country click) ──────────────
   selectedCountry: SelectedCountry | null
@@ -230,6 +236,12 @@ export const useAppStore = create<AppState>((set) => ({
   setShowHeatmapLayer:  (showHeatmapLayer) => set({ showHeatmapLayer }),
   layerErrors: { aircraft: false, satellites: false, ships: false, conflict: false },
   setLayerError: (layer, error) => set((s) => ({ layerErrors: { ...s.layerErrors, [layer]: error } })),
+  layerLoading: { aircraft: false, satellites: false, ships: false, conflict: false },
+  setLayerLoading: (layer, loading) => set((s) => ({ layerLoading: { ...s.layerLoading, [layer]: loading } })),
+
+  // Events loaded
+  eventsLoaded: false,
+  setEventsLoaded: (eventsLoaded) => set({ eventsLoaded }),
 
   // Region selection
   selectedCountry:    null,

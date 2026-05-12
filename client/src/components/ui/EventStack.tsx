@@ -117,7 +117,8 @@ const ITEM_H = 30  // 26px icon + 4px flex gap
 const VSCROLL_BUFFER = 8  // extra items rendered above/below visible window
 
 export function EventStack() {
-  const filtered = useFilteredEvents()
+  const filtered     = useFilteredEvents()
+  const eventsLoaded = useAppStore((s) => s.eventsLoaded)
 
   // ── Virtual scroll ────────────────────────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null)
@@ -196,6 +197,24 @@ export function EventStack() {
       className="absolute left-2 pointer-events-none"
       style={{ top: '44px', bottom: '36px', overflow: 'hidden' }}
     >
+      {/* Loading skeleton — shown until first REST fetch resolves */}
+      {!eventsLoaded && filtered.length === 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '2px' }}>
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: '26px', height: '26px',
+                borderRadius: '3px',
+                background: 'rgba(0,180,255,0.06)',
+                border: '1px solid rgba(0,180,255,0.1)',
+                animation: `skeletonPulse 1.4s ease-in-out ${i * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Sentinel div establishes total scroll height */}
       <div style={{ height: `${total * ITEM_H}px`, position: 'relative' }}>
         {/* Render only the visible window, positioned at startIdx */}

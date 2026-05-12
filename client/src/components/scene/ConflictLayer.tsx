@@ -146,13 +146,15 @@ interface Props {
 export function ConflictLayer({ positionsRef }: Props) {
   const showConflictLayer = useAppStore((s) => s.showConflictLayer)
   const setLayerError     = useAppStore((s) => s.setLayerError)
+  const setLayerLoading   = useAppStore((s) => s.setLayerLoading)
   const outerRef = useRef<THREE.Group>(null)
   const gastRef  = useRef<THREE.Group>(null)
   const visRef   = useRef<THREE.Group>(null)
 
-  const { data, error: conflictErr } = useConflictLayer(showConflictLayer)
+  const { data, error: conflictErr, loading: conflictLoad } = useConflictLayer(showConflictLayer)
 
-  useEffect(() => { setLayerError('conflict', conflictErr) }, [conflictErr, setLayerError])
+  useEffect(() => { setLayerError('conflict',   conflictErr)  }, [conflictErr,  setLayerError])
+  useEffect(() => { setLayerLoading('conflict',  conflictLoad) }, [conflictLoad, setLayerLoading])
 
   const rendered = useMemo(
     () => (data ? buildRenderedFeatures(data.features) : []),
