@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
+import type { FilterPreset } from '../../store'
 import { CATEGORY_ICON, CATEGORY_COLOR, CATEGORY_LABEL } from '../../data/categoryConfig'
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_COLOR)
@@ -155,6 +156,13 @@ export function CategoryFilterBar() {
   const bookmarkedIds        = useAppStore((s) => s.bookmarkedIds)
   const showWatchlistOnly    = useAppStore((s) => s.showWatchlistOnly)
   const setShowWatchlistOnly = useAppStore((s) => s.setShowWatchlistOnly)
+  const filterPresets        = useAppStore((s) => s.filterPresets)
+  const saveFilterPreset     = useAppStore((s) => s.saveFilterPreset)
+  const applyFilterPreset    = useAppStore((s) => s.applyFilterPreset)
+  const deleteFilterPreset   = useAppStore((s) => s.deleteFilterPreset)
+  const [savingPreset, setSavingPreset] = useState(false)
+  const [presetName,   setPresetName]   = useState('')
+  const presetInputRef = useRef<HTMLInputElement>(null)
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -170,11 +178,20 @@ export function CategoryFilterBar() {
     return counts
   }, [events])
 
+  const isNonDefault = hiddenCategories.length > 0 || timeRangeFilter !== 'all' || searchQuery !== ''
+
+  function handleSavePreset() {
+    if (!presetName.trim()) return
+    saveFilterPreset(presetName.trim())
+    setPresetName(''); setSavingPreset(false)
+  }
+
   return (
     <div
-      className="absolute top-2 z-20 flex items-center gap-1 font-mono"
-      style={{ left: '50%', transform: 'translateX(-50%)' }}
+      className="absolute top-2 z-20 flex flex-col items-center gap-1 font-mono"
+      style={{ left: '50%', transform: 'translateX(-50%)', alignItems: 'center' }}
     >
+    <div className="flex items-center gap-1">
       {/* Watchlist toggle — ★ with bookmark count */}
       <button
         onClick={() => setShowWatchlistOnly(!showWatchlistOnly)}
@@ -297,6 +314,59 @@ export function CategoryFilterBar() {
           />
         ))}
       </div>
+    </div>{/* end filter row */}
+
+    {/* ── Preset row (shown when presets exist or filters are non-default) ── */}
+    {(filterPresets.length > 0 || isNonDefault) && (
+      <div className="flex items-center gap-1 flex-wrap justify-center" style={{ maxWidth: '600px' }}>
+        {/* Saved preset chips */}
+        {filterPresets.map((preset: FilterPreset) => (
+          <div key={preset.id} className="flex items-center rounded border overflow-hidden" style={{
+            borderColor: 'rgba(155,109,255,0.3)',
+            background: 'rgba(155,109,255,0.06)',
+            backdropFilter: 'blur(4px)',
+          }}>
+            <button
+              onClick={() => applyFilterPreset(preset.id)}
+              style={{ fontSize: '8px', color: '#c084fc', padding: '2px 6px', letterSpacing: '0.06em', cursor: 'pointer' }}
+              title={`Apply preset: ${preset.name}`}
+            >⊙ {preset.name}</button>
+            <button
+              onClick={() => deleteFilterPreset(preset.id)}
+              style={{ fontSize: '7px', color: '#4a3060', padding: '2px 4px', cursor: 'pointer', borderLeft: '1px solid rgba(155,109,255,0.2)' }}
+              title="Delete preset"
+            >✕</button>
+          </div>
+        ))}
+
+        {/* Save preset flow */}
+        {isNonDefault && filterPresets.length < 5 && !savingPreset && (
+          <button
+            onClick={() => { setSavingPreset(true); setTimeout(() => presetInputRef.current?.focus(), 50) }}
+            style={{
+              fontSize: '7px', color: '#4a3060', padding: '2px 6px',
+              border: '1px solid rgba(155,109,255,0.2)', borderRadius: '3px',
+              background: 'transparent', cursor: 'pointer', letterSpacing: '0.06em',
+            }}
+          >+ SAVE PRESET</button>
+        )}
+        {savingPreset && (
+          <div className="flex items-center rounded border overflow-hidden" style={{ borderColor: 'rgba(155,109,255,0.4)', background: 'rgba(155,109,255,0.08)' }}>
+            <input
+              ref={presetInputRef}
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSavePreset(); if (e.key === 'Escape') { setSavingPreset(false); setPresetName('') } }}
+              placeholder="Preset name…"
+              maxLength={30}
+              style={{ fontSize: '8px', color: '#c084fc', background: 'transparent', border: 'none', outline: 'none', padding: '2px 6px', width: '90px', letterSpacing: '0.04em' }}
+            />
+            <button onClick={handleSavePreset} style={{ fontSize: '7px', color: '#9b6dff', padding: '2px 5px', cursor: 'pointer', borderLeft: '1px solid rgba(155,109,255,0.2)' }}>✓</button>
+            <button onClick={() => { setSavingPreset(false); setPresetName('') }} style={{ fontSize: '7px', color: '#4a3060', padding: '2px 4px', cursor: 'pointer' }}>✕</button>
+          </div>
+        )}
+      </div>
+    )}
     </div>
   )
 }

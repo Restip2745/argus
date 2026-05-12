@@ -852,7 +852,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Custom filter presets
+[DONE][MEDIUM] Feature: Custom filter presets
   Description: Let operators save their current active filter state (hiddenCategories +
     timeRangeFilter + searchQuery) as a named preset. Store up to 5 presets in Zustand
     (persisted to localStorage 'argus-filter-presets'). Show preset chips in CategoryFilterBar

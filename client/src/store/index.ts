@@ -6,6 +6,14 @@ import type { BodyDef } from '../data/celestialBodies'
 
 const CONTEXT_ENTITY_LIMIT = 8
 
+export interface FilterPreset {
+  id: string
+  name: string
+  hiddenCategories: string[]
+  timeRangeFilter: '6h' | '12h' | '24h' | 'all'
+  searchQuery: string
+}
+
 export interface SelectedPerson {
   name: string
   wikiTitle?: string
@@ -136,6 +144,12 @@ interface AppState {
   // ── Event full-text search (for EventStack) ───────────────
   searchQuery: string
   setSearchQuery: (q: string) => void
+
+  // ── Filter presets ────────────────────────────────────────
+  filterPresets: FilterPreset[]
+  saveFilterPreset: (name: string) => void
+  applyFilterPreset: (id: string) => void
+  deleteFilterPreset: (id: string) => void
 
   // ── Bookmark / Watchlist ──────────────────────────────────
   bookmarkedIds: string[]
@@ -306,6 +320,39 @@ export const useAppStore = create<AppState>((set) => ({
   // Full-text search
   searchQuery: '',
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  // Filter presets — persisted in localStorage
+  filterPresets: (() => {
+    try { return JSON.parse(localStorage.getItem('argus-filter-presets') ?? '[]') as FilterPreset[] }
+    catch { return [] }
+  })(),
+  saveFilterPreset: (name) => set((s) => {
+    if (s.filterPresets.length >= 5) return s
+    const preset: FilterPreset = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: name.trim().slice(0, 30) || 'Preset',
+      hiddenCategories: [...s.hiddenCategories],
+      timeRangeFilter: s.timeRangeFilter,
+      searchQuery: s.searchQuery,
+    }
+    const next = [...s.filterPresets, preset]
+    localStorage.setItem('argus-filter-presets', JSON.stringify(next))
+    return { filterPresets: next }
+  }),
+  applyFilterPreset: (id) => set((s) => {
+    const p = s.filterPresets.find((fp) => fp.id === id)
+    if (!p) return s
+    return {
+      hiddenCategories: [...p.hiddenCategories],
+      timeRangeFilter:  p.timeRangeFilter,
+      searchQuery:      p.searchQuery,
+    }
+  }),
+  deleteFilterPreset: (id) => set((s) => {
+    const next = s.filterPresets.filter((fp) => fp.id !== id)
+    localStorage.setItem('argus-filter-presets', JSON.stringify(next))
+    return { filterPresets: next }
+  }),
 
   // Bookmarks — persisted in localStorage
   bookmarkedIds: (() => {
