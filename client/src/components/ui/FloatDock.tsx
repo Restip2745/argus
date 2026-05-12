@@ -3,6 +3,7 @@ import { useAppStore } from '../../store'
 import { useTranslation } from 'react-i18next'
 import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 interface DockBtnProps {
   icon: string
@@ -82,6 +83,8 @@ export function FloatDock() {
   const setBriefRead       = useAppStore((s) => s.setBriefRead)
   const [showBrief, setShowBrief] = useState(false)
   const briefRef = useRef<HTMLDivElement>(null)
+  const briefModalRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(briefModalRef, showBrief)
   const immersiveMode     = useAppStore((s) => s.immersiveMode)
   const setImmersiveMode  = useAppStore((s) => s.setImmersiveMode)
   const liteMode          = useAppStore((s) => s.liteMode)
@@ -164,7 +167,12 @@ export function FloatDock() {
 
       {/* Intel Brief modal */}
       {showBrief && intelBrief && (
-        <div style={{
+        <div
+          ref={briefModalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Intel Brief"
+          style={{
           position: 'absolute', bottom: '52px', left: '50%', transform: 'translateX(-50%)',
           width: '340px',
           background: 'rgba(4,9,22,0.97)',

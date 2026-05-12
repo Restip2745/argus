@@ -15,6 +15,7 @@
  *     </Panel>
  *   </div>
  */
+import { useId } from 'react'
 import type { HTMLAttributes } from 'react'
 
 // ── Corner accents ────────────────────────────────────────────────────────────
@@ -81,9 +82,13 @@ export function Panel({
   className,
   ...rest
 }: PanelProps) {
+  const titleId = useId()
   return (
     <div
       ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
       className={className}
       {...rest}
       style={{
@@ -130,7 +135,7 @@ export function Panel({
         {/* Left: badge slot + title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
           {headerLeft}
-          <span style={{ color: accentColor, fontSize: '8px', letterSpacing: '0.15em' }}>
+          <span id={titleId} style={{ color: accentColor, fontSize: '8px', letterSpacing: '0.15em' }}>
             {title}
           </span>
         </div>

@@ -1113,3 +1113,52 @@ Managed by the autonomous development agent. Follow strict format below.
   Success Criteria: Met — core flows covered; no regression; 17/17 tests pass.
   Retry Count: 0
   Source: ROADMAP
+
+---
+
+[DONE][HIGH] Accessibility: Modal focus trapping
+  Description: Created client/src/hooks/useFocusTrap.ts — accepts containerRef + enabled boolean,
+    traps Tab/Shift+Tab within focusable elements, restores focus on unmount/disable.
+    Applied to ConfigModal.tsx (existing cardRef), KeyboardShortcutsModal.tsx (new modalRef),
+    and FloatDock.tsx Intel Brief modal (new briefModalRef + useFocusTrap(briefModalRef, showBrief)).
+    All three receive role="dialog" aria-modal="true" ARIA attributes.
+  Success Criteria: Met — Tab cycles within modals; Escape/close restores focus; TS clean; 58 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Accessibility: Panel ARIA roles
+  Description: Panel.tsx base component now uses useId() to generate a stable titleId, passes
+    id={titleId} to the title span, and renders role="dialog" aria-modal="true"
+    aria-labelledby={titleId} on the outer container div. All 5 floating panels
+    (EventPanel, RegionPanel, PersonPanel, CelestialBodyPanel, MultiEntityContextPanel)
+    inherit ARIA roles automatically via Panel.tsx.
+  Success Criteria: Met — all panels have dialog role; title spans have matching ids; TS clean; 58 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Test: Hook integration tests for useServiceHealth and useConflictLayer
+  Description: Added client/src/hooks/__tests__/useServiceHealth.test.ts (7 tests: default
+    state, healthy response, unhealthy ollama, stale scraper, fetch error, hidden skip,
+    visibility resume) and useConflictLayer.test.ts (8 tests: disabled state, loading flag,
+    success, 503 error, network error, disable-after-load, hidden skip, visibility resume).
+    Uses vi.spyOn(globalThis, 'fetch') + real timers + waitFor pattern.
+  Success Criteria: Met — 15 new tests pass; 58 client tests pass total; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Test: Server SQLite integration test
+  Description: Added server/src/__tests__/sqlite.test.ts with 9 tests using in-memory
+    better-sqlite3 DB (createTestDb() runs schema.sql against :memory:). Tests cover:
+    insertWebhookEvent (row persisted, dedup via OR IGNORE, JSON arrays), getRelatedEvents
+    (empty when no overlap, actor overlap scoring, location label scoring),
+    deleteExpiredArticles (past-expiry delete, low-heat delete, non-expired preserved).
+    Dates use SQLite native format (YYYY-MM-DD HH:MM:SS) via toSqliteDt() helper.
+  Success Criteria: Met — 9 new server tests pass; 19 server tests pass total; TS clean.
+  Retry Count: 0
+  Source: ROADMAP

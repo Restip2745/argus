@@ -4,6 +4,7 @@ import { useDraggable } from '../../hooks/useDraggable'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { copyToClipboard } from '../../utils/clipboard'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
@@ -58,6 +59,7 @@ export function ConfigModal() {
   const uiScale       = useAppStore((s) => s.uiScale)
   const setUiScale    = useAppStore((s) => s.setUiScale)
   const cardRef       = useRef<HTMLDivElement>(null)
+  useFocusTrap(cardRef, true)
 
   const [config,   setConfig]   = useState<LlmConfig | null>(null)
   const [models,   setModels]   = useState<string[]>([])
@@ -224,6 +226,9 @@ export function ConfigModal() {
     <div
       className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={handleBackdrop}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Configuration"
       style={{ zIndex: 200 }}
     >
       <div
