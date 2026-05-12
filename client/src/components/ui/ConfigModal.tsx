@@ -448,11 +448,25 @@ export function ConfigModal() {
             className="flex items-center justify-between px-6 py-3.5 border-t border-[rgba(0,180,255,0.12)] sticky bottom-0 z-20"
             style={{ background: '#04090e' }}
           >
-            <span className="text-[9px] tracking-widest">
-              {status === 'saving' && <span className="text-[#00d4ff]">SAVING…</span>}
-              {status === 'idle' && !dirty && <span className="text-[#2a4060]">NO UNSAVED CHANGES</span>}
-              {status === 'idle' &&  dirty && <span className="text-[#ff9c2a]">● UNSAVED CHANGES</span>}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] tracking-widest">
+                {status === 'saving' && <span className="text-[#00d4ff]">SAVING…</span>}
+                {status === 'idle' && !dirty && <span className="text-[#2a4060]">NO UNSAVED CHANGES</span>}
+                {status === 'idle' &&  dirty && <span className="text-[#ff9c2a]">● UNSAVED CHANGES</span>}
+              </span>
+              <a
+                href={`${API}/api/events/export?format=json`}
+                download
+                className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                title="Download event archive as JSON"
+              >↓ JSON</a>
+              <a
+                href={`${API}/api/events/export?format=csv`}
+                download
+                className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                title="Download event archive as CSV"
+              >↓ CSV</a>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={handleCancel}

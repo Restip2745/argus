@@ -704,7 +704,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Feature: Event archive export endpoint
+[DONE][LOW] Feature: Event archive export endpoint
   Description: Add GET /api/events/export?format=json|csv to the server. JSON returns full
     analyzed articles array. CSV maps to columns: id, title, category, intensity, location,
     heat_score, published_at, source, url. Client EventPanel or Config Modal exposes a

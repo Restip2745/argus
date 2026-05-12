@@ -43,6 +43,36 @@ app.get('/api/events', (_req, res) => {
   }
 })
 
+app.get('/api/events/export', (req, res) => {
+  try {
+    const events = getAnalyzedArticles()
+    const format = (req.query.format as string | undefined) ?? 'json'
+    if (format === 'csv') {
+      const header = 'id,title,category,intensity,location,heat_score,published_at,source,url\n'
+      const rows = events.map((e) => [
+        e.id,
+        `"${(e.title ?? '').replace(/"/g, '""')}"`,
+        e.category,
+        e.intensity,
+        `"${(e.location_label ?? '').replace(/"/g, '""')}"`,
+        e.heat_score ?? '',
+        e.published_at ?? '',
+        `"${(e.source ?? '').replace(/"/g, '""')}"`,
+        `"${(e.url ?? '').replace(/"/g, '""')}"`,
+      ].join(',')).join('\n')
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+      res.setHeader('Content-Disposition', `attachment; filename="argus-events-${Date.now()}.csv"`)
+      res.send(header + rows)
+    } else {
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Content-Disposition', `attachment; filename="argus-events-${Date.now()}.json"`)
+      res.json(events)
+    }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message })
+  }
+})
+
 app.get('/api/events/:id/related', (req, res) => {
   try {
     res.json(getRelatedEvents(req.params.id))
