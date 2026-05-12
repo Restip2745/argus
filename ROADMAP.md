@@ -71,6 +71,18 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase G — Operational Hardening
+
+> Improve operational stability, observability, and power-user workflows.
+
+- [x] **Service Health Indicator** — `/api/health` returns ollamaOnline + lastScraperRun + analyzedCount; FloatDock shows amber badge when services degraded
+- [x] **Intel Brief History** — rolling 5-brief history in Zustand; BRIEF modal shows collapsible past entries with timestamps
+- [ ] **Rate Limiting on Agent API** — server-side request rate limit on `/api/agent` to prevent Ollama overload; return 429 with retry-after
+- [ ] **Config Modal Scraper Status** — show lastScraperRun timestamp and feed health (success/fail per feed) in Config Modal Feeds tab
+- [ ] **Event Archive Export** — endpoint `GET /api/events/export?format=json|csv` to download full event database as a file
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

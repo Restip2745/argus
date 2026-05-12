@@ -680,6 +680,42 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][MEDIUM] Feature: Rate limiting on /api/agent endpoint
+  Description: Created server/src/services/rateLimiter.ts — in-memory per-key token-bucket
+    (Map with count + resetAt). Self-cleaning via setInterval(5min) purges expired entries.
+    /api/agent now extracts client IP from x-forwarded-for or socket.remoteAddress, checks
+    checkRateLimit('agent:{ip}', 5, 30_000) and returns 429 + { error: '...' } if exceeded.
+  Success Criteria: Met — 6th request within 30s returns 429; normal usage unaffected;
+    server TS clean; 27/27 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Config Modal scraper status display
+  Description: The Config Modal Feeds tab shows feed URLs and enable/disable toggles, but
+    operators cannot see when feeds last ran or if any individual feed failed. Add feed health
+    state to healthTracker (per-feed: lastSuccess, lastError, errorMessage). Show a colored
+    status dot (green/red) and last-success timestamp next to each feed in the Config Modal.
+  Success Criteria: Config Modal Feeds tab shows per-feed status. Green when last scrape OK,
+    red with error snippet when last scrape failed. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Feature: Event archive export endpoint
+  Description: Add GET /api/events/export?format=json|csv to the server. JSON returns full
+    analyzed articles array. CSV maps to columns: id, title, category, intensity, location,
+    heat_score, published_at, source, url. Client EventPanel or Config Modal exposes a
+    "Download Archive" button that triggers the download.
+  Success Criteria: /api/events/export?format=json downloads a JSON file; ?format=csv
+    downloads a CSV file with correct headers. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

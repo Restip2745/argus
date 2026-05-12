@@ -15,6 +15,7 @@ import { startRetention } from './workers/retention'
 import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
+import { checkRateLimit } from './services/rateLimiter'
 
 
 const app        = express()
@@ -97,6 +98,13 @@ Keep responses concise and intelligence-focused. No markdown, no code blocks, no
 If the question is in Chinese, respond in Traditional Chinese (繁體中文).`
 
 app.post('/api/agent', async (req, res) => {
+  const ip = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()
+    ?? req.socket.remoteAddress
+    ?? 'unknown'
+  if (!checkRateLimit(`agent:${ip}`, 5, 30_000)) {
+    res.status(429).json({ error: 'Rate limited — please wait 30 seconds' }); return
+  }
+
   const { context, question } = req.body as { context?: string; question?: string }
   if (!question || typeof question !== 'string' || question.trim().length === 0) {
     res.status(400).json({ error: 'question required' }); return
