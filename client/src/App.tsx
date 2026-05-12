@@ -18,6 +18,7 @@ import { CelestialBodyPanel } from './components/panels/CelestialBodyPanel'
 import { PersonPanel } from './components/panels/PersonPanel'
 import { MultiEntityContextPanel } from './components/panels/MultiEntityContextPanel'
 import { ToastContainer } from './components/ui/ToastContainer'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useAppStore } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
 import { usePopoutSync } from './hooks/usePopoutSync'
@@ -125,6 +126,7 @@ export default function App() {
       <ToastContainer />
 
       {/* ── Scaled HUD layer ─────────────────────────────────────────────── */}
+      <ErrorBoundary label="HUD">
       <div style={{ zoom: uiScale }}>
 
         {hudVisible ? (
@@ -148,11 +150,11 @@ export default function App() {
 
             <CategoryFilterBar />
             <FloatDock />
-            <EventPanel />
-            <RegionPanel />
-            <CelestialBodyPanel />
-            <PersonPanel />
-            <MultiEntityContextPanel />
+            <ErrorBoundary label="Event Panel"><EventPanel /></ErrorBoundary>
+            <ErrorBoundary label="Region Panel"><RegionPanel /></ErrorBoundary>
+            <ErrorBoundary label="Celestial Panel"><CelestialBodyPanel /></ErrorBoundary>
+            <ErrorBoundary label="Person Panel"><PersonPanel /></ErrorBoundary>
+            <ErrorBoundary label="Context Panel"><MultiEntityContextPanel /></ErrorBoundary>
             <CelestialNavList />
 
             {/* ── Top-right control bar ──────────────────────────────────── */}
@@ -210,6 +212,7 @@ export default function App() {
         )}
 
       </div>{/* end scaled HUD layer */}
+      </ErrorBoundary>
     </div>
   )
 }

@@ -755,6 +755,46 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: React error boundaries
+  Description: No error boundaries exist in the app. A render error in any component silently
+    blanks the entire app with no recovery path. Add an ErrorBoundary class component that
+    catches errors, shows a minimal inline "Panel crashed — click to retry" message, and
+    lets the user reset. Wrap: (1) the entire HUD layer in App.tsx as a top-level safety net;
+    (2) individual floating panels (EventPanel, RegionPanel, PersonPanel, CelestialBodyPanel,
+    MultiEntityContextPanel) with per-panel boundaries for finer granularity.
+  Success Criteria: Throwing inside a panel shows a compact error card without crashing the
+    rest of the UI. "Retry" button resets that panel's boundary. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Clipboard write fallback
+  Description: EventPanel.tsx export button calls navigator.clipboard.writeText() with
+    .catch(() => {}). In non-HTTPS contexts (e.g. local network deployments) the clipboard
+    API is unavailable and the copy silently fails. Add a fallback: if clipboard throws,
+    create a temporary <textarea> with the text, select it, and execCommand('copy') — or
+    show a modal with the text pre-selected for manual copy.
+  Success Criteria: Export button works in non-HTTPS context (simulate by stubbing clipboard).
+    User sees either successful copy or a clear fallback prompt. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Test: Hook unit tests for useFilteredEvents and useAgentQuery
+  Description: useFilteredEvents contains the core event filter logic (category, time-range,
+    search, bookmarks) but has no dedicated tests. useAgentQuery has context truncation and
+    streaming state but is untested. Add Vitest tests: (1) useFilteredEvents — test each
+    filter in isolation and in combination; (2) useAgentQuery — test MAX_CONTEXT_CHARS
+    truncation flag, error handling, clear() behavior.
+  Success Criteria: ≥8 new tests for useFilteredEvents; ≥5 for useAgentQuery; all pass;
+    no regression on existing 27 tests.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

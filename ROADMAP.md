@@ -93,6 +93,16 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase I — Robustness & Quality
+
+> Prevent catastrophic failures, improve error messaging, and strengthen test coverage.
+
+- [ ] **React Error Boundaries** — wrap HUD and individual panels in error boundaries; show graceful "Panel error — click to retry" fallback instead of full-app blank
+- [ ] **Clipboard Write Fallback** — if `navigator.clipboard.writeText` fails (non-HTTPS), fall back to a text-area select/copy prompt or trigger a file download
+- [ ] **Hook Unit Tests** — add Vitest tests for `useFilteredEvents` (filter + search + time-range logic) and `useAgentQuery` (context truncation, streaming state)
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.
