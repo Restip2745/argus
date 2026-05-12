@@ -842,6 +842,51 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Security: Rate limit /api/agent-vision endpoint
+  Description: /api/agent-vision has no rate limiting, unlike /api/agent. A vision request
+    processes a base64 image through Ollama which is more expensive than text. Apply the same
+    checkRateLimit('vision:{ip}', 5, 30_000) guard at the top of the agent-vision handler.
+  Success Criteria: 6th vision request within 30s returns 429. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Custom filter presets
+  Description: Let operators save their current active filter state (hiddenCategories +
+    timeRangeFilter + searchQuery) as a named preset. Store up to 5 presets in Zustand
+    (persisted to localStorage 'argus-filter-presets'). Show preset chips in CategoryFilterBar
+    below the category chips; clicking applies all filter values at once. Add a "Save preset"
+    button (appears when filters are non-default) and "×" to delete each preset.
+  Success Criteria: Saving a preset and reloading the page preserves it. Clicking applies
+    all three filter dimensions simultaneously. TS clean; 43+ tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] UX: Localize toast intensity labels
+  Description: ToastContainer.tsx renders toast.event.intensity ('CRITICAL', 'HIGH') as a
+    raw string label. These should use i18n keys (event.intensity.CRITICAL, etc.) so they
+    localize when the user switches language. Add keys to en.json and zh-TW.json.
+  Success Criteria: Language switch updates intensity labels in toasts. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Perf: Lightweight Ollama health ping
+  Description: startOllamaHealthPoll() calls client.list() every 30s — this returns all
+    models and can be slow on first load. Replace with a lightweight HEAD/GET request to
+    the Ollama base URL (e.g. GET {host}/api/tags with a 3s timeout) to check connectivity
+    without downloading the full model list.
+  Success Criteria: Health check still accurately detects Ollama offline; faster response
+    time. TS clean; server tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

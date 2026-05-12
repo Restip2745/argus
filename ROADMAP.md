@@ -114,6 +114,17 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase K — Security & UX Polish
+
+> Closing security gaps and refining user-facing interactions.
+
+- [ ] **Rate Limit /api/agent-vision** — apply the same token-bucket rate limit to the vision endpoint as for /api/agent (5 req/30s per IP)
+- [ ] **Custom Filter Presets** — let users save/load named filter combinations (category set + time range + search) to Zustand store + localStorage
+- [ ] **Localize Toast Intensity Labels** — toast intensity labels ('CRITICAL', 'HIGH') should use the i18n system so they localize when language switches
+- [ ] **Lightweight Ollama Health Ping** — replace the full `client.list()` call in startOllamaHealthPoll with a lightweight HTTP HEAD request to detect connectivity faster
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

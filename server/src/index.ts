@@ -258,6 +258,11 @@ Respond in HTML format only. Use only these tags: <p> <ul> <ol> <li> <b> <i> <h4
 If the question is in Chinese, respond in Traditional Chinese (繁體中文).`
 
 app.post('/api/agent-vision', async (req, res) => {
+  const visionIp = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()
+    ?? req.socket.remoteAddress ?? 'unknown'
+  if (!checkRateLimit(`vision:${visionIp}`, 5, 30_000)) {
+    res.status(429).json({ error: 'Rate limited — please wait 30 seconds' }); return
+  }
   try {
     const { image, question, context } = req.body as {
       image?: string
