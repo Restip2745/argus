@@ -9,6 +9,7 @@
  * State is synced from the main window via BroadcastChannel.
  */
 import { useEffect, useMemo } from 'react'
+import { useTranslation }     from 'react-i18next'
 import { useAppStore }        from './store'
 import { usePopoutSync }      from './hooks/usePopoutSync'
 import { getCountryInfo, getDynamicTags } from './data/countryData'
@@ -35,17 +36,6 @@ const COL_STYLE: React.CSSProperties = {
   overflow:      'hidden',
 }
 
-const CATEGORY_QUERIES: Record<string, string[]> = {
-  ARMED_CONFLICT: ['升級風險評估', '停火可能性分析', '國際介入機率', '平民傷亡趨勢'],
-  POLITICAL:      ['政局穩定度評估', '選舉影響分析', '盟友反應預測', '外交制裁可能性'],
-  ECONOMIC:       ['市場衝擊評估', '供應鏈風險', '貨幣匯率影響', '貿易夥伴反應'],
-  SOCIAL:         ['社會穩定指數', '人口遷移趨勢', '媒體輿論走向', '國際關注度'],
-  SCIENCE_TECH:   ['技術擴散風險', '軍事應用潛力', '出口管制衝擊', '競爭優勢變化'],
-  ENVIRONMENT:    ['人道影響評估', '資源競爭加劇', '區域穩定影響', '氣候安全連結'],
-  HEALTH:         ['跨境傳播風險', '醫療系統壓力', '供應鏈中斷', '國際協調機制'],
-  CRIME_SECURITY: ['情報網路滲透', '跨境執法合作', '金融制裁效力', '恐攻升級風險'],
-  SPACE:          ['戰略軌道影響', '太空軍事化風險', '衛星通訊中斷', '國際條約框架'],
-}
 
 // ── Event popout ───────────────────────────────────────────────────────────────
 
@@ -207,6 +197,7 @@ function ContextPopoutContent() {
 
 export default function PopoutPage() {
   usePopoutSync('guest')
+  const { t } = useTranslation()
 
   const activePanelId    = useAppStore((s) => s.activePanelId)
   const events           = useAppStore((s) => s.events)
@@ -242,10 +233,16 @@ export default function PopoutPage() {
     ].filter(Boolean).join('\n')
   }, [event])
 
-  const eventQueries = useMemo(
-    () => (event ? (CATEGORY_QUERIES[event.category] ?? []).slice(0, 4) : []),
-    [event],
-  )
+  const eventQueries = useMemo(() => {
+    if (!event) return []
+    const cat = event.category
+    return [
+      t(`popout.catQ.${cat}.0`, ''),
+      t(`popout.catQ.${cat}.1`, ''),
+      t(`popout.catQ.${cat}.2`, ''),
+      t(`popout.catQ.${cat}.3`, ''),
+    ].filter(Boolean)
+  }, [event, t])
 
   const regionAgentContext = useMemo(() => {
     if (!selectedCountry) return ''
@@ -279,11 +276,21 @@ export default function PopoutPage() {
     if (selectedPersons.length === 0) return []
     if (selectedPersons.length === 1) {
       const name = selectedPersons[0].name
-      return [`${name} 的政治立場分析`, `${name} 的重要事蹟`, `${name} 的國際影響力`, `${name} 與當前事件的關聯`]
+      return [
+        t('popout.personQ.s0', { name }),
+        t('popout.personQ.s1', { name }),
+        t('popout.personQ.s2', { name }),
+        t('popout.personQ.s3', { name }),
+      ]
     }
-    const names = selectedPersons.slice(0, 2).map(p => p.name)
-    return [`${names.join(' 與 ')} 的關係分析`, `${names.join(' 和 ')} 的政治立場比較`, '二者在國際事務上的角色']
-  }, [selectedPersons])
+    const n0 = selectedPersons[0].name
+    const n1 = selectedPersons[1].name
+    return [
+      t('popout.personQ.m0', { n0, n1 }),
+      t('popout.personQ.m1', { n0, n1 }),
+      t('popout.personQ.m2'),
+    ]
+  }, [selectedPersons, t])
 
   const contextAgentContext = useMemo(() => {
     if (contextEntities.length === 0) return ''
@@ -297,12 +304,12 @@ export default function PopoutPage() {
     const types = new Set(contextEntities.map(e => e.type))
     const names = contextEntities.slice(0, 3).map(e => e.name)
     const queries: string[] = []
-    if (contextEntities.length >= 2) queries.push(`分析 ${names.slice(0, 2).join(' 與 ')} 之間的關聯`)
-    if (types.has('event') && types.has('person')) queries.push('這些人物在這些事件中扮演什麼角色？')
-    if (types.has('event') && types.has('region')) queries.push('這些事件對該地區的影響評估')
-    queries.push('綜合情報摘要')
+    if (contextEntities.length >= 2) queries.push(t('popout.contextQ.0', { n0: names[0], n1: names[1] }))
+    if (types.has('event') && types.has('person')) queries.push(t('popout.contextQ.1'))
+    if (types.has('event') && types.has('region')) queries.push(t('popout.contextQ.2'))
+    queries.push(t('popout.contextQ.3'))
     return queries.slice(0, 4)
-  }, [contextEntities])
+  }, [contextEntities, t])
 
   const agentContext     = popoutType === 'context' ? contextAgentContext : popoutType === 'region' ? regionAgentContext  : popoutType === 'person' ? personAgentContext : eventAgentContext
   const suggestedQueries = popoutType === 'context' ? contextQueries     : popoutType === 'region' ? regionQueries       : popoutType === 'person' ? personQueries     : eventQueries

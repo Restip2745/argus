@@ -612,13 +612,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Bugfix: Fix hardcoded Chinese strings in PopoutPage suggested queries
-  Description: PopoutPage.tsx computes suggestedQueries with hardcoded Traditional Chinese strings
-    (e.g., "分析當前局勢") that do not go through the i18n system. These should use t() keys so
-    they switch language with the rest of the UI. Add keys to en.json and zh-TW.json and replace
-    the hardcoded strings.
-  Success Criteria: Switching language in Config Modal changes popout suggested query labels.
-    TS clean; all tests pass.
+[DONE][LOW] Bugfix: Fix hardcoded Chinese strings in PopoutPage suggested queries
+  Description: Removed the file-level CATEGORY_QUERIES constant with 36 hardcoded Chinese strings.
+    Added `popout.catQ`, `popout.personQ`, and `popout.contextQ` key groups to both en.json and
+    zh-TW.json (47 new keys total). Added useTranslation() to PopoutPage root component.
+    eventQueries, personQueries, and contextQueries useMemos now call t() with interpolation
+    ({{name}}, {{n0}}, {{n1}}) and include `t` in their dependency arrays so queries re-compute
+    on language switch.
+  Success Criteria: Met — language switch in Config Modal updates popout suggested query labels;
+    TS clean; 27/27 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
