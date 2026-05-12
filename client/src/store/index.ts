@@ -145,6 +145,10 @@ interface AppState {
   searchQuery: string
   setSearchQuery: (q: string) => void
 
+  // ── Personal event notes ─────────────────────────────────
+  eventNotes: Record<string, string>
+  setEventNote: (id: string, note: string) => void
+
   // ── Filter presets ────────────────────────────────────────
   filterPresets: FilterPreset[]
   saveFilterPreset: (name: string) => void
@@ -320,6 +324,19 @@ export const useAppStore = create<AppState>((set) => ({
   // Full-text search
   searchQuery: '',
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  // Event notes — persisted in localStorage
+  eventNotes: (() => {
+    try { return JSON.parse(localStorage.getItem('argus-event-notes') ?? '{}') as Record<string, string> }
+    catch { return {} }
+  })(),
+  setEventNote: (id, note) => set((s) => {
+    const next = { ...s.eventNotes }
+    if (note.trim()) next[id] = note.slice(0, 500)
+    else delete next[id]
+    localStorage.setItem('argus-event-notes', JSON.stringify(next))
+    return { eventNotes: next }
+  }),
 
   // Filter presets — persisted in localStorage
   filterPresets: (() => {

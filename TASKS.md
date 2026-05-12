@@ -900,7 +900,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Personal event notes
+[DONE][MEDIUM] Feature: Personal event notes
   Description: Add a short personal note field (max 500 chars) to each event, persisted to
     localStorage as 'argus-event-notes' Record<id, string>. Zustand store gains setEventNote
     action. EventPanelBody shows a small ✏ note section below the title: collapsed by default,

@@ -8,6 +8,7 @@
  * Receives all data as props so EventPanel can animate this whole block as
  * a unit (slide in/out) when the user navigates the timeline.
  */
+import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import type { ArgusEvent } from '../../types'
@@ -73,6 +74,23 @@ export function EventPanelBody({
   const isEN = i18n.language === 'en'
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const searchQuery    = useAppStore((s) => s.searchQuery)
+  const eventNotes     = useAppStore((s) => s.eventNotes)
+  const setEventNote   = useAppStore((s) => s.setEventNote)
+  const existingNote   = eventNotes[event.id] ?? ''
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [noteDraft, setNoteDraft] = useState('')
+  const noteRef = useRef<HTMLTextAreaElement>(null)
+
+  function openNote() {
+    setNoteDraft(existingNote)
+    setNoteOpen(true)
+    setTimeout(() => { noteRef.current?.focus(); noteRef.current?.select() }, 30)
+  }
+
+  function saveNote() {
+    setEventNote(event.id, noteDraft)
+    setNoteOpen(false)
+  }
   const addSelectedPerson = useAppStore((s) => s.addSelectedPerson)
   const personNames = extractPersonNames(event.actors ?? [])
 
@@ -118,6 +136,45 @@ export function EventPanelBody({
       {/* ── Main info ──────────────────────────────────────────────────────── */}
       <div className="relative px-3 py-3 space-y-2.5">
         <h2 className="text-[#c8dde8] text-[11px] font-semibold leading-snug">{highlightText(title, searchQuery)}</h2>
+
+        {/* Personal note */}
+        {!noteOpen && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+            {existingNote ? (
+              <button
+                onClick={openNote}
+                style={{ fontSize: '8px', color: '#4a6070', textAlign: 'left', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', maxWidth: '100%', fontFamily: 'JetBrains Mono, monospace', lineHeight: 1.4 }}
+                title="Click to edit note"
+              >
+                ✏ {existingNote.slice(0, 80)}{existingNote.length > 80 ? '…' : ''}
+              </button>
+            ) : (
+              <button
+                onClick={openNote}
+                style={{ fontSize: '7px', color: '#2a4060', letterSpacing: '0.08em', background: 'none', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}
+              >+ ADD NOTE</button>
+            )}
+          </div>
+        )}
+        {noteOpen && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <textarea
+              ref={noteRef}
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value.slice(0, 500))}
+              onKeyDown={(e) => { if (e.key === 'Escape') { setNoteOpen(false) } if (e.key === 'Enter' && e.ctrlKey) saveNote() }}
+              placeholder="Personal note (max 500 chars)…"
+              rows={3}
+              style={{ fontSize: '9px', color: '#a8c4d8', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.2)', borderRadius: '3px', padding: '5px 7px', resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', outline: 'none', lineHeight: 1.5, width: '100%' }}
+            />
+            <div style={{ display: 'flex', gap: '4px', fontSize: '8px' }}>
+              <button onClick={saveNote} style={{ color: '#00d4ff', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>SAVE</button>
+              {existingNote && <button onClick={() => { setNoteDraft(''); saveNote() }} style={{ color: '#ff4d4d', background: 'none', border: '1px solid rgba(255,77,77,0.25)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>CLEAR</button>}
+              <button onClick={() => setNoteOpen(false)} style={{ color: '#2a4060', background: 'none', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>ESC</button>
+              <span style={{ color: '#1a3050', marginLeft: 'auto', letterSpacing: '0.06em' }}>{noteDraft.length}/500</span>
+            </div>
+          </div>
+        )}
 
         {/* Datetime */}
         {event.published_at && (
