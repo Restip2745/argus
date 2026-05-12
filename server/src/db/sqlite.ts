@@ -208,7 +208,7 @@ export function deleteExpiredArticles(): number {
   // Condition 1: expired + not recently referenced
   const r1 = getDb().prepare(
     `DELETE FROM articles
-     WHERE expires_at < datetime('now')
+     WHERE datetime(expires_at) < datetime('now')
        AND (last_referenced < datetime('now', '-24 hours') OR last_referenced IS NULL)`
   ).run()
   total += r1.changes
@@ -218,7 +218,7 @@ export function deleteExpiredArticles(): number {
   const r2 = getDb().prepare(
     `DELETE FROM articles
      WHERE heat_score < 0.2 AND is_analyzed = 1
-       AND expires_at < datetime('now')`
+       AND datetime(expires_at) < datetime('now')`
   ).run()
   total += r2.changes
 
