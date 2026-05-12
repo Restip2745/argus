@@ -97,9 +97,9 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 > Prevent catastrophic failures, improve error messaging, and strengthen test coverage.
 
-- [ ] **React Error Boundaries** — wrap HUD and individual panels in error boundaries; show graceful "Panel error — click to retry" fallback instead of full-app blank
-- [ ] **Clipboard Write Fallback** — if `navigator.clipboard.writeText` fails (non-HTTPS), fall back to a text-area select/copy prompt or trigger a file download
-- [ ] **Hook Unit Tests** — add Vitest tests for `useFilteredEvents` (filter + search + time-range logic) and `useAgentQuery` (context truncation, streaming state)
+- [x] **React Error Boundaries** — `ErrorBoundary` class component wraps HUD + 5 panels; shows compact error card + RETRY button
+- [x] **Clipboard Write Fallback** — `copyToClipboard()` utility tries Clipboard API then falls back to `execCommand('copy')`
+- [x] **Hook Unit Tests** — 9 tests for `useFilteredEvents` (category/time/search/watchlist/combination) + 5 for `useAgentQuery` (truncation, streaming, error, clear); 43 total tests pass
 
 ---
 

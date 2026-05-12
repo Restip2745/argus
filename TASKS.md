@@ -782,7 +782,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Test: Hook unit tests for useFilteredEvents and useAgentQuery
+[DONE][MEDIUM] Test: Hook unit tests for useFilteredEvents and useAgentQuery
   Description: useFilteredEvents contains the core event filter logic (category, time-range,
     search, bookmarks) but has no dedicated tests. useAgentQuery has context truncation and
     streaming state but is untested. Add Vitest tests: (1) useFilteredEvents — test each
