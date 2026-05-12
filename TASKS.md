@@ -820,7 +820,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] UX: Event search term highlighting
+[DONE][LOW] UX: Event search term highlighting
   Description: When a searchQuery is active, the matched terms in EventStack tooltip titles
     and in EventPanelBody title + summary text should be visually highlighted. Wrap matched
     substrings in <mark class="search-highlight"> elements. Add .search-highlight CSS class.

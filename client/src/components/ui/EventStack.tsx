@@ -5,15 +5,17 @@ import type { ArgusEvent } from '../../types'
 import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
+import { highlightText } from '../../utils/highlightText'
 
 interface IconItemProps {
   event: ArgusEvent
   animDelay: number
   isNew: boolean
   nudgeGen: number  // increments each time a new item arrives → re-triggers nudge
+  searchQuery: string
 }
 
-function IconItem({ event, animDelay, isNew, nudgeGen }: IconItemProps) {
+function IconItem({ event, animDelay, isNew, nudgeGen, searchQuery }: IconItemProps) {
   const [hovered, setHovered] = useState(false)
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
   const prevNudgeGen = useRef(nudgeGen)
@@ -86,7 +88,7 @@ function IconItem({ event, animDelay, isNew, nudgeGen }: IconItemProps) {
           }}
         >
           <span style={{ color }}>{icon} </span>
-          <span style={{ color: '#c8dde8' }}>{title}</span>
+          <span style={{ color: '#c8dde8' }}>{highlightText(title, searchQuery)}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
             {event.published_at && (
               <span style={{ color: '#2a4060', fontSize: 8 }}>
@@ -119,6 +121,7 @@ const VSCROLL_BUFFER = 8  // extra items rendered above/below visible window
 export function EventStack() {
   const filtered     = useFilteredEvents()
   const eventsLoaded = useAppStore((s) => s.eventsLoaded)
+  const searchQuery  = useAppStore((s) => s.searchQuery)
 
   // ── Virtual scroll ────────────────────────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null)
@@ -229,6 +232,7 @@ export function EventStack() {
               animDelay={Math.min((startIdx + localI) * 0.035, 0.7)}
               isNew={newIds.has(event.id)}
               nudgeGen={newIds.has(event.id) ? 0 : nudgeGen}
+              searchQuery={searchQuery}
             />
           ))}
         </div>

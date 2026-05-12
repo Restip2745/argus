@@ -17,6 +17,7 @@ import type { AgentEntry } from '../../hooks/useAgentQuery'
 import { EventRelationGraph } from './EventRelationGraph'
 import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
+import { highlightText } from '../../utils/highlightText'
 
 function expiryLabel(expiresAt: string | null, heatScore: number): string {
   if (expiresAt) {
@@ -71,6 +72,7 @@ export function EventPanelBody({
   const { t, i18n } = useTranslation()
   const isEN = i18n.language === 'en'
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
+  const searchQuery    = useAppStore((s) => s.searchQuery)
   const addSelectedPerson = useAppStore((s) => s.addSelectedPerson)
   const personNames = extractPersonNames(event.actors ?? [])
 
@@ -115,7 +117,7 @@ export function EventPanelBody({
 
       {/* ── Main info ──────────────────────────────────────────────────────── */}
       <div className="relative px-3 py-3 space-y-2.5">
-        <h2 className="text-[#c8dde8] text-[11px] font-semibold leading-snug">{title}</h2>
+        <h2 className="text-[#c8dde8] text-[11px] font-semibold leading-snug">{highlightText(title, searchQuery)}</h2>
 
         {/* Datetime */}
         {event.published_at && (

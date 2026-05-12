@@ -211,6 +211,15 @@ canvas {
   50%       { opacity: 0; }
 }
 
+/* ── Search term highlight ─────────────────────────────────── */
+.search-highlight {
+  background: rgba(0,212,255,0.22);
+  color: #00d4ff;
+  border-radius: 2px;
+  padding: 0 1px;
+  font-style: inherit;
+}
+
 /* ── EventStack skeleton loader ────────────────────────────── */
 @keyframes skeletonPulse {
   0%, 100% { opacity: 0.25; }
