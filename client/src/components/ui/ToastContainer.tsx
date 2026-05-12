@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
 import type { ArgusEvent } from '../../types'
@@ -13,9 +14,11 @@ interface Toast {
 }
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
+  const { t } = useTranslation()
   const color = CATEGORY_COLOR[toast.event.category] ?? '#4a6070'
   const icon  = CATEGORY_ICON[toast.event.category]  ?? '◉'
   const isCritical = toast.event.intensity === 'CRITICAL'
+  const intensityLabel = t(`event.intensity.${toast.event.intensity}`, toast.event.intensity)
 
   return (
     <div
@@ -47,7 +50,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
       <div style={{ flex: 1, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
           <span style={{ fontSize: '7px', letterSpacing: '0.12em', fontWeight: 700, color: isCritical ? '#ff4d4d' : '#ff9c2a' }}>
-            {toast.event.intensity}
+            {intensityLabel}
           </span>
           {toast.count > 1 && (
             <span style={{

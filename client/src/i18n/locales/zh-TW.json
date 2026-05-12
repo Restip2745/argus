@@ -10,6 +10,12 @@
     "region":        "地區情報"
   },
   "event": {
+    "intensity": {
+      "LOW":      "低",
+      "MODERATE": "中",
+      "HIGH":     "高",
+      "CRITICAL": "危急"
+    },
     "category": {
       "politics":  "政治",
       "military":  "軍事",

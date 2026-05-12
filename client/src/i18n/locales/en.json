@@ -10,6 +10,12 @@
     "region":        "REGION INTEL"
   },
   "event": {
+    "intensity": {
+      "LOW":      "LOW",
+      "MODERATE": "MODERATE",
+      "HIGH":     "HIGH",
+      "CRITICAL": "CRITICAL"
+    },
     "category": {
       "politics":  "Politics",
       "military":  "Military",

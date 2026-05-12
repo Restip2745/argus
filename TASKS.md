@@ -865,7 +865,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] UX: Localize toast intensity labels
+[DONE][MEDIUM] UX: Localize toast intensity labels
   Description: ToastContainer.tsx renders toast.event.intensity ('CRITICAL', 'HIGH') as a
     raw string label. These should use i18n keys (event.intensity.CRITICAL, etc.) so they
     localize when the user switches language. Add keys to en.json and zh-TW.json.
