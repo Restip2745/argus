@@ -936,6 +936,53 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Security: Add Helmet.js security headers
+  Description: The Express server currently sends no security headers. This leaves the app
+    vulnerable to clickjacking, MIME-sniffing, and other browser attacks. Add `helmet` as
+    a dependency and apply it as middleware. Customize CSP to allow the client origin and
+    any self-hosted Ollama endpoint.
+  Success Criteria: Server responses include X-Frame-Options, X-Content-Type-Options,
+    and Referrer-Policy headers. TS clean; server tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Keyboard shortcuts help overlay
+  Description: Currently the only way to know about keyboard shortcuts (/, Escape, b, [, ],
+    i) is to read the source code. Add a keyboard shortcut help overlay triggered by pressing
+    '?' when not in an input. Show as a floating modal with all shortcuts listed. Also add a
+    '?' DockBtn in FloatDock that opens it.
+  Success Criteria: Pressing '?' opens the shortcuts overlay. All current shortcuts listed.
+    Closes on Escape or clicking outside. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: User-configurable event sort order
+  Description: EventStack currently always sorts by published_at DESC. Add a sort dropdown
+    to CategoryFilterBar (options: NEWEST, HEAT ↓, INTENSITY ↓). Store in Zustand
+    `eventSortOrder`. useFilteredEvents applies the chosen sort before returning.
+  Success Criteria: Selecting HEAT shows highest heat_score events first; INTENSITY shows
+    CRITICAL first. Selection persists in store. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Perf: Memoize EventStack IconItem
+  Description: EventStack renders all visible icon items on every filtered-events update.
+    Wrap IconItem in React.memo with a comparator that only re-renders when event.id,
+    isNew, nudgeGen, or searchQuery changes. This prevents all visible items from re-rendering
+    when a single new event arrives.
+  Success Criteria: React DevTools profiler shows fewer re-renders per new event. No visual
+    regression. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

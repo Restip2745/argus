@@ -3,6 +3,7 @@ import express from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import cors from 'cors'
+import helmet from 'helmet'
 import { Ollama } from 'ollama'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -28,6 +29,7 @@ const io         = new Server(httpServer, {
 const PORT = Number(process.env.PORT ?? 3001)
 
 app.use(cors({ origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173' }))
+app.use(helmet({ contentSecurityPolicy: false }))   // CSP disabled: client uses WebGL/Canvas
 app.use(express.json())
 
 // ── REST routes ──────────────────────────────────────────

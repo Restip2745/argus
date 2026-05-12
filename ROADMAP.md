@@ -136,6 +136,17 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase M — Security Headers & UX Refinement
+
+> Harden HTTP security posture and improve power-user discoverability.
+
+- [ ] **Security Headers (Helmet.js)** — add `helmet` to the Express server for CSP, HSTS, X-Frame-Options, and other security headers
+- [ ] **Keyboard Shortcuts Help Overlay** — press `?` to open a modal listing all keyboard shortcuts; accessible from FloatDock
+- [ ] **User-Configurable Event Sort** — add a sort dropdown to CategoryFilterBar (heat score ↓, published ↓, intensity ↓); stored in Zustand
+- [ ] **IconItem React.memo Optimization** — wrap EventStack's `IconItem` component in `React.memo` with a custom comparator to reduce re-renders
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.
