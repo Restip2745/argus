@@ -156,6 +156,8 @@ export function CategoryFilterBar() {
   const bookmarkedIds        = useAppStore((s) => s.bookmarkedIds)
   const showWatchlistOnly    = useAppStore((s) => s.showWatchlistOnly)
   const setShowWatchlistOnly = useAppStore((s) => s.setShowWatchlistOnly)
+  const eventSortOrder       = useAppStore((s) => s.eventSortOrder)
+  const setEventSortOrder    = useAppStore((s) => s.setEventSortOrder)
   const filterPresets        = useAppStore((s) => s.filterPresets)
   const saveFilterPreset     = useAppStore((s) => s.saveFilterPreset)
   const applyFilterPreset    = useAppStore((s) => s.applyFilterPreset)
@@ -250,6 +252,34 @@ export function CategoryFilterBar() {
           )
         })}
       </div>
+
+      {/* Sort order selector */}
+      <select
+        value={eventSortOrder}
+        onChange={(e) => setEventSortOrder(e.target.value as 'newest' | 'heat' | 'intensity')}
+        className="font-mono"
+        style={{
+          fontSize: '8px', color: '#2a5070',
+          background: 'rgba(4,9,22,0.75)',
+          border: '1px solid rgba(0,180,255,0.15)',
+          borderRadius: '3px',
+          padding: '3px 16px 3px 6px',
+          backdropFilter: 'blur(4px)',
+          marginRight: '4px',
+          cursor: 'pointer',
+          outline: 'none',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4'%3E%3Cpath d='M0 0l4 4 4-4z' fill='%232a5070'/%3E%3C/svg%3E\")",
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right 4px center',
+        }}
+        title="Sort order"
+      >
+        <option value="newest">NEWEST</option>
+        <option value="heat">HEAT ↓</option>
+        <option value="intensity">INTENSITY ↓</option>
+      </select>
 
       {/* Full-text search input */}
       <div

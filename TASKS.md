@@ -960,7 +960,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: User-configurable event sort order
+[DONE][MEDIUM] Feature: User-configurable event sort order
   Description: EventStack currently always sorts by published_at DESC. Add a sort dropdown
     to CategoryFilterBar (options: NEWEST, HEAT ↓, INTENSITY ↓). Store in Zustand
     `eventSortOrder`. useFilteredEvents applies the chosen sort before returning.

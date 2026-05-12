@@ -145,6 +145,10 @@ interface AppState {
   searchQuery: string
   setSearchQuery: (q: string) => void
 
+  // ── Event sort order ─────────────────────────────────────
+  eventSortOrder: 'newest' | 'heat' | 'intensity'
+  setEventSortOrder: (v: 'newest' | 'heat' | 'intensity') => void
+
   // ── Personal event notes ─────────────────────────────────
   eventNotes: Record<string, string>
   setEventNote: (id: string, note: string) => void
@@ -324,6 +328,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Full-text search
   searchQuery: '',
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  // Event sort order
+  eventSortOrder: 'newest' as const,
+  setEventSortOrder: (eventSortOrder) => set({ eventSortOrder }),
 
   // Event notes — persisted in localStorage
   eventNotes: (() => {

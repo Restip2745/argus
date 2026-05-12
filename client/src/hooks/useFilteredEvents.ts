@@ -14,6 +14,8 @@ function safeTs(iso: string | null | undefined): number {
   return isNaN(t) ? 0 : t
 }
 
+const INTENSITY_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MODERATE: 2, LOW: 1 }
+
 /** Returns the same sorted/filtered event list that EventStack renders. */
 export function useFilteredEvents(): ArgusEvent[] {
   const events            = useAppStore((s) => s.events)
@@ -22,6 +24,7 @@ export function useFilteredEvents(): ArgusEvent[] {
   const searchQuery       = useAppStore((s) => s.searchQuery)
   const bookmarkedIds     = useAppStore((s) => s.bookmarkedIds)
   const showWatchlistOnly = useAppStore((s) => s.showWatchlistOnly)
+  const eventSortOrder    = useAppStore((s) => s.eventSortOrder)
 
   return useMemo(() => {
     const cutoff = timeRangeFilter !== 'all'
@@ -29,8 +32,17 @@ export function useFilteredEvents(): ArgusEvent[] {
       : null
     const q = searchQuery.trim().toLowerCase()
     const bookmarkSet = new Set(bookmarkedIds)
+
+    function sortFn(a: ArgusEvent, b: ArgusEvent): number {
+      if (eventSortOrder === 'heat')
+        return (b.heat_score ?? 0) - (a.heat_score ?? 0)
+      if (eventSortOrder === 'intensity')
+        return (INTENSITY_RANK[b.intensity] ?? 0) - (INTENSITY_RANK[a.intensity] ?? 0)
+      return safeTs(b.published_at) - safeTs(a.published_at)
+    }
+
     return [...events]
-      .sort((a, b) => safeTs(b.published_at) - safeTs(a.published_at))
+      .sort(sortFn)
       .filter((e) => {
         if (showWatchlistOnly && !bookmarkSet.has(e.id)) return false
         if (hiddenCategories.includes(e.category)) return false
@@ -45,5 +57,5 @@ export function useFilteredEvents(): ArgusEvent[] {
         }
         return true
       })
-  }, [events, hiddenCategories, timeRangeFilter, searchQuery, bookmarkedIds, showWatchlistOnly])
+  }, [events, hiddenCategories, timeRangeFilter, searchQuery, bookmarkedIds, showWatchlistOnly, eventSortOrder])
 }
