@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useAppStore } from '../../store'
 import { useTranslation } from 'react-i18next'
 import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
+import { useServiceHealth } from '../../hooks/useServiceHealth'
 
 interface DockBtnProps {
   icon: string
@@ -110,6 +111,8 @@ export function FloatDock() {
   const layerErrors          = useAppStore((s) => s.layerErrors)
   const layerLoading         = useAppStore((s) => s.layerLoading)
 
+
+  const serviceHealth = useServiceHealth()
 
   const { alertCount, topCats } = useMemo(() => {
     const hidden = new Set(hiddenCategories)
@@ -233,6 +236,17 @@ export function FloatDock() {
             const first = events.find(e => e.intensity === 'CRITICAL' || e.intensity === 'HIGH')
             if (first) setActivePanelId(first.id)
           }}
+        />
+      )}
+
+      {/* Service health badge — only shows when degraded */}
+      {!serviceHealth.healthy && (
+        <DockBtn
+          icon="⚙"
+          label={serviceHealth.ollamaOnline ? 'SCRAPER STALLED' : 'OLLAMA OFFLINE'}
+          badge="!"
+          color="#ff8c00"
+          onClick={() => {/* informational only */}}
         />
       )}
 

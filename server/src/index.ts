@@ -14,6 +14,7 @@ import { startOllamaWorker } from './services/ollama'
 import { startRetention } from './workers/retention'
 import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
+import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 
 
 const app        = express()
@@ -30,7 +31,7 @@ app.use(express.json())
 // ── REST routes ──────────────────────────────────────────
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  res.json(getHealthSnapshot())
 })
 
 app.get('/api/events', (_req, res) => {
@@ -363,6 +364,7 @@ async function main() {
   startOllamaWorker(io)
   startRetention()
   startSummaryWorker(io)
+  startOllamaHealthPoll()
 
   httpServer.listen(PORT, () => {
     console.log(`[ARGUS] Server → http://localhost:${PORT}`)

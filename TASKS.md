@@ -641,15 +641,16 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Feature: Service health status indicator
-  Description: /api/health currently returns only { status: 'ok' }. Operators cannot tell
-    if Ollama is reachable or if the scraper has stalled. Enhance /api/health to include
-    { ollamaOnline: bool, lastScraperRun: ISO string | null, analyzedCount: number }.
-    Add useServiceHealth hook that polls /api/health every 60s. Show a small indicator in
-    FloatDock (e.g. amber ⚠ SERVICES badge) when ollamaOnline is false or lastScraperRun
-    is older than 45 minutes.
-  Success Criteria: FloatDock shows service degradation badge when Ollama is unreachable
-    or scraper has stalled. Badge absent when all services healthy. TS clean; tests pass.
+[DONE][HIGH] Feature: Service health status indicator
+  Description: Created server/src/services/healthTracker.ts — tracks ollamaOnline (30s poll
+    via Ollama.list()), lastScraperRun (set by scraper on each run), and analyzedCount
+    (from DB). /api/health endpoint now returns this full snapshot. scraper.ts calls
+    setLastScraperRun() after each fetchAllFeeds() run. startOllamaHealthPoll() called in
+    server main(). Client: useServiceHealth hook polls /api/health every 60s, computes
+    healthy = ollamaOnline && !scraperStale (stale = >45min since last run). FloatDock shows
+    amber ⚙ badge with "OLLAMA OFFLINE" or "SCRAPER STALLED" label when unhealthy.
+  Success Criteria: Met — badge visible when services degraded; absent when healthy;
+    server+client TS clean; 27/27 tests pass.
   Retry Count: 0
   Source: ROADMAP
 

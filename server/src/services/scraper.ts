@@ -3,6 +3,7 @@ import cron from 'node-cron'
 import Parser from 'rss-parser'
 import { getFeedsConfig } from '../config/feedsConfig'
 import { insertRawArticle } from '../db/sqlite'
+import { setLastScraperRun } from './healthTracker'
 import type { RawFeedItem } from '../types'
 
 const parser = new Parser()
@@ -54,5 +55,6 @@ async function fetchAllFeeds(): Promise<void> {
     }
   }
 
+  setLastScraperRun(new Date().toISOString())
   console.log(`[Scraper] Done — ${inserted} new, ${skipped} duplicates skipped`)
 }
