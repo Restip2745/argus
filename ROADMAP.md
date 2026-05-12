@@ -118,10 +118,10 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 > Closing security gaps and refining user-facing interactions.
 
-- [ ] **Rate Limit /api/agent-vision** — apply the same token-bucket rate limit to the vision endpoint as for /api/agent (5 req/30s per IP)
-- [ ] **Custom Filter Presets** — let users save/load named filter combinations (category set + time range + search) to Zustand store + localStorage
-- [ ] **Localize Toast Intensity Labels** — toast intensity labels ('CRITICAL', 'HIGH') should use the i18n system so they localize when language switches
-- [ ] **Lightweight Ollama Health Ping** — replace the full `client.list()` call in startOllamaHealthPoll with a lightweight HTTP HEAD request to detect connectivity faster
+- [x] **Rate Limit /api/agent-vision** — same 5 req/30s per-IP token bucket applied to vision endpoint
+- [x] **Custom Filter Presets** — up to 5 named presets (hiddenCategories + timeRange + search) persisted to localStorage; preset row in CategoryFilterBar
+- [x] **Localize Toast Intensity Labels** — `event.intensity.{LOW,MODERATE,HIGH,CRITICAL}` i18n keys; ToastContainer uses t()
+- [x] **Lightweight Ollama Health Ping** — HEAD `/api/tags` with 3s AbortSignal.timeout instead of full client.list()
 
 ---
 

@@ -1,4 +1,3 @@
-import { Ollama } from 'ollama'
 import { getLlmConfig } from '../config/llmConfig'
 import { getAnalyzedArticles } from '../db/sqlite'
 
@@ -59,9 +58,10 @@ export function getHealthSnapshot(): {
 export function startOllamaHealthPoll(): void {
   async function check() {
     try {
-      const client = new Ollama({ host: getLlmConfig().host })
-      await client.list()
-      ollamaOnline = true
+      const { host } = getLlmConfig()
+      const url = `${host.replace(/\/$/, '')}/api/tags`
+      const r = await fetch(url, { signal: AbortSignal.timeout(3_000), method: 'HEAD' })
+      ollamaOnline = r.ok || r.status === 405  // 405 = HEAD not supported, but server is up
     } catch {
       ollamaOnline = false
     }

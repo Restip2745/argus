@@ -875,7 +875,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Perf: Lightweight Ollama health ping
+[DONE][LOW] Perf: Lightweight Ollama health ping
   Description: startOllamaHealthPoll() calls client.list() every 30s — this returns all
     models and can be slow on first load. Replace with a lightweight HEAD/GET request to
     the Ollama base URL (e.g. GET {host}/api/tags with a 3s timeout) to check connectivity
