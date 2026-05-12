@@ -729,14 +729,14 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Toast notification deduplication
-  Description: If ≥2 HIGH/CRITICAL events of the same category arrive within 30 seconds,
-    ToastContainer currently shows separate stacking toasts. Merge rapid-arrival toasts from
-    the same category into a single toast with a count badge (e.g. "3× ARMED CONFLICT") and
-    reset the 3s auto-dismiss timer on each additional arrival.
-  Success Criteria: 3 rapid HIGH events of the same category show as one toast with "3×"
-    badge; 3s dismiss timer resets on each. Different categories still show separately.
-    TS clean; all tests pass.
+[DONE][MEDIUM] Feature: Toast notification deduplication
+  Description: Toast interface gains count: number field. When a new HIGH/CRITICAL event
+    arrives, arrival logic checks for an existing non-exiting toast with the same category.
+    If found: increments count and resets dismiss timer (scheduleExit now always resets timer
+    instead of skipping if one exists). If not found: creates new toast as before. ToastItem
+    shows a count badge (×N) and generic "CATEGORY EVENTS" label when count > 1.
+  Success Criteria: Met — rapid same-category arrivals merge into one toast with badge;
+    timer resets; different categories still separate; TS clean; 27/27 tests pass.
   Retry Count: 0
   Source: ROADMAP
 

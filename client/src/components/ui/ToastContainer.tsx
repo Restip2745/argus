@@ -8,6 +8,7 @@ const TOAST_DURATION_MS = 3000
 interface Toast {
   id: string
   event: ArgusEvent
+  count: number
   exiting: boolean
 }
 
@@ -44,16 +45,19 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 
       {/* Content */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
-        <div
-          style={{
-            fontSize: '7px',
-            letterSpacing: '0.12em',
-            fontWeight: 700,
-            color: isCritical ? '#ff4d4d' : '#ff9c2a',
-            marginBottom: '3px',
-          }}
-        >
-          {toast.event.intensity}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+          <span style={{ fontSize: '7px', letterSpacing: '0.12em', fontWeight: 700, color: isCritical ? '#ff4d4d' : '#ff9c2a' }}>
+            {toast.event.intensity}
+          </span>
+          {toast.count > 1 && (
+            <span style={{
+              fontSize: '6px', fontWeight: 700, letterSpacing: '0.08em',
+              padding: '0 3px', borderRadius: '2px',
+              background: `${color}22`, color,
+            }}>
+              ×{toast.count}
+            </span>
+          )}
         </div>
         <div
           style={{
@@ -66,7 +70,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
             WebkitBoxOrient: 'vertical',
           }}
         >
-          {toast.event.title}
+          {toast.count > 1 ? `${toast.event.category.replace(/_/g, ' ')} EVENTS` : toast.event.title}
         </div>
       </div>
 
@@ -101,8 +105,9 @@ export function ToastContainer() {
   const timersRef     = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   const scheduleExit = useCallback((id: string) => {
+    // Always reset timer (allows deduplication to extend dismiss window)
     const existing = timersRef.current.get(id)
-    if (existing) return
+    if (existing) clearTimeout(existing)
     const t = setTimeout(() => {
       setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t))
       setTimeout(() => {
@@ -140,12 +145,25 @@ export function ToastContainer() {
 
     if (arriving.length === 0) return
 
-    setToasts((prev) => [
-      ...prev,
-      ...arriving.map((e) => ({ id: e.id, event: e, exiting: false })),
-    ])
-
-    arriving.forEach((e) => scheduleExit(e.id))
+    setToasts((prev) => {
+      let updated = [...prev]
+      for (const e of arriving) {
+        // Merge into same-category non-exiting toast if one exists
+        const existingIdx = updated.findIndex(
+          (t) => t.event.category === e.category && !t.exiting
+        )
+        if (existingIdx !== -1) {
+          updated = updated.map((t, i) =>
+            i === existingIdx ? { ...t, event: e, count: t.count + 1 } : t
+          )
+          scheduleExit(updated[existingIdx].id)
+        } else {
+          updated = [...updated, { id: e.id, event: e, count: 1, exiting: false }]
+          scheduleExit(e.id)
+        }
+      }
+      return updated
+    })
   }, [events, scheduleExit])
 
   // Cleanup timers on unmount
