@@ -42,6 +42,7 @@ export function getHealthSnapshot(): {
   lastScraperRun: string | null
   analyzedCount: number
   feedStatuses: FeedStatus[]
+  webhookEnabled: boolean
 } {
   let analyzedCount = 0
   try { analyzedCount = getAnalyzedArticles().length } catch { /* db not ready */ }
@@ -52,6 +53,7 @@ export function getHealthSnapshot(): {
     lastScraperRun,
     analyzedCount,
     feedStatuses: [...feedStatuses.values()],
+    webhookEnabled: !!process.env.WEBHOOK_SECRET,
   }
 }
 

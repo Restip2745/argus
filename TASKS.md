@@ -912,7 +912,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Webhook curl helper in Config Modal
+[DONE][MEDIUM] Feature: Webhook curl helper in Config Modal
   Description: When the server reports webhookEnabled: true in the health snapshot, Config
     Modal shows a "WEBHOOK" section with the endpoint URL and a "Copy curl" button that
     copies a sample curl command (with placeholder key) to the clipboard.

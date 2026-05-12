@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useAppStore } from '../../store'
 import { useDraggable } from '../../hooks/useDraggable'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
+import { useServiceHealth } from '../../hooks/useServiceHealth'
+import { copyToClipboard } from '../../utils/clipboard'
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
@@ -52,6 +54,7 @@ export function ConfigModal() {
   const filteredEvents = useFilteredEvents()
   const allEvents      = useAppStore((s) => s.events)
   const setShowConfig  = useAppStore((s) => s.setShowConfig)
+  const [curlCopied, setCurlCopied] = useState(false)
   const uiScale       = useAppStore((s) => s.uiScale)
   const setUiScale    = useAppStore((s) => s.setUiScale)
   const cardRef       = useRef<HTMLDivElement>(null)
@@ -200,6 +203,7 @@ export function ConfigModal() {
   }
 
   const isLoading = status === 'loading' || status === 'saving'
+  const serviceHealth = useServiceHealth()
 
   const filteredIds = useMemo(
     () => filteredEvents.map((e) => e.id).join(','),
@@ -442,6 +446,33 @@ export function ConfigModal() {
                   </button>
                 </div>
               </div>
+
+              {/* Webhook */}
+              {serviceHealth.webhookEnabled && (
+                <div>
+                  <SectionTitle label="Webhook" />
+                  <div className="text-[#2a4060] text-[9px] mb-2 leading-relaxed">
+                    External events can be pushed to ARGUS via:
+                    <code className="block mt-1 text-[#4a6070] bg-[rgba(0,180,255,0.05)] border border-[rgba(0,180,255,0.12)] rounded px-2 py-1">
+                      POST {API}/api/events/webhook
+                    </code>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const cmd = `curl -X POST ${API}/api/events/webhook \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-Webhook-Key: <YOUR_KEY>' \\
+  -d '{"title":"Test Event","category":"POLITICAL","intensity":"MODERATE"}'`
+                      void copyToClipboard(cmd).then((ok) => {
+                        if (ok) { setCurlCopied(true); setTimeout(() => setCurlCopied(false), 2000) }
+                      })
+                    }}
+                    className="px-3 py-1 text-[9px] tracking-widest border rounded transition-colors border-[rgba(0,180,255,0.2)] text-[#2a5070] hover:text-[#00d4ff] hover:border-[rgba(0,212,255,0.4)]"
+                  >
+                    {curlCopied ? '✓ COPIED' : 'COPY CURL EXAMPLE'}
+                  </button>
+                </div>
+              )}
 
             </div>{/* end right column */}
           </div>{/* end grid */}

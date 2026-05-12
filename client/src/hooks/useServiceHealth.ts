@@ -9,6 +9,7 @@ export interface ServiceHealth {
   ollamaOnline: boolean
   lastScraperRun: string | null
   analyzedCount: number
+  webhookEnabled: boolean
   healthy: boolean
 }
 
@@ -17,6 +18,7 @@ export function useServiceHealth(): ServiceHealth {
     ollamaOnline: true,
     lastScraperRun: null,
     analyzedCount: 0,
+    webhookEnabled: false,
     healthy: true,
   })
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -34,15 +36,17 @@ export function useServiceHealth(): ServiceHealth {
               ollamaOnline?: boolean
               lastScraperRun?: string | null
               analyzedCount?: number
+              webhookEnabled?: boolean
             }
             if (!cancelled) {
               const ollamaOnline   = data.ollamaOnline !== false
               const lastScraperRun = data.lastScraperRun ?? null
               const analyzedCount  = data.analyzedCount ?? 0
+              const webhookEnabled = data.webhookEnabled === true
               const scraperStale = lastScraperRun != null
                 ? (Date.now() - new Date(lastScraperRun).getTime()) > STALE_SCRAPER_MS
                 : false
-              setHealth({ ollamaOnline, lastScraperRun, analyzedCount, healthy: ollamaOnline && !scraperStale })
+              setHealth({ ollamaOnline, lastScraperRun, analyzedCount, webhookEnabled, healthy: ollamaOnline && !scraperStale })
             }
           }
         } catch { /* network error — keep previous health state */ }
