@@ -257,19 +257,21 @@ export function TrackingLayer({ positionsRef }: Props) {
   const showSatellitesLayer = useAppStore((s) => s.showSatellitesLayer)
   const showShipsLayer      = useAppStore((s) => s.showShipsLayer)
   const setLayerError       = useAppStore((s) => s.setLayerError)
-
   const setLayerLoading     = useAppStore((s) => s.setLayerLoading)
 
   const { data: aircraft,  error: aircraftErr,  loading: aircraftLoad  } = useAircraftLayer(showAircraftLayer)
   const { data: ships,     error: shipsErr,     loading: shipsLoad     } = useShipsLayer(showShipsLayer)
   const { data: tleData,   error: satelliteErr, loading: satelliteLoad } = useSatelliteLayer(showSatellitesLayer)
 
-  useEffect(() => { setLayerError('aircraft',   aircraftErr)   }, [aircraftErr,   setLayerError])
-  useEffect(() => { setLayerError('ships',       shipsErr)     }, [shipsErr,      setLayerError])
-  useEffect(() => { setLayerError('satellites',  satelliteErr) }, [satelliteErr,  setLayerError])
-  useEffect(() => { setLayerLoading('aircraft',   aircraftLoad)  }, [aircraftLoad,  setLayerLoading])
-  useEffect(() => { setLayerLoading('ships',       shipsLoad)    }, [shipsLoad,     setLayerLoading])
-  useEffect(() => { setLayerLoading('satellites',  satelliteLoad) }, [satelliteLoad, setLayerLoading])
+  useEffect(() => {
+    setLayerError('aircraft', aircraftErr); setLayerLoading('aircraft', aircraftLoad)
+  }, [aircraftErr, aircraftLoad, setLayerError, setLayerLoading])
+  useEffect(() => {
+    setLayerError('ships', shipsErr); setLayerLoading('ships', shipsLoad)
+  }, [shipsErr, shipsLoad, setLayerError, setLayerLoading])
+  useEffect(() => {
+    setLayerError('satellites', satelliteErr); setLayerLoading('satellites', satelliteLoad)
+  }, [satelliteErr, satelliteLoad, setLayerError, setLayerLoading])
 
   // Shared refs updated every frame by DistanceTracker
   const distRef   = useRef<number>(Infinity)

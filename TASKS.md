@@ -669,10 +669,12 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Perf: Merge TrackingLayer error+loading useEffects
-  Description: TrackingLayer.tsx has 6 separate useEffect calls (3 for error, 3 for loading).
-    Merge each error+loading pair into a single useEffect per layer to reduce render count.
-  Success Criteria: 3 useEffects instead of 6; same behavior; TS clean; tests pass.
+[DONE][LOW] Perf: Merge TrackingLayer error+loading useEffects
+  Description: Reduced from 6 separate useEffect calls to 3 — each effect now updates both
+    error and loading state for a single layer in one call, reducing the number of potential
+    extra store update cycles per hook state change.
+  Success Criteria: Met — 3 useEffects instead of 6; same observable behavior; TS clean;
+    27/27 tests pass.
   Retry Count: 0
   Source: ROADMAP
 
