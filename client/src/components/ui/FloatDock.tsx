@@ -112,7 +112,8 @@ export function FloatDock() {
   const layerLoading         = useAppStore((s) => s.layerLoading)
 
 
-  const serviceHealth = useServiceHealth()
+  const serviceHealth      = useServiceHealth()
+  const socketConnected    = useAppStore((s) => s.socketConnected)
 
   const { alertCount, topCats } = useMemo(() => {
     const hidden = new Set(hiddenCategories)
@@ -222,7 +223,16 @@ export function FloatDock() {
         width: '20px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center',
         borderRight: '1px solid rgba(0,180,255,0.1)', marginRight: '2px', paddingRight: '6px',
       }}>
-        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#39ff8a', boxShadow: '0 0 6px #39ff8a', animation: 'pulse 2s infinite' }} />
+        <div
+          title={socketConnected ? 'Connected' : 'Reconnecting…'}
+          style={{
+            width: '6px', height: '6px', borderRadius: '50%',
+            background: socketConnected ? '#39ff8a' : '#ff8c00',
+            boxShadow: socketConnected ? '0 0 6px #39ff8a' : '0 0 6px #ff8c00',
+            animation: socketConnected ? 'pulse 2s infinite' : 'pulse 0.8s infinite',
+            transition: 'background 0.5s, box-shadow 0.5s',
+          }}
+        />
       </div>
 
       {/* Alert badge */}

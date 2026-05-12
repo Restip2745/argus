@@ -716,6 +716,45 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Socket reconnection catch-up
+  Description: useOllamaSocket now listens to socket.io 'reconnect' event and calls
+    fetchEvents() to re-fetch all events from REST, recovering any events missed during
+    the disconnect window. Added socketConnected: boolean + setSocketConnected to Zustand
+    store; set true on 'connect', false on 'disconnect'. FloatDock status dot now reflects
+    socket state: green (2s pulse) = connected, amber (0.8s pulse) = disconnected/reconnecting.
+  Success Criteria: Met — reconnect triggers REST catch-up; dot reflects connection state;
+    TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Toast notification deduplication
+  Description: If ≥2 HIGH/CRITICAL events of the same category arrive within 30 seconds,
+    ToastContainer currently shows separate stacking toasts. Merge rapid-arrival toasts from
+    the same category into a single toast with a count badge (e.g. "3× ARMED CONFLICT") and
+    reset the 3s auto-dismiss timer on each additional arrival.
+  Success Criteria: 3 rapid HIGH events of the same category show as one toast with "3×"
+    badge; 3s dismiss timer resets on each. Different categories still show separately.
+    TS clean; all tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Feature: Streaming cut-off notice
+  Description: If the Ollama SSE stream ends without sending 'data: [DONE]\n\n' (e.g.
+    mid-response server crash or timeout), the agent response is left as partial HTML with
+    a still-active cursor. Detect stream completion without [DONE] and append a visible
+    "(response interrupted)" notice, mark streaming: false, and show an amber color on that
+    entry.
+  Success Criteria: Simulating early stream close (closing res before sending [DONE]) causes
+    the notice to appear. Normal responses unaffected. TS clean; all tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

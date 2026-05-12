@@ -15,26 +15,36 @@ interface IntelBriefPayload {
 }
 
 export function useOllamaSocket() {
-  const addEvent        = useAppStore((s) => s.addEvent)
-  const setEvents       = useAppStore((s) => s.setEvents)
-  const setIntelBrief   = useAppStore((s) => s.setIntelBrief)
-  const setEventsLoaded = useAppStore((s) => s.setEventsLoaded)
+  const addEvent            = useAppStore((s) => s.addEvent)
+  const setEvents           = useAppStore((s) => s.setEvents)
+  const setIntelBrief       = useAppStore((s) => s.setIntelBrief)
+  const setEventsLoaded     = useAppStore((s) => s.setEventsLoaded)
+  const setSocketConnected  = useAppStore((s) => s.setSocketConnected)
 
   useEffect(() => {
+    function fetchEvents() {
+      return fetch(`${API_BASE}/api/events`)
+        .then((res) => res.json())
+        .then((data: ArgusEvent[]) => {
+          if (Array.isArray(data)) setEvents(data)
+        })
+        .catch((err) => console.warn('[REST] Failed to fetch events:', err))
+    }
+
     // Fetch existing analyzed articles on mount
-    fetch(`${API_BASE}/api/events`)
-      .then((res) => res.json())
-      .then((data: ArgusEvent[]) => {
-        if (Array.isArray(data)) setEvents(data)
-      })
-      .catch((err) => console.warn('[REST] Failed to fetch events:', err))
-      .finally(() => setEventsLoaded(true))
+    fetchEvents().finally(() => setEventsLoaded(true))
 
     // Connect Socket.io for real-time updates
     socket = io(API_BASE, { path: '/socket.io' })
 
     socket.on('connect', () => {
       console.log('[Socket] Connected:', socket?.id)
+      setSocketConnected(true)
+    })
+
+    socket.on('reconnect', () => {
+      console.log('[Socket] Reconnected — catching up with REST')
+      void fetchEvents()
     })
 
     socket.on('new_event', (event: ArgusEvent) => {
@@ -47,11 +57,12 @@ export function useOllamaSocket() {
 
     socket.on('disconnect', () => {
       console.log('[Socket] Disconnected')
+      setSocketConnected(false)
     })
 
     return () => {
       socket?.disconnect()
       socket = null
     }
-  }, [addEvent, setEvents, setIntelBrief])
+  }, [addEvent, setEvents, setIntelBrief, setEventsLoaded, setSocketConnected])
 }

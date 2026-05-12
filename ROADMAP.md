@@ -83,6 +83,16 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase H — Resilience & Real-Time Polish
+
+> Improve live-data reliability and streaming robustness.
+
+- [ ] **Socket Reconnection Catch-Up** — on socket.io reconnect, re-fetch `/api/events` to recover events missed during disconnect; show amber dot in FloatDock while reconnecting
+- [ ] **Toast Notification Deduplication** — if ≥2 toasts for same category arrive within 30s, merge into a count badge rather than stacking separate toasts
+- [ ] **Streaming Cut-Off Notice** — if Ollama SSE stream ends without `[DONE]` (e.g. server crash), append a visible "(response interrupted)" notice to the partial agent response
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

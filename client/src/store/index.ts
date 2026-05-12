@@ -83,6 +83,8 @@ interface AppState {
   // ── Events loaded state ───────────────────────────────────
   eventsLoaded: boolean
   setEventsLoaded: (v: boolean) => void
+  socketConnected: boolean
+  setSocketConnected: (v: boolean) => void
 
   // ── Region selection (GeoJSON country click) ──────────────
   selectedCountry: SelectedCountry | null
@@ -243,6 +245,8 @@ export const useAppStore = create<AppState>((set) => ({
   // Events loaded
   eventsLoaded: false,
   setEventsLoaded: (eventsLoaded) => set({ eventsLoaded }),
+  socketConnected: false,
+  setSocketConnected: (socketConnected) => set({ socketConnected }),
 
   // Region selection
   selectedCountry:    null,
