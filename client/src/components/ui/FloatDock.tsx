@@ -115,6 +115,22 @@ export function FloatDock() {
   const serviceHealth      = useServiceHealth()
   const socketConnected    = useAppStore((s) => s.socketConnected)
 
+  // 12-bar hourly sparkline for event arrival rate
+  const sparklineBars = useMemo(() => {
+    const now   = Date.now()
+    const bars  = new Array(12).fill(0)
+    for (const e of events) {
+      const ts = e.published_at ? new Date(e.published_at).getTime() : 0
+      if (ts <= 0) continue
+      const hoursAgo = (now - ts) / 3_600_000
+      if (hoursAgo >= 0 && hoursAgo < 12) {
+        bars[11 - Math.floor(hoursAgo)]++
+      }
+    }
+    const peak = Math.max(1, ...bars)
+    return bars.map((v) => v / peak)  // 0..1 normalised heights
+  }, [events])
+
   const { alertCount, topCats } = useMemo(() => {
     const hidden = new Set(hiddenCategories)
     let critical = 0, high = 0
@@ -260,15 +276,31 @@ export function FloatDock() {
         />
       )}
 
-      {/* Event feed */}
-      <DockBtn
-        icon="◉"
-        label={`INTEL FEED — ${events.length} ITEMS`}
-        badge={events.length}
-        color="#00d4ff"
-        active={!liteMode && !immersiveMode}
-        onClick={() => { setImmersiveMode(false); setLiteMode(false) }}
-      />
+      {/* Event feed with sparkline */}
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <DockBtn
+          icon="◉"
+          label={`INTEL FEED — ${events.length} ITEMS`}
+          badge={events.length}
+          color="#00d4ff"
+          active={!liteMode && !immersiveMode}
+          onClick={() => { setImmersiveMode(false); setLiteMode(false) }}
+        />
+        {/* 12-bar sparkline rendered beneath the button */}
+        <svg width="28" height="6" style={{ position: 'absolute', bottom: '-5px', left: 0, opacity: 0.7, pointerEvents: 'none' }}>
+          {sparklineBars.map((h, i) => (
+            <rect
+              key={i}
+              x={i * (28 / 12) + 0.5}
+              y={6 - h * 5}
+              width={28 / 12 - 1}
+              height={h * 5}
+              fill={`rgba(0,212,255,${0.3 + h * 0.7})`}
+              rx="0.5"
+            />
+          ))}
+        </svg>
+      </div>
 
       {/* Active event panel */}
       {activePanelId && (

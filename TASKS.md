@@ -924,7 +924,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Feature: Event arrival rate sparkline
+[DONE][LOW] Feature: Event arrival rate sparkline
   Description: Compute a 12-bar hourly histogram from the events array timestamps (current
     hour and 11 previous hours). Render as a tiny SVG bar chart (12 × ~4px bars) next to
     the event count badge in FloatDock's event feed button. Color gradient: dim when 0,
