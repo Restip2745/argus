@@ -971,7 +971,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Perf: Memoize EventStack IconItem
+[DONE][LOW] Perf: Memoize EventStack IconItem
   Description: EventStack renders all visible icon items on every filtered-events update.
     Wrap IconItem in React.memo with a comparator that only re-renders when event.id,
     isNew, nudgeGen, or searchQuery changes. This prevents all visible items from re-rendering

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import { useAppStore } from '../../store'
 import type { ArgusEvent } from '../../types'
 
@@ -15,7 +15,7 @@ interface IconItemProps {
   searchQuery: string
 }
 
-function IconItem({ event, animDelay, isNew, nudgeGen, searchQuery }: IconItemProps) {
+const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, searchQuery }: IconItemProps) {
   const [hovered, setHovered] = useState(false)
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
   const prevNudgeGen = useRef(nudgeGen)
@@ -113,7 +113,12 @@ function IconItem({ event, animDelay, isNew, nudgeGen, searchQuery }: IconItemPr
       )}
     </div>
   )
-}
+}, (prev, next) =>
+  prev.event.id === next.event.id &&
+  prev.isNew    === next.isNew &&
+  prev.nudgeGen === next.nudgeGen &&
+  prev.searchQuery === next.searchQuery
+)
 
 const ITEM_H = 30  // 26px icon + 4px flex gap
 const VSCROLL_BUFFER = 8  // extra items rendered above/below visible window
