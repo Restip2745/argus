@@ -641,6 +641,42 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[TODO][HIGH] Feature: Service health status indicator
+  Description: /api/health currently returns only { status: 'ok' }. Operators cannot tell
+    if Ollama is reachable or if the scraper has stalled. Enhance /api/health to include
+    { ollamaOnline: bool, lastScraperRun: ISO string | null, analyzedCount: number }.
+    Add useServiceHealth hook that polls /api/health every 60s. Show a small indicator in
+    FloatDock (e.g. amber ⚠ SERVICES badge) when ollamaOnline is false or lastScraperRun
+    is older than 45 minutes.
+  Success Criteria: FloatDock shows service degradation badge when Ollama is unreachable
+    or scraper has stalled. Badge absent when all services healthy. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Feature: Intel Brief History
+  Description: Added intelBriefHistory array to Zustand store (max 5, deduped by id).
+    setIntelBrief now pushes new brief to the front of history and trims to last 5.
+    FloatDock brief modal renders a "PREVIOUS BRIEFS" section below the current brief
+    when history.length > 1. Each past entry is a <details> element with timestamp
+    summary and full HTML body on expand, shown in a scrollable container.
+  Success Criteria: Met — up to 5 past briefs browsable via collapsible rows in BRIEF
+    modal; deduplication prevents duplicate entries; TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Perf: Merge TrackingLayer error+loading useEffects
+  Description: TrackingLayer.tsx has 6 separate useEffect calls (3 for error, 3 for loading).
+    Merge each error+loading pair into a single useEffect per layer to reduce render count.
+  Success Criteria: 3 useEffects instead of 6; same behavior; TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

@@ -146,6 +146,7 @@ interface AppState {
   setIntelBrief: (b: { id: string; summary: string; generatedAt: string; topEventIds: string[] }) => void
   briefRead: boolean
   setBriefRead: (v: boolean) => void
+  intelBriefHistory: Array<{ id: string; summary: string; generatedAt: string; topEventIds: string[] }>
 
   // ── Person panel ──────────────────────────────────────────
   selectedPersons: SelectedPerson[]
@@ -319,9 +320,14 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Intel brief
   intelBrief:    null,
-  setIntelBrief: (b) => set({ intelBrief: b, briefRead: false }),
+  setIntelBrief: (b) => set((s) => ({
+    intelBrief: b,
+    briefRead: false,
+    intelBriefHistory: [b, ...s.intelBriefHistory.filter(h => h.id !== b.id)].slice(0, 5),
+  })),
   briefRead:     false,
   setBriefRead:  (briefRead) => set({ briefRead }),
+  intelBriefHistory: [],
 
   // Person panel
   selectedPersons: [],

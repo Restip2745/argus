@@ -75,9 +75,10 @@ function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active
 export function FloatDock() {
   const { t } = useTranslation()
   const events            = useAppStore((s) => s.events)
-  const intelBrief        = useAppStore((s) => s.intelBrief)
-  const briefRead         = useAppStore((s) => s.briefRead)
-  const setBriefRead      = useAppStore((s) => s.setBriefRead)
+  const intelBrief         = useAppStore((s) => s.intelBrief)
+  const intelBriefHistory  = useAppStore((s) => s.intelBriefHistory)
+  const briefRead          = useAppStore((s) => s.briefRead)
+  const setBriefRead       = useAppStore((s) => s.setBriefRead)
   const [showBrief, setShowBrief] = useState(false)
   const briefRef = useRef<HTMLDivElement>(null)
   const immersiveMode     = useAppStore((s) => s.immersiveMode)
@@ -155,8 +156,9 @@ export function FloatDock() {
           backdropFilter: 'blur(8px)',
           fontFamily: 'JetBrains Mono, monospace',
           animation: 'toastEnter 0.25s cubic-bezier(0.34,1.56,0.64,1) both',
+          maxHeight: '70vh', display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexShrink: 0 }}>
             <span style={{ color: '#ffd700', fontSize: '7px', letterSpacing: '0.15em', fontWeight: 700 }}>◇ INTEL BRIEF</span>
             <span style={{ color: '#2a4060', fontSize: '7px' }}>
               {new Date(intelBrief.generatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
@@ -164,9 +166,33 @@ export function FloatDock() {
           </div>
           <div
             className="agent-response"
-            style={{ color: '#a8c4d8', fontSize: '9px', lineHeight: 1.5 }}
+            style={{ color: '#a8c4d8', fontSize: '9px', lineHeight: 1.5, flexShrink: 0 }}
             dangerouslySetInnerHTML={{ __html: intelBrief.summary }}
           />
+          {/* Brief history — older entries collapsible */}
+          {intelBriefHistory.length > 1 && (
+            <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,215,0,0.12)', paddingTop: '6px', overflowY: 'auto', flexShrink: 1 }}>
+              <div style={{ color: '#4a5060', fontSize: '7px', letterSpacing: '0.12em', marginBottom: '5px' }}>PREVIOUS BRIEFS</div>
+              {intelBriefHistory.slice(1).map((b) => (
+                <details key={b.id} style={{ marginBottom: '5px' }}>
+                  <summary style={{
+                    color: '#3a5060', fontSize: '7px', letterSpacing: '0.1em',
+                    cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '5px',
+                  }}>
+                    <span style={{ color: '#2a3850' }}>▸</span>
+                    {new Date(b.generatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                    {' · '}
+                    {new Date(b.generatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </summary>
+                  <div
+                    className="agent-response"
+                    style={{ color: '#6a8090', fontSize: '8px', lineHeight: 1.5, marginTop: '4px', paddingLeft: '10px' }}
+                    dangerouslySetInnerHTML={{ __html: b.summary }}
+                  />
+                </details>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
