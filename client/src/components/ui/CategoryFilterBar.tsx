@@ -55,6 +55,9 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setMouse({ nx: 0, ny: 0 }) }}
       onMouseMove={onMouseMove}
+      aria-pressed={!hidden}
+      aria-label={`${label} — ${count} events${hidden ? ' (hidden)' : ''}`}
+      data-cat-chip
       title={`${label} (${count})`}
       className="relative flex items-center gap-1 border rounded overflow-hidden"
       style={{
@@ -125,6 +128,20 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
 }
 
 // ── Bar ─────────────────────────────────────────────────────────────────────
+
+function handleChipArrowKey(e: React.KeyboardEvent<HTMLDivElement>) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+  const chips = Array.from(
+    (e.currentTarget as HTMLDivElement).querySelectorAll<HTMLButtonElement>('[data-cat-chip]')
+  )
+  const idx = chips.indexOf(document.activeElement as HTMLButtonElement)
+  if (idx === -1) return
+  e.preventDefault()
+  const next = e.key === 'ArrowRight'
+    ? chips[(idx + 1) % chips.length]
+    : chips[(idx - 1 + chips.length) % chips.length]
+  next.focus()
+}
 
 export function CategoryFilterBar() {
   const { t }                = useTranslation()
@@ -261,18 +278,25 @@ export function CategoryFilterBar() {
         )}
       </div>
 
-      {ALL_CATEGORIES.map((cat) => (
-        <FilterButton
-          key={cat}
-          cat={cat}
-          count={categoryCounts[cat] ?? 0}
-          hidden={hiddenCategories.includes(cat)}
-          color={CATEGORY_COLOR[cat]}
-          icon={CATEGORY_ICON[cat]}
-          label={CATEGORY_LABEL[cat]}
-          onToggle={() => toggleHiddenCategory(cat)}
-        />
-      ))}
+      <div
+        role="group"
+        aria-label="Category filters"
+        className="flex items-center gap-1"
+        onKeyDown={handleChipArrowKey}
+      >
+        {ALL_CATEGORIES.map((cat) => (
+          <FilterButton
+            key={cat}
+            cat={cat}
+            count={categoryCounts[cat] ?? 0}
+            hidden={hiddenCategories.includes(cat)}
+            color={CATEGORY_COLOR[cat]}
+            icon={CATEGORY_ICON[cat]}
+            label={CATEGORY_LABEL[cat]}
+            onToggle={() => toggleHiddenCategory(cat)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

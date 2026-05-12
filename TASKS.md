@@ -626,6 +626,21 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][MEDIUM] Feature: Keyboard Accessibility
+  Description: (1) Added handleChipArrowKey() on the chip group container (role="group"
+    aria-label="Category filters") — ArrowLeft/ArrowRight move focus between
+    [data-cat-chip] buttons, wrapping around at edges. (2) FilterButton gains data-cat-chip
+    attribute, aria-pressed={!hidden}, and aria-label including count and hidden state.
+    (3) Added global :focus-visible CSS rules (buttons/anchors: 2px cyan ring + 2px offset;
+    inputs/selects: 1px offset) to index.css — provides visible ring for keyboard navigation
+    across all interactive elements in the app.
+  Success Criteria: Met — ArrowLeft/ArrowRight navigate filter chips; aria-pressed reflects
+    toggle state; focus ring visible on all focused interactive elements; TS clean; 27/27 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---
