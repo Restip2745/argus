@@ -3,7 +3,7 @@ import cron from 'node-cron'
 import Parser from 'rss-parser'
 import { getFeedsConfig } from '../config/feedsConfig'
 import { insertRawArticle } from '../db/sqlite'
-import { setLastScraperRun } from './healthTracker'
+import { setLastScraperRun, recordFeedSuccess, recordFeedError } from './healthTracker'
 import type { RawFeedItem } from '../types'
 
 const parser = new Parser()
@@ -50,8 +50,11 @@ async function fetchAllFeeds(): Promise<void> {
         if (wasInserted) inserted++
         else skipped++
       }
+      recordFeedSuccess(feed.name)
     } catch (err) {
-      console.error(`[Scraper] Failed to fetch "${feed.name}":`, (err as Error).message)
+      const msg = (err as Error).message
+      recordFeedError(feed.name, msg)
+      console.error(`[Scraper] Failed to fetch "${feed.name}":`, msg)
     }
   }
 

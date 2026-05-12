@@ -692,7 +692,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Config Modal scraper status display
+[DONE][MEDIUM] Feature: Config Modal scraper status display
   Description: The Config Modal Feeds tab shows feed URLs and enable/disable toggles, but
     operators cannot see when feeds last ran or if any individual feed failed. Add feed health
     state to healthTracker (per-feed: lastSuccess, lastError, errorMessage). Show a colored

@@ -19,6 +19,13 @@ interface FeedConfigItem {
   enabled: boolean
 }
 
+interface FeedStatus {
+  name:         string
+  lastSuccess:  string | null
+  lastError:    string | null
+  errorMessage: string | null
+}
+
 // ── Section divider ───────────────────────────────────────────────────────────
 function SectionTitle({ label }: { label: string }) {
   return (
@@ -58,6 +65,7 @@ export function ConfigModal() {
   const { onMouseDown: startDrag, dragging } = useDraggable()
 
   const [feeds,       setFeeds]       = useState<FeedConfigItem[]>([])
+  const [feedStatuses, setFeedStatuses] = useState<Record<string, FeedStatus>>({})
   const [newFeedName, setNewFeedName] = useState('')
   const [newFeedUrl,  setNewFeedUrl]  = useState('')
   const [localScale,  setLocalScale]  = useState(uiScale)
@@ -90,14 +98,21 @@ export function ConfigModal() {
     setStatus('loading')
     setErrMsg('')
     try {
-      const [cfgRes, modRes, feedsRes] = await Promise.all([
+      const [cfgRes, modRes, feedsRes, healthRes] = await Promise.all([
         fetch(`${API}/api/config/llm`),
         fetch(`${API}/api/ollama/models`),
         fetch(`${API}/api/config/feeds`),
+        fetch(`${API}/api/health`),
       ])
       if (!cfgRes.ok) throw new Error(`Config fetch failed: ${cfgRes.status}`)
       const cfg: LlmConfig = await cfgRes.json()
       const fds: FeedConfigItem[] = feedsRes.ok ? await feedsRes.json() : []
+      if (healthRes.ok) {
+        const h = await healthRes.json() as { feedStatuses?: FeedStatus[] }
+        const statusMap: Record<string, FeedStatus> = {}
+        for (const s of (h.feedStatuses ?? [])) statusMap[s.name] = s
+        setFeedStatuses(statusMap)
+      }
       setConfig(cfg);       savedConfig.current = cfg
       setFeeds(fds);        savedFeeds.current  = fds
       setLocalScale(uiScale); savedScale.current = uiScale
@@ -344,32 +359,51 @@ export function ConfigModal() {
                   {feeds.length === 0 && (
                     <div className="text-[#2a4060] py-2 text-center">No feeds configured</div>
                   )}
-                  {feeds.map((feed, i) => (
-                    <div key={i} className="flex items-center gap-2 py-1 border-b border-[rgba(0,180,255,0.06)]">
-                      <button
-                        onClick={() => toggleFeed(i)} disabled={isLoading}
-                        className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors text-[9px] flex items-center justify-center
-                          ${feed.enabled
-                            ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.15)] text-[#00d4ff]'
-                            : 'border-[rgba(0,180,255,0.2)] text-[#2a4060]'}`}
-                        title={feed.enabled ? 'Disable' : 'Enable'}
-                      >
-                        {feed.enabled ? '✓' : ''}
-                      </button>
-                      <span
-                        className={`flex-1 truncate cursor-pointer text-[10px] transition-colors
-                          ${feed.enabled ? 'text-[#a8c4d8]' : 'text-[#2a4060]'}`}
-                        onClick={() => toggleFeed(i)} title={feed.url}
-                      >
-                        {feed.name}
-                      </span>
-                      <button
-                        onClick={() => deleteFeed(i)} disabled={isLoading}
-                        className="text-[#4a6070] hover:text-[#ff4d4d] transition-colors text-[10px] flex-shrink-0"
-                        title="Remove"
-                      >✕</button>
-                    </div>
-                  ))}
+                  {feeds.map((feed, i) => {
+                    const fs = feedStatuses[feed.name]
+                    const dotColor = !fs ? '#2a4060'
+                      : fs.lastError && (!fs.lastSuccess || fs.lastError > fs.lastSuccess) ? '#ff4d4d'
+                      : '#39ff8a'
+                    const dotTitle = !fs ? 'No data yet'
+                      : fs.errorMessage ? `Error: ${fs.errorMessage}`
+                      : fs.lastSuccess ? `Last OK: ${new Date(fs.lastSuccess).toLocaleTimeString()}` : ''
+                    return (
+                      <div key={i} className="flex items-center gap-2 py-1 border-b border-[rgba(0,180,255,0.06)]">
+                        <button
+                          onClick={() => toggleFeed(i)} disabled={isLoading}
+                          className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors text-[9px] flex items-center justify-center
+                            ${feed.enabled
+                              ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.15)] text-[#00d4ff]'
+                              : 'border-[rgba(0,180,255,0.2)] text-[#2a4060]'}`}
+                          title={feed.enabled ? 'Disable' : 'Enable'}
+                        >
+                          {feed.enabled ? '✓' : ''}
+                        </button>
+                        {/* Feed health status dot */}
+                        <span
+                          title={dotTitle}
+                          style={{
+                            width: 5, height: 5, borderRadius: '50%',
+                            background: dotColor,
+                            flexShrink: 0,
+                            boxShadow: dotColor !== '#2a4060' ? `0 0 4px ${dotColor}88` : 'none',
+                          }}
+                        />
+                        <span
+                          className={`flex-1 truncate cursor-pointer text-[10px] transition-colors
+                            ${feed.enabled ? 'text-[#a8c4d8]' : 'text-[#2a4060]'}`}
+                          onClick={() => toggleFeed(i)} title={feed.url}
+                        >
+                          {feed.name}
+                        </span>
+                        <button
+                          onClick={() => deleteFeed(i)} disabled={isLoading}
+                          className="text-[#4a6070] hover:text-[#ff4d4d] transition-colors text-[10px] flex-shrink-0"
+                          title="Remove"
+                        >✕</button>
+                      </div>
+                    )
+                  })}
                 </div>
 
                 {/* Add feed */}
