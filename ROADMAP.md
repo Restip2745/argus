@@ -125,6 +125,17 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase L — Data & Workflow
+
+> Enhance data workflows, personal productivity, and operator integration.
+
+- [ ] **Export Filtered Events** — extend `/api/events/export` with a `?ids=` query param so the client can pass the filtered event IDs and download only the visible subset
+- [ ] **Personal Event Notes** — attach a short personal note (textarea, max 500 chars) to each event; persisted to localStorage; shown in EventPanelBody header area
+- [ ] **Webhook Curl Helper in Config Modal** — when `WEBHOOK_SECRET` is configured and the health snapshot includes it, show a "Copy curl" button in the Config Modal with a sample webhook request
+- [ ] **Event Arrival Rate Sparkline** — tiny 12-bar hourly histogram next to the event count in FloatDock showing arrival rate over the past 12 hours
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

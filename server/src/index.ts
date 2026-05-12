@@ -122,7 +122,14 @@ app.post('/api/events/webhook', (req, res) => {
 
 app.get('/api/events/export', (req, res) => {
   try {
-    const events = getAnalyzedArticles()
+    const allEvents = getAnalyzedArticles()
+    const idsParam = req.query.ids as string | undefined
+    const events = idsParam
+      ? (() => {
+          const idSet = new Set(idsParam.split(',').map((s) => s.trim()).filter(Boolean))
+          return allEvents.filter((e) => idSet.has(e.id))
+        })()
+      : allEvents
     const format = (req.query.format as string | undefined) ?? 'json'
     if (format === 'csv') {
       const header = 'id,title,category,intensity,location,heat_score,published_at,source,url\n'

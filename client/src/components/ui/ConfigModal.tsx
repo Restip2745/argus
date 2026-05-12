@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useAppStore } from '../../store'
 import { useDraggable } from '../../hooks/useDraggable'
+import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
@@ -48,7 +49,9 @@ function FieldLabel({ text, value }: { text: string; value?: React.ReactNode }) 
 }
 
 export function ConfigModal() {
-  const setShowConfig = useAppStore((s) => s.setShowConfig)
+  const filteredEvents = useFilteredEvents()
+  const allEvents      = useAppStore((s) => s.events)
+  const setShowConfig  = useAppStore((s) => s.setShowConfig)
   const uiScale       = useAppStore((s) => s.uiScale)
   const setUiScale    = useAppStore((s) => s.setUiScale)
   const cardRef       = useRef<HTMLDivElement>(null)
@@ -197,6 +200,12 @@ export function ConfigModal() {
   }
 
   const isLoading = status === 'loading' || status === 'saving'
+
+  const filteredIds = useMemo(
+    () => filteredEvents.map((e) => e.id).join(','),
+    [filteredEvents],
+  )
+  const hasActiveFilter = filteredEvents.length < allEvents.length
 
   const cardStyle: React.CSSProperties = {
     transform:  `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
@@ -458,14 +467,30 @@ export function ConfigModal() {
                 href={`${API}/api/events/export?format=json`}
                 download
                 className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
-                title="Download event archive as JSON"
+                title={`Download all ${allEvents.length} events as JSON`}
               >↓ JSON</a>
               <a
                 href={`${API}/api/events/export?format=csv`}
                 download
                 className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
-                title="Download event archive as CSV"
+                title={`Download all ${allEvents.length} events as CSV`}
               >↓ CSV</a>
+              {hasActiveFilter && (
+                <>
+                  <a
+                    href={`${API}/api/events/export?format=json&ids=${encodeURIComponent(filteredIds)}`}
+                    download
+                    className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                    title={`Download filtered ${filteredEvents.length} events as JSON`}
+                  >↓ JSON ({filteredEvents.length})</a>
+                  <a
+                    href={`${API}/api/events/export?format=csv&ids=${encodeURIComponent(filteredIds)}`}
+                    download
+                    className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                    title={`Download filtered ${filteredEvents.length} events as CSV`}
+                  >↓ CSV ({filteredEvents.length})</a>
+                </>
+              )}
             </div>
             <div className="flex gap-2">
               <button

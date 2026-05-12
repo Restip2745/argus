@@ -887,6 +887,55 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Feature: Export filtered events
+  Description: GET /api/events/export currently ignores which events the user is actually
+    viewing — it exports everything in the DB. Add an optional ?ids= query parameter:
+    when provided (comma-separated list of event IDs), server filters the articles query to
+    only those IDs. Client EventPanel (or Config Modal) can pass the currently-filtered IDs
+    from the Zustand store's filtered events list.
+  Success Criteria: Passing ?ids=id1,id2 returns only those events in JSON/CSV. Omitting
+    ?ids still exports all. TS clean; server + client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Personal event notes
+  Description: Add a short personal note field (max 500 chars) to each event, persisted to
+    localStorage as 'argus-event-notes' Record<id, string>. Zustand store gains setEventNote
+    action. EventPanelBody shows a small ✏ note section below the title: collapsed by default,
+    expands to a textarea on click, auto-saves on blur.
+  Success Criteria: Notes persist across reload. Note icon appears when a note exists.
+    TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Feature: Webhook curl helper in Config Modal
+  Description: When the server reports webhookEnabled: true in the health snapshot, Config
+    Modal shows a "WEBHOOK" section with the endpoint URL and a "Copy curl" button that
+    copies a sample curl command (with placeholder key) to the clipboard.
+    Requires adding webhookEnabled boolean to healthTracker getHealthSnapshot().
+  Success Criteria: Webhook section appears in Config Modal when WEBHOOK_SECRET is set.
+    Copy curl puts a usable curl command in clipboard. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Feature: Event arrival rate sparkline
+  Description: Compute a 12-bar hourly histogram from the events array timestamps (current
+    hour and 11 previous hours). Render as a tiny SVG bar chart (12 × ~4px bars) next to
+    the event count badge in FloatDock's event feed button. Color gradient: dim when 0,
+    brighter with more events.
+  Success Criteria: FloatDock event count button shows sparkline bars reflecting actual
+    event distribution. Updates when new events arrive. TS clean; tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---
