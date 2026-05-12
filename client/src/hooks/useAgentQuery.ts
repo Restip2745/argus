@@ -74,6 +74,7 @@ export function useAgentQuery() {
       const decoder = new TextDecoder()
       let   buffer  = ''
       let   rawText = ''
+      let   doneReceived = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -86,7 +87,7 @@ export function useAgentQuery() {
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           const payload = line.slice(6).trim()
-          if (payload === '[DONE]') continue
+          if (payload === '[DONE]') { doneReceived = true; continue }
           try {
             const parsed = JSON.parse(payload) as { text?: string; error?: string }
             if (parsed.error) throw new Error(parsed.error)
@@ -104,7 +105,10 @@ export function useAgentQuery() {
       const truncationNotice = contextTruncated
         ? '<div class="context-truncated-notice">⚠ Context truncated to 8 000 chars</div>'
         : ''
-      const safe = truncationNotice + sanitizeHtml(rawText)
+      const interruptedNotice = !doneReceived && rawText.length > 0
+        ? '<div class="stream-interrupted-notice">⚠ Response interrupted</div>'
+        : ''
+      const safe = truncationNotice + sanitizeHtml(rawText) + interruptedNotice
       setHistory(h => h.map((e) =>
         e.id === entryId ? { ...e, html: safe, streaming: false } : e
       ))

@@ -742,7 +742,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Feature: Streaming cut-off notice
+[DONE][LOW] Feature: Streaming cut-off notice
   Description: If the Ollama SSE stream ends without sending 'data: [DONE]\n\n' (e.g.
     mid-response server crash or timeout), the agent response is left as partial HTML with
     a still-active cursor. Detect stream completion without [DONE] and append a visible
