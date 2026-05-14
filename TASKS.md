@@ -20,6 +20,92 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Security: API Input Validation
+  Description: Extracted all route validation into server/src/utils/validation.ts:
+    validateExportParams() — enum-checks format ('json'|'csv'), length-checks ids (≤10KB);
+    validateEventId() — regex-guards :id against path traversal (/^[a-zA-Z0-9_-]{1,120}$/);
+    validateLlmConfigBody() — type-checks object shape (host/model=string, temperature/contextSize=number);
+    validateFeedsBody() — validates array of {url:string, enabled:boolean} objects.
+    All 5 routes updated to call the relevant validator and return 400 on failure.
+    Added 34 unit tests in validation.test.ts covering valid and invalid inputs for all four validators.
+  Success Criteria: Met — invalid format/id/body return 400; valid requests unaffected;
+    server TS clean; 53 server tests pass (was 19).
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][HIGH] Security: Config Endpoint Auth Guard
+  Description: POST /api/config/llm, POST /api/config/feeds, and POST /api/config/reset
+    are open mutation endpoints — any client on the network can change Ollama model or feed
+    URLs without any auth check. Add an optional CONFIG_SECRET env var guard: if set, all
+    /api/config/* POST requests must include X-Config-Key header matching the secret;
+    missing/wrong header returns 401. If CONFIG_SECRET is not set, requests pass through
+    unchanged (self-hosted default). Auth check reuses the same pattern as X-Webhook-Key.
+  Success Criteria: With CONFIG_SECRET set, missing key returns 401; correct key succeeds.
+    Without CONFIG_SECRET, all requests succeed (no breaking change). Server TS clean;
+    server tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Refactor: Structured Server Logging
+  Description: Server has 26+ console.log/warn/error statements scattered across index.ts,
+    sqlite.ts, ollama.ts, scraper.ts, and workers. In production these pollute stdout with
+    debug noise and can leak internal details. Create server/src/utils/logger.ts — a simple
+    env-gated logger (LOG_LEVEL=debug|info|warn|error, defaults to 'info'). Replace all
+    server console.* calls with logger.debug/info/warn/error. Keep client ErrorBoundary
+    console.error (used for DevTools visibility).
+  Success Criteria: server/src/utils/logger.ts exists; no console.log/warn/error in server
+    src outside tests; LOG_LEVEL=warn silences debug/info; server TS clean; 19 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Accessibility: Button aria-labels
+  Description: Several icon-only buttons and unlabeled controls lack aria-label:
+    EventPanelBody note action buttons (SAVE/CLEAR/ESC shown as text but with no aria-label);
+    CategoryFilterBar <select> for sort order has no aria-label; PersonPanel header ⌕ search
+    toggle button has no aria-label; RegionPanel and CelestialBodyPanel popout/add-context
+    buttons should have descriptive aria-labels matching their visible tooltip text.
+    Add aria-label to each affected interactive element.
+  Success Criteria: All icon-only or ambiguously-labeled interactive elements have aria-label;
+    no existing labels changed; TS clean; 58 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Test: useOllamaSocket hook unit tests
+  Description: useOllamaSocket is the critical data-ingestion hook — it performs the initial
+    REST fetch, subscribes to socket.io 'new_event' and 'intel_brief', and triggers catch-up
+    on reconnect. It has zero test coverage. Add Vitest tests mocking socket.io-client and
+    fetch: (1) initial fetch populates events store; (2) 'new_event' message appends event;
+    (3) reconnect triggers re-fetch; (4) intel_brief message updates store; (5) duplicate
+    event ids are deduplicated.
+  Success Criteria: ≥5 new tests for useOllamaSocket; all pass; 63+ total client tests pass;
+    TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Perf: Lazy-load i18n locale files
+  Description: Both en.json and zh-TW.json are bundled at build time, increasing the initial
+    JS payload even for users who never switch language. Swap to i18next-http-backend: serve
+    locale files from /public/locales/{lng}/translation.json; configure i18next with
+    backend plugin to fetch only the active locale on startup; other locales fetched on
+    demand when the user switches language. Remove the static import of translation JSON from
+    i18n.ts.
+  Success Criteria: Network tab shows only the active locale JSON fetched on startup;
+    language switch still works; TS clean; client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Bugfix: Fix null/invalid date handling in EventStack
   Description: EventStack.tsx had two silent failure modes in date handling:
     (1) Sort used localeCompare on published_at strings — malformed/null dates silently

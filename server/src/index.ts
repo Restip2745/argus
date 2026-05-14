@@ -17,6 +17,7 @@ import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
+import { validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody } from './utils/validation'
 import type { EventCategory, EventIntensity } from './types'
 
 
@@ -124,16 +125,19 @@ app.post('/api/events/webhook', (req, res) => {
 
 app.get('/api/events/export', (req, res) => {
   try {
+    const format  = req.query.format  as string | undefined
+    const idsParam = req.query.ids    as string | undefined
+    const err = validateExportParams(format, idsParam)
+    if (err) { res.status(400).json({ error: err }); return }
     const allEvents = getAnalyzedArticles()
-    const idsParam = req.query.ids as string | undefined
+    const resolvedFormat = format ?? 'json'
     const events = idsParam
       ? (() => {
           const idSet = new Set(idsParam.split(',').map((s) => s.trim()).filter(Boolean))
           return allEvents.filter((e) => idSet.has(e.id))
         })()
       : allEvents
-    const format = (req.query.format as string | undefined) ?? 'json'
-    if (format === 'csv') {
+    if (resolvedFormat === 'csv') {
       const header = 'id,title,category,intensity,location,heat_score,published_at,source,url\n'
       const rows = events.map((e) => [
         e.id,
@@ -160,10 +164,12 @@ app.get('/api/events/export', (req, res) => {
 })
 
 app.get('/api/events/:id/related', (req, res) => {
+  const err = validateEventId(req.params.id)
+  if (err) { res.status(400).json({ error: err }); return }
   try {
     res.json(getRelatedEvents(req.params.id))
-  } catch (err) {
-    res.status(500).json({ error: (err as Error).message })
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message })
   }
 })
 
@@ -172,11 +178,13 @@ app.get('/api/config/llm', (_req, res) => {
 })
 
 app.post('/api/config/llm', (req, res) => {
+  const err = validateLlmConfigBody(req.body)
+  if (err) { res.status(400).json({ error: err }); return }
   try {
     const updated = setLlmConfig(req.body)
     res.json(updated)
-  } catch (err) {
-    res.status(400).json({ error: (err as Error).message })
+  } catch (e) {
+    res.status(400).json({ error: (e as Error).message })
   }
 })
 
@@ -195,11 +203,13 @@ app.get('/api/config/feeds', (_req, res) => {
 })
 
 app.post('/api/config/feeds', (req, res) => {
+  const feedsErr = validateFeedsBody(req.body)
+  if (feedsErr) { res.status(400).json({ error: feedsErr }); return }
   try {
     const updated = setFeedsConfig(req.body)
     res.json(updated)
-  } catch (err) {
-    res.status(400).json({ error: (err as Error).message })
+  } catch (e) {
+    res.status(400).json({ error: (e as Error).message })
   }
 })
 

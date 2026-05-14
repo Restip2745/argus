@@ -158,6 +158,19 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase O — Security, Observability & Coverage
+
+> Close API security gaps, improve server-side logging, and expand test coverage for critical paths.
+
+- [ ] **API Input Validation** — validate query/body params on all Express endpoints: format enum check on `/api/events/export`, id sanitization on `/api/events/:id/related`, body schema guard on `/api/config/llm` and `/api/config/feeds`
+- [ ] **Config Endpoint Auth** — optional `CONFIG_SECRET` env var guards all `/api/config/*` mutation endpoints (POST); returns 401 if secret set but header missing; no-op if secret not configured (self-hosted default)
+- [ ] **Structured Logging** — replace 31 `console.log/warn/error` calls in server with an env-gated logger utility (`LOG_LEVEL` env var: `debug|info|warn|error`); keeps client ErrorBoundary console.error for DevTools visibility
+- [ ] **Accessibility: Button aria-labels** — add `aria-label` to unlabeled icon-only buttons in EventPanelBody (SAVE/CLEAR/ESC note actions), PersonPanel, RegionPanel, CelestialBodyPanel, and CategoryFilterBar `<select>` sort control
+- [ ] **Test: useOllamaSocket hook** — add Vitest tests for the socket reconnection catch-up logic, initial REST fetch, and event deduplication; mock socket.io-client
+- [ ] **Perf: Lazy-load i18n locale** — load only the active locale JSON at startup via i18next `backend` plugin; other locales fetched on language switch; reduces initial bundle
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.
