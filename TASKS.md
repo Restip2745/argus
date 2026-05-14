@@ -67,15 +67,16 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Accessibility: Button aria-labels
-  Description: Several icon-only buttons and unlabeled controls lack aria-label:
-    EventPanelBody note action buttons (SAVE/CLEAR/ESC shown as text but with no aria-label);
-    CategoryFilterBar <select> for sort order has no aria-label; PersonPanel header ⌕ search
-    toggle button has no aria-label; RegionPanel and CelestialBodyPanel popout/add-context
-    buttons should have descriptive aria-labels matching their visible tooltip text.
-    Add aria-label to each affected interactive element.
-  Success Criteria: All icon-only or ambiguously-labeled interactive elements have aria-label;
-    no existing labels changed; TS clean; 58 client tests pass.
+[DONE][MEDIUM] Accessibility: Button aria-labels
+  Description: Added aria-label to 10 interactive elements across 5 files:
+    EventPanelBody.tsx — note SAVE/CLEAR/ESC buttons (aria-label="Save note",
+    "Clear note", "Cancel note"); CategoryFilterBar.tsx — sort <select> (aria-label
+    mirrors title="Sort order") and ✕ clear-search button (aria-label="Clear search");
+    PersonPanel.tsx — ⊕ add-context, ⌕ search toggle, ⊡ popout buttons (aria-label
+    mirrors dynamic title text); RegionPanel.tsx — ⊕ add-context and ⊡ popout (same
+    pattern); CelestialBodyPanel.tsx — ⊕ add-context button.
+  Success Criteria: Met — all icon-only/symbol buttons have aria-label; no existing
+    functionality changed; TS clean; 58 client tests pass.
   Retry Count: 0
   Source: ROADMAP
 

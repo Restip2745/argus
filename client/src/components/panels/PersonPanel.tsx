@@ -156,6 +156,7 @@ export function PersonPanel() {
                     addContextEntity(ce)
                   }
                 }}
+                aria-label={allInContext ? 'Already in context' : 'Add to context panel'}
                 title={allInContext ? 'Already in context' : 'Add to context panel'}
                 disabled={allInContext}
                 style={{
@@ -174,6 +175,7 @@ export function PersonPanel() {
           })()}
           <button
             onClick={() => setShowSearch(v => !v)}
+            aria-label={t('person.search', 'Search person')}
             title={t('person.search', 'Search person')}
             style={{
               background: showSearch ? `${ACCENT}18` : 'none',
@@ -186,6 +188,7 @@ export function PersonPanel() {
           >⌕</button>
           <button
             onClick={popoutOpen}
+            aria-label={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
             title={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
             style={{
               background: 'none', border: 'none',
