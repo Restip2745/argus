@@ -1,5 +1,6 @@
 import type { Server, Socket } from 'socket.io'
 import type { ClientEvent } from '../types'
+import { logger } from '../utils/logger'
 
 interface AnnotationStroke {
   id: string
@@ -12,7 +13,7 @@ interface AnnotationStroke {
 
 export function initSocket(io: Server): void {
   io.on('connection', (socket: Socket) => {
-    console.log(`[Socket] Client connected: ${socket.id}`)
+    logger.debug('[Socket]', `Client connected: ${socket.id}`)
 
     // Relay annotation strokes to all other clients (collaborative canvas)
     socket.on('stroke', (stroke: AnnotationStroke) => {
@@ -24,7 +25,7 @@ export function initSocket(io: Server): void {
     })
 
     socket.on('disconnect', () => {
-      console.log(`[Socket] Client disconnected: ${socket.id}`)
+      logger.debug('[Socket]', `Client disconnected: ${socket.id}`)
     })
   })
 }

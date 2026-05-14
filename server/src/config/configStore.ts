@@ -4,6 +4,7 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
+import { logger } from '../utils/logger'
 
 const CONFIG_PATH = join(__dirname, '../../../data/config.json')
 
@@ -36,6 +37,6 @@ export function persistConfig(patch: Partial<PersistedConfig>): void {
     writeFileSync(tmp, JSON.stringify(next, null, 2), 'utf8')
     renameSync(tmp, CONFIG_PATH)
   } catch (err) {
-    console.warn('[Config] Failed to persist config:', (err as Error).message)
+    logger.warn('[Config]', 'Failed to persist config:', (err as Error).message)
   }
 }

@@ -51,15 +51,17 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Refactor: Structured Server Logging
-  Description: Server has 26+ console.log/warn/error statements scattered across index.ts,
-    sqlite.ts, ollama.ts, scraper.ts, and workers. In production these pollute stdout with
-    debug noise and can leak internal details. Create server/src/utils/logger.ts — a simple
-    env-gated logger (LOG_LEVEL=debug|info|warn|error, defaults to 'info'). Replace all
-    server console.* calls with logger.debug/info/warn/error. Keep client ErrorBoundary
-    console.error (used for DevTools visibility).
-  Success Criteria: server/src/utils/logger.ts exists; no console.log/warn/error in server
-    src outside tests; LOG_LEVEL=warn silences debug/info; server TS clean; 19 tests pass.
+[DONE][MEDIUM] Refactor: Structured Server Logging
+  Description: Created server/src/utils/logger.ts — env-gated logger with LOG_LEVEL
+    (debug|info|warn|error|silent, default 'info'). Replaced all 28 console.* calls across
+    index.ts, sqlite.ts, ollama.ts, scraper.ts, socket.ts, retention.ts, summary.ts,
+    configStore.ts, and llmConfig.ts with logger.debug/info/warn/error.
+    Per-connection socket.io events downgraded to logger.debug (high-frequency).
+    Ollama per-article classification log downgraded to logger.debug.
+    Added 7 tests in logger.test.ts: info suppresses debug, debug level emits debug,
+    warn uses console.warn, error uses console.error, silent suppresses all, tag included.
+  Success Criteria: Met — logger.ts created; 0 console.* in server src outside tests;
+    LOG_LEVEL=silent suppresses all output; server TS clean; 66 tests pass.
   Retry Count: 0
   Source: ROADMAP
 

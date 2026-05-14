@@ -18,6 +18,7 @@ import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
 import { validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
+import { logger } from './utils/logger'
 import type { EventCategory, EventIntensity } from './types'
 
 
@@ -419,7 +420,7 @@ app.get('/api/tracking/aircraft', async (_req, res) => {
     })
     res.json(aircraft)
   } catch (err) {
-    console.warn('[tracking] aircraft fetch failed:', (err as Error).message)
+    logger.warn('[tracking]', 'aircraft fetch failed:', (err as Error).message)
     res.json([])
   }
 })
@@ -449,7 +450,7 @@ app.get('/api/tracking/tle', async (req, res) => {
     })
     res.json(sats)
   } catch (err) {
-    console.warn('[tracking] TLE fetch failed:', (err as Error).message)
+    logger.warn('[tracking]', 'TLE fetch failed:', (err as Error).message)
     res.json([])
   }
 })
@@ -465,7 +466,7 @@ app.get('/api/tracking/ships', async (_req, res) => {
     const ships = await fetchCached<ShipState[]>('ships', TRACKING_TTL.ships, () => fetchAisSnapshot(apiKey))
     res.json(ships)
   } catch (err) {
-    console.warn('[tracking] ships fetch failed:', (err as Error).message)
+    logger.warn('[tracking]', 'ships fetch failed:', (err as Error).message)
     res.json([])
   }
 })
@@ -503,7 +504,7 @@ app.get('/api/conflict/fronts', async (_req, res) => {
     })
     res.json(geojson)
   } catch (err) {
-    console.warn('[conflict] GeoJSON fetch failed, using demo data:', (err as Error).message)
+    logger.warn('[conflict]', 'GeoJSON fetch failed, using demo data:', (err as Error).message)
     res.json(getDemoConflictGeoJSON())
   }
 })
@@ -520,11 +521,11 @@ async function main() {
   startOllamaHealthPoll()
 
   httpServer.listen(PORT, () => {
-    console.log(`[ARGUS] Server → http://localhost:${PORT}`)
+    logger.info('[ARGUS]', `Server → http://localhost:${PORT}`)
   })
 }
 
 main().catch((err) => {
-  console.error('[ARGUS] Fatal startup error:', err)
+  logger.error('[ARGUS]', 'Fatal startup error:', err)
   process.exit(1)
 })

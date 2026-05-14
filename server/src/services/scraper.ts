@@ -5,6 +5,7 @@ import { getFeedsConfig } from '../config/feedsConfig'
 import { insertRawArticle } from '../db/sqlite'
 import { setLastScraperRun, recordFeedSuccess, recordFeedError } from './healthTracker'
 import type { RawFeedItem } from '../types'
+import { logger } from '../utils/logger'
 
 const parser = new Parser()
 
@@ -21,11 +22,11 @@ export function startScraper(): void {
     void fetchAllFeeds()
   })
 
-  console.log('[Scraper] RSS scraper scheduled — every 15 min')
+  logger.info('[Scraper]', 'RSS scraper scheduled — every 15 min')
 }
 
 async function fetchAllFeeds(): Promise<void> {
-  console.log(`[Scraper] Starting feed fetch (${new Date().toISOString()})`)
+  logger.info('[Scraper]', `Starting feed fetch (${new Date().toISOString()})`)
   let inserted = 0
   let skipped = 0
 
@@ -54,10 +55,10 @@ async function fetchAllFeeds(): Promise<void> {
     } catch (err) {
       const msg = (err as Error).message
       recordFeedError(feed.name, msg)
-      console.error(`[Scraper] Failed to fetch "${feed.name}":`, msg)
+      logger.error('[Scraper]', `Failed to fetch "${feed.name}":`, msg)
     }
   }
 
   setLastScraperRun(new Date().toISOString())
-  console.log(`[Scraper] Done — ${inserted} new, ${skipped} duplicates skipped`)
+  logger.info('[Scraper]', `Done — ${inserted} new, ${skipped} duplicates skipped`)
 }

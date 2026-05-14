@@ -2,6 +2,7 @@ import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import type { Article, OllamaClassification, ClientEvent, SourceReliability } from '../types'
+import { logger } from '../utils/logger'
 
 let db: Database.Database
 
@@ -15,7 +16,7 @@ export function initDb(): void {
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
     .get()
   if (oldTable) {
-    console.log('[DB] Migrating: dropping old events table')
+    logger.info('[DB]', 'Migrating: dropping old events table')
     db.exec('DROP TABLE IF EXISTS events')
   }
 
@@ -26,10 +27,10 @@ export function initDb(): void {
   const cols = db.prepare("PRAGMA table_info(articles)").all() as { name: string }[]
   if (!cols.some(c => c.name === 'reliability')) {
     db.exec("ALTER TABLE articles ADD COLUMN reliability TEXT")
-    console.log('[DB] Migration: added reliability column')
+    logger.info('[DB]', 'Migration: added reliability column')
   }
 
-  console.log('[DB] SQLite initialised (articles schema)')
+  logger.info('[DB]', 'SQLite initialised (articles schema)')
 }
 
 export function getDb(): Database.Database {
