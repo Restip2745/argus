@@ -17,6 +17,8 @@ import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
+import { validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
+import { logger } from './utils/logger'
 import type { EventCategory, EventIntensity } from './types'
 
 
@@ -124,16 +126,19 @@ app.post('/api/events/webhook', (req, res) => {
 
 app.get('/api/events/export', (req, res) => {
   try {
+    const format  = req.query.format  as string | undefined
+    const idsParam = req.query.ids    as string | undefined
+    const err = validateExportParams(format, idsParam)
+    if (err) { res.status(400).json({ error: err }); return }
     const allEvents = getAnalyzedArticles()
-    const idsParam = req.query.ids as string | undefined
+    const resolvedFormat = format ?? 'json'
     const events = idsParam
       ? (() => {
           const idSet = new Set(idsParam.split(',').map((s) => s.trim()).filter(Boolean))
           return allEvents.filter((e) => idSet.has(e.id))
         })()
       : allEvents
-    const format = (req.query.format as string | undefined) ?? 'json'
-    if (format === 'csv') {
+    if (resolvedFormat === 'csv') {
       const header = 'id,title,category,intensity,location,heat_score,published_at,source,url\n'
       const rows = events.map((e) => [
         e.id,
@@ -160,23 +165,40 @@ app.get('/api/events/export', (req, res) => {
 })
 
 app.get('/api/events/:id/related', (req, res) => {
+  const err = validateEventId(req.params.id)
+  if (err) { res.status(400).json({ error: err }); return }
   try {
     res.json(getRelatedEvents(req.params.id))
-  } catch (err) {
-    res.status(500).json({ error: (err as Error).message })
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message })
   }
 })
+
+// Optional auth guard for config mutation endpoints.
+// If CONFIG_SECRET env var is set, callers must provide X-Config-Key header with matching value.
+// If CONFIG_SECRET is not set, requests pass through (self-hosted default — no breaking change).
+function checkConfigAuth(req: express.Request, res: express.Response): boolean {
+  const err = validateConfigAuth(
+    req.headers['x-config-key'] as string | undefined,
+    process.env.CONFIG_SECRET,
+  )
+  if (err) { res.status(401).json({ error: err }); return false }
+  return true
+}
 
 app.get('/api/config/llm', (_req, res) => {
   res.json(getLlmConfig())
 })
 
 app.post('/api/config/llm', (req, res) => {
+  if (!checkConfigAuth(req, res)) return
+  const err = validateLlmConfigBody(req.body)
+  if (err) { res.status(400).json({ error: err }); return }
   try {
     const updated = setLlmConfig(req.body)
     res.json(updated)
-  } catch (err) {
-    res.status(400).json({ error: (err as Error).message })
+  } catch (e) {
+    res.status(400).json({ error: (e as Error).message })
   }
 })
 
@@ -195,11 +217,14 @@ app.get('/api/config/feeds', (_req, res) => {
 })
 
 app.post('/api/config/feeds', (req, res) => {
+  if (!checkConfigAuth(req, res)) return
+  const feedsErr = validateFeedsBody(req.body)
+  if (feedsErr) { res.status(400).json({ error: feedsErr }); return }
   try {
     const updated = setFeedsConfig(req.body)
     res.json(updated)
-  } catch (err) {
-    res.status(400).json({ error: (err as Error).message })
+  } catch (e) {
+    res.status(400).json({ error: (e as Error).message })
   }
 })
 
@@ -395,7 +420,7 @@ app.get('/api/tracking/aircraft', async (_req, res) => {
     })
     res.json(aircraft)
   } catch (err) {
-    console.warn('[tracking] aircraft fetch failed:', (err as Error).message)
+    logger.warn('[tracking]', 'aircraft fetch failed:', (err as Error).message)
     res.json([])
   }
 })
@@ -425,7 +450,7 @@ app.get('/api/tracking/tle', async (req, res) => {
     })
     res.json(sats)
   } catch (err) {
-    console.warn('[tracking] TLE fetch failed:', (err as Error).message)
+    logger.warn('[tracking]', 'TLE fetch failed:', (err as Error).message)
     res.json([])
   }
 })
@@ -441,7 +466,7 @@ app.get('/api/tracking/ships', async (_req, res) => {
     const ships = await fetchCached<ShipState[]>('ships', TRACKING_TTL.ships, () => fetchAisSnapshot(apiKey))
     res.json(ships)
   } catch (err) {
-    console.warn('[tracking] ships fetch failed:', (err as Error).message)
+    logger.warn('[tracking]', 'ships fetch failed:', (err as Error).message)
     res.json([])
   }
 })
@@ -479,7 +504,7 @@ app.get('/api/conflict/fronts', async (_req, res) => {
     })
     res.json(geojson)
   } catch (err) {
-    console.warn('[conflict] GeoJSON fetch failed, using demo data:', (err as Error).message)
+    logger.warn('[conflict]', 'GeoJSON fetch failed, using demo data:', (err as Error).message)
     res.json(getDemoConflictGeoJSON())
   }
 })
@@ -496,11 +521,11 @@ async function main() {
   startOllamaHealthPoll()
 
   httpServer.listen(PORT, () => {
-    console.log(`[ARGUS] Server → http://localhost:${PORT}`)
+    logger.info('[ARGUS]', `Server → http://localhost:${PORT}`)
   })
 }
 
 main().catch((err) => {
-  console.error('[ARGUS] Fatal startup error:', err)
+  logger.error('[ARGUS]', 'Fatal startup error:', err)
   process.exit(1)
 })

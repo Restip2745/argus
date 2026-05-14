@@ -6,6 +6,7 @@ import {
 } from '../db/sqlite'
 import { calculateHeatScore, calculateExpiresAt } from '../services/ollama'
 import type { Article, OllamaClassification, EventCategory, EventIntensity } from '../types'
+import { logger } from '../utils/logger'
 
 /**
  * Reconstruct the base heat score from an article's stored fields
@@ -41,11 +42,11 @@ export function startRetention(): void {
     try {
       runRetention()
     } catch (err) {
-      console.error('[Retention] Error:', (err as Error).message)
+      logger.error('[Retention]', 'Error:', (err as Error).message)
     }
   })
 
-  console.log('[Retention] Worker scheduled — every 15 min')
+  logger.info('[Retention]', 'Worker scheduled — every 15 min')
 }
 
 function runRetention(): void {
@@ -90,6 +91,6 @@ function runRetention(): void {
   const deleted = deleteExpiredArticles()
 
   if (boostCount > 0 || deleted > 0) {
-    console.log(`[Retention] Boosted ${boostCount} article(s), deleted ${deleted} expired`)
+    logger.info('[Retention]', `Boosted ${boostCount} article(s), deleted ${deleted} expired`)
   }
 }

@@ -218,6 +218,7 @@ export function CelestialBodyPanel() {
               }
               addContextEntity(ce)
             }}
+            aria-label={inContext ? 'Already in context' : 'Add to context panel'}
             title={inContext ? 'Already in context' : 'Add to context panel'}
             disabled={inContext}
             style={{

@@ -1,0 +1,121 @@
+{
+  "app": { "title": "全球情報監控系統" },
+  "panel": {
+    "close":         "關閉",
+    "back":          "返回",
+    "loading":       "載入中…",
+    "noData":        "目前無情報資料",
+    "focus":         "聚焦",
+    "focus_region":  "聚焦地區",
+    "region":        "地區情報"
+  },
+  "event": {
+    "intensity": {
+      "LOW":      "低",
+      "MODERATE": "中",
+      "HIGH":     "高",
+      "CRITICAL": "危急"
+    },
+    "category": {
+      "politics":  "政治",
+      "military":  "軍事",
+      "economy":   "經濟",
+      "space":     "太空",
+      "disaster":  "災害",
+      "science":   "科學",
+      "other":     "其他"
+    },
+    "labels": {
+      "heat":            "熱度",
+      "source":          "來源",
+      "suggestedQueries":"建議查詢",
+      "agent":           "◈ 情報代理",
+      "analyzing":       "分析中",
+      "viewSource":      "查看原文",
+      "askAgent":        "詢問情報分析…"
+    },
+    "timeRange": {
+      "6h":   "6小時",
+      "12h":  "12小時",
+      "24h":  "24小時",
+      "all":  "全部"
+    },
+    "search": {
+      "placeholder": "搜尋"
+    }
+  },
+  "region": {
+    "overview":    "概覽",
+    "events":      "近期事件",
+    "agent":       "◈ 地區情報分析",
+    "noEvents":    "目前無近期事件"
+  },
+  "canvas": {
+    "toggle": "標記畫布"
+  },
+  "conflictLayer": {
+    "toggle": "衝突前線"
+  },
+  "celestialNav": {
+    "collapse": "收起",
+    "expand":   "天體導航"
+  },
+  "person": {
+    "title":             "人物",
+    "search":            "搜尋人物",
+    "searchPlaceholder": "搜尋人物…",
+    "agent":             "◈ 人物情報分析",
+    "askAgent":          "詢問人物情報…",
+    "keyFigures":        "關鍵人物"
+  },
+  "context": {
+    "title":        "多實體情境",
+    "agent":        "◈ 跨實體情報分析",
+    "askAgent":     "詢問跨實體情報分析…",
+    "clear":        "清除",
+    "clearAll":     "清除所有實體",
+    "limitReached": "已達實體上限",
+    "addToContext":  "加入情境面板",
+    "inContext":     "已在情境中"
+  },
+  "ui": {
+    "solarSystem": "太陽系",
+    "earth":       "地球",
+    "annotations": "標記畫布",
+    "settings":    "設定",
+    "liteMode":    "精簡模式",
+    "normalMode":  "標準模式",
+    "immersive":   "沉浸模式",
+    "aiAnalysis":  "AI 畫面分析",
+    "config":      "設定",
+    "search":      "搜尋事件…"
+  },
+  "popout": {
+    "catQ": {
+      "ARMED_CONFLICT": { "0": "升級風險評估",   "1": "停火可能性分析",  "2": "國際介入機率",    "3": "平民傷亡趨勢"        },
+      "POLITICAL":      { "0": "政局穩定度評估", "1": "選舉影響分析",   "2": "盟友反應預測",    "3": "外交制裁可能性"       },
+      "ECONOMIC":       { "0": "市場衝擊評估",   "1": "供應鏈風險",     "2": "貨幣匯率影響",    "3": "貿易夥伴反應"         },
+      "SOCIAL":         { "0": "社會穩定指數",   "1": "人口遷移趨勢",   "2": "媒體輿論走向",    "3": "國際關注度"           },
+      "SCIENCE_TECH":   { "0": "技術擴散風險",   "1": "軍事應用潛力",   "2": "出口管制衝擊",    "3": "競爭優勢變化"         },
+      "ENVIRONMENT":    { "0": "人道影響評估",   "1": "資源競爭加劇",   "2": "區域穩定影響",    "3": "氣候安全連結"         },
+      "HEALTH":         { "0": "跨境傳播風險",   "1": "醫療系統壓力",   "2": "供應鏈中斷",      "3": "國際協調機制"         },
+      "CRIME_SECURITY": { "0": "情報網路滲透",   "1": "跨境執法合作",   "2": "金融制裁效力",    "3": "恐攻升級風險"         },
+      "SPACE":          { "0": "戰略軌道影響",   "1": "太空軍事化風險", "2": "衛星通訊中斷",    "3": "國際條約框架"         }
+    },
+    "personQ": {
+      "s0": "{{name}} 的政治立場分析",
+      "s1": "{{name}} 的重要事蹟",
+      "s2": "{{name}} 的國際影響力",
+      "s3": "{{name}} 與當前事件的關聯",
+      "m0": "{{n0}} 與 {{n1}} 的關係分析",
+      "m1": "{{n0}} 和 {{n1}} 的政治立場比較",
+      "m2": "二者在國際事務上的角色"
+    },
+    "contextQ": {
+      "0": "分析 {{n0}} 與 {{n1}} 之間的關聯",
+      "1": "這些人物在這些事件中扮演什麼角色？",
+      "2": "這些事件對該地區的影響評估",
+      "3": "綜合情報摘要"
+    }
+  }
+}

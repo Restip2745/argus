@@ -20,6 +20,97 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Security: API Input Validation
+  Description: Extracted all route validation into server/src/utils/validation.ts:
+    validateExportParams() — enum-checks format ('json'|'csv'), length-checks ids (≤10KB);
+    validateEventId() — regex-guards :id against path traversal (/^[a-zA-Z0-9_-]{1,120}$/);
+    validateLlmConfigBody() — type-checks object shape (host/model=string, temperature/contextSize=number);
+    validateFeedsBody() — validates array of {url:string, enabled:boolean} objects.
+    All 5 routes updated to call the relevant validator and return 400 on failure.
+    Added 34 unit tests in validation.test.ts covering valid and invalid inputs for all four validators.
+  Success Criteria: Met — invalid format/id/body return 400; valid requests unaffected;
+    server TS clean; 53 server tests pass (was 19).
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Security: Config Endpoint Auth Guard
+  Description: Added validateConfigAuth(headerValue, secret) to validation.ts — returns null
+    if auth passes, error string if it fails; no-op when secret is undefined/empty.
+    checkConfigAuth() helper in index.ts reads req.headers['x-config-key'] and
+    process.env.CONFIG_SECRET then calls validateConfigAuth; sends 401 on failure.
+    Applied to POST /api/config/llm and POST /api/config/feeds. No breaking change when
+    CONFIG_SECRET is unset (self-hosted default).
+    Added 6 unit tests for validateConfigAuth covering: no secret (undefined/empty),
+    correct key, wrong key, missing header, empty header.
+  Success Criteria: Met — CONFIG_SECRET set: missing/wrong key returns 401, correct key
+    passes; CONFIG_SECRET unset: all requests succeed; server TS clean; 59 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Refactor: Structured Server Logging
+  Description: Created server/src/utils/logger.ts — env-gated logger with LOG_LEVEL
+    (debug|info|warn|error|silent, default 'info'). Replaced all 28 console.* calls across
+    index.ts, sqlite.ts, ollama.ts, scraper.ts, socket.ts, retention.ts, summary.ts,
+    configStore.ts, and llmConfig.ts with logger.debug/info/warn/error.
+    Per-connection socket.io events downgraded to logger.debug (high-frequency).
+    Ollama per-article classification log downgraded to logger.debug.
+    Added 7 tests in logger.test.ts: info suppresses debug, debug level emits debug,
+    warn uses console.warn, error uses console.error, silent suppresses all, tag included.
+  Success Criteria: Met — logger.ts created; 0 console.* in server src outside tests;
+    LOG_LEVEL=silent suppresses all output; server TS clean; 66 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Accessibility: Button aria-labels
+  Description: Added aria-label to 10 interactive elements across 5 files:
+    EventPanelBody.tsx — note SAVE/CLEAR/ESC buttons (aria-label="Save note",
+    "Clear note", "Cancel note"); CategoryFilterBar.tsx — sort <select> (aria-label
+    mirrors title="Sort order") and ✕ clear-search button (aria-label="Clear search");
+    PersonPanel.tsx — ⊕ add-context, ⌕ search toggle, ⊡ popout buttons (aria-label
+    mirrors dynamic title text); RegionPanel.tsx — ⊕ add-context and ⊡ popout (same
+    pattern); CelestialBodyPanel.tsx — ⊕ add-context button.
+  Success Criteria: Met — all icon-only/symbol buttons have aria-label; no existing
+    functionality changed; TS clean; 58 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Test: useOllamaSocket hook unit tests
+  Description: Added client/src/hooks/__tests__/useOllamaSocket.test.ts with 8 tests:
+    (1) initial fetch populates events + sets eventsLoaded; (2) eventsLoaded=true even on
+    fetch failure; (3) connect event sets socketConnected=true; (4) disconnect sets false;
+    (5) new_event appends to store; (6) duplicate new_event is deduplicated; (7) intel_brief
+    updates store; (8) reconnect triggers second fetch; (9) unmount disconnects socket.
+    Mocks socket.io-client via vi.mock() with a factory returning per-test mock sockets.
+    Also removed 4 console.log/warn calls from useOllamaSocket.ts.
+  Success Criteria: Met — 8 new tests; 67 client tests pass total; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Perf: Lazy-load i18n locale files
+  Description: Installed i18next-http-backend. Copied locale JSON files from
+    client/src/i18n/locales/ to client/public/locales/{lng}/translation.json so they are
+    served as static assets. Removed static import of both locale files from i18n/index.ts;
+    added HttpBackend plugin with loadPath='/locales/{{lng}}/translation.json' and
+    initImmediate=false (waits for active locale before ready). Only the active locale
+    (zh-TW at startup) is fetched; en.json loaded only if user switches language.
+    Tests unaffected — they mock react-i18next directly.
+  Success Criteria: Met — static JSON imports removed; locale files in public/; TS clean;
+    67 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Bugfix: Fix null/invalid date handling in EventStack
   Description: EventStack.tsx had two silent failure modes in date handling:
     (1) Sort used localeCompare on published_at strings — malformed/null dates silently

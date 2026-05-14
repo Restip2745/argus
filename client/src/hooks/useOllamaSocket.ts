@@ -28,7 +28,7 @@ export function useOllamaSocket() {
         .then((data: ArgusEvent[]) => {
           if (Array.isArray(data)) setEvents(data)
         })
-        .catch((err) => console.warn('[REST] Failed to fetch events:', err))
+        .catch(() => {/* network errors surfaced via eventsLoaded; not actionable in client */})
     }
 
     // Fetch existing analyzed articles on mount
@@ -38,12 +38,10 @@ export function useOllamaSocket() {
     socket = io(API_BASE, { path: '/socket.io' })
 
     socket.on('connect', () => {
-      console.log('[Socket] Connected:', socket?.id)
       setSocketConnected(true)
     })
 
     socket.on('reconnect', () => {
-      console.log('[Socket] Reconnected — catching up with REST')
       void fetchEvents()
     })
 
@@ -56,7 +54,6 @@ export function useOllamaSocket() {
     })
 
     socket.on('disconnect', () => {
-      console.log('[Socket] Disconnected')
       setSocketConnected(false)
     })
 
