@@ -82,15 +82,15 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Test: useOllamaSocket hook unit tests
-  Description: useOllamaSocket is the critical data-ingestion hook — it performs the initial
-    REST fetch, subscribes to socket.io 'new_event' and 'intel_brief', and triggers catch-up
-    on reconnect. It has zero test coverage. Add Vitest tests mocking socket.io-client and
-    fetch: (1) initial fetch populates events store; (2) 'new_event' message appends event;
-    (3) reconnect triggers re-fetch; (4) intel_brief message updates store; (5) duplicate
-    event ids are deduplicated.
-  Success Criteria: ≥5 new tests for useOllamaSocket; all pass; 63+ total client tests pass;
-    TS clean.
+[DONE][MEDIUM] Test: useOllamaSocket hook unit tests
+  Description: Added client/src/hooks/__tests__/useOllamaSocket.test.ts with 8 tests:
+    (1) initial fetch populates events + sets eventsLoaded; (2) eventsLoaded=true even on
+    fetch failure; (3) connect event sets socketConnected=true; (4) disconnect sets false;
+    (5) new_event appends to store; (6) duplicate new_event is deduplicated; (7) intel_brief
+    updates store; (8) reconnect triggers second fetch; (9) unmount disconnects socket.
+    Mocks socket.io-client via vi.mock() with a factory returning per-test mock sockets.
+    Also removed 4 console.log/warn calls from useOllamaSocket.ts.
+  Success Criteria: Met — 8 new tests; 67 client tests pass total; TS clean.
   Retry Count: 0
   Source: ROADMAP
 
