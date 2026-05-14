@@ -4,6 +4,7 @@ import {
   validateEventId,
   validateLlmConfigBody,
   validateFeedsBody,
+  validateConfigAuth,
 } from '../utils/validation'
 
 // ── validateExportParams ──────────────────────────────────────────────────────
@@ -162,5 +163,33 @@ describe('validateFeedsBody', () => {
 
   it('rejects feed with non-boolean enabled', () => {
     expect(validateFeedsBody([{ url: 'https://example.com', enabled: 'true' }])).toMatch(/enabled/)
+  })
+})
+
+// ── validateConfigAuth ────────────────────────────────────────────────────────
+
+describe('validateConfigAuth', () => {
+  it('passes when no secret configured (undefined)', () => {
+    expect(validateConfigAuth(undefined, undefined)).toBeNull()
+  })
+
+  it('passes when no secret configured (empty string)', () => {
+    expect(validateConfigAuth('anything', '')).toBeNull()
+  })
+
+  it('passes when header matches secret', () => {
+    expect(validateConfigAuth('my-secret', 'my-secret')).toBeNull()
+  })
+
+  it('rejects when header is wrong', () => {
+    expect(validateConfigAuth('wrong-key', 'my-secret')).toMatch(/X-Config-Key/)
+  })
+
+  it('rejects when header is missing', () => {
+    expect(validateConfigAuth(undefined, 'my-secret')).toMatch(/X-Config-Key/)
+  })
+
+  it('rejects when header is empty string', () => {
+    expect(validateConfigAuth('', 'my-secret')).toMatch(/X-Config-Key/)
   })
 })

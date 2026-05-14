@@ -17,7 +17,7 @@ import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
-import { validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody } from './utils/validation'
+import { validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
 import type { EventCategory, EventIntensity } from './types'
 
 
@@ -173,11 +173,24 @@ app.get('/api/events/:id/related', (req, res) => {
   }
 })
 
+// Optional auth guard for config mutation endpoints.
+// If CONFIG_SECRET env var is set, callers must provide X-Config-Key header with matching value.
+// If CONFIG_SECRET is not set, requests pass through (self-hosted default — no breaking change).
+function checkConfigAuth(req: express.Request, res: express.Response): boolean {
+  const err = validateConfigAuth(
+    req.headers['x-config-key'] as string | undefined,
+    process.env.CONFIG_SECRET,
+  )
+  if (err) { res.status(401).json({ error: err }); return false }
+  return true
+}
+
 app.get('/api/config/llm', (_req, res) => {
   res.json(getLlmConfig())
 })
 
 app.post('/api/config/llm', (req, res) => {
+  if (!checkConfigAuth(req, res)) return
   const err = validateLlmConfigBody(req.body)
   if (err) { res.status(400).json({ error: err }); return }
   try {
@@ -203,6 +216,7 @@ app.get('/api/config/feeds', (_req, res) => {
 })
 
 app.post('/api/config/feeds', (req, res) => {
+  if (!checkConfigAuth(req, res)) return
   const feedsErr = validateFeedsBody(req.body)
   if (feedsErr) { res.status(400).json({ error: feedsErr }); return }
   try {

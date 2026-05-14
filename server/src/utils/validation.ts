@@ -3,6 +3,17 @@
  * Each function returns null on success or an error message string on failure.
  */
 
+/**
+ * Checks the X-Config-Key header against the CONFIG_SECRET env var.
+ * Returns null if auth passes, or an error string if it fails.
+ * If secret is undefined/empty, auth is disabled (self-hosted default).
+ */
+export function validateConfigAuth(headerValue: string | undefined, secret: string | undefined): string | null {
+  if (!secret) return null
+  if (headerValue !== secret) return 'Invalid or missing X-Config-Key header'
+  return null
+}
+
 const SAFE_ID_RE = /^[a-zA-Z0-9_\-]{1,120}$/
 
 export function validateExportParams(
