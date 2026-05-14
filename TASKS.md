@@ -96,15 +96,16 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Perf: Lazy-load i18n locale files
-  Description: Both en.json and zh-TW.json are bundled at build time, increasing the initial
-    JS payload even for users who never switch language. Swap to i18next-http-backend: serve
-    locale files from /public/locales/{lng}/translation.json; configure i18next with
-    backend plugin to fetch only the active locale on startup; other locales fetched on
-    demand when the user switches language. Remove the static import of translation JSON from
-    i18n.ts.
-  Success Criteria: Network tab shows only the active locale JSON fetched on startup;
-    language switch still works; TS clean; client tests pass.
+[DONE][LOW] Perf: Lazy-load i18n locale files
+  Description: Installed i18next-http-backend. Copied locale JSON files from
+    client/src/i18n/locales/ to client/public/locales/{lng}/translation.json so they are
+    served as static assets. Removed static import of both locale files from i18n/index.ts;
+    added HttpBackend plugin with loadPath='/locales/{{lng}}/translation.json' and
+    initImmediate=false (waits for active locale before ready). Only the active locale
+    (zh-TW at startup) is fetched; en.json loaded only if user switches language.
+    Tests unaffected — they mock react-i18next directly.
+  Success Criteria: Met — static JSON imports removed; locale files in public/; TS clean;
+    67 client tests pass.
   Retry Count: 0
   Source: ROADMAP
 

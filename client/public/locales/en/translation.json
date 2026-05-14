@@ -1,0 +1,121 @@
+{
+  "app": { "title": "Global Intelligence Surveillance System" },
+  "panel": {
+    "close":         "Close",
+    "back":          "Back",
+    "loading":       "Loading...",
+    "noData":        "No intelligence data available",
+    "focus":         "FOCUS",
+    "focus_region":  "FOCUS REGION",
+    "region":        "REGION INTEL"
+  },
+  "event": {
+    "intensity": {
+      "LOW":      "LOW",
+      "MODERATE": "MODERATE",
+      "HIGH":     "HIGH",
+      "CRITICAL": "CRITICAL"
+    },
+    "category": {
+      "politics":  "Politics",
+      "military":  "Military",
+      "economy":   "Economy",
+      "space":     "Space",
+      "disaster":  "Disaster",
+      "science":   "Science",
+      "other":     "Other"
+    },
+    "labels": {
+      "heat":            "HEAT",
+      "source":          "SOURCE",
+      "suggestedQueries":"SUGGESTED QUERIES",
+      "agent":           "◈ INTELLIGENCE AGENT",
+      "analyzing":       "ANALYZING",
+      "viewSource":      "VIEW SOURCE",
+      "askAgent":        "Ask intelligence analysis..."
+    },
+    "timeRange": {
+      "6h":   "6h",
+      "12h":  "12h",
+      "24h":  "24h",
+      "all":  "All"
+    },
+    "search": {
+      "placeholder": "SEARCH"
+    }
+  },
+  "region": {
+    "overview":    "OVERVIEW",
+    "events":      "RECENT EVENTS",
+    "agent":       "◈ REGION INTELLIGENCE",
+    "noEvents":    "No recent events"
+  },
+  "canvas": {
+    "toggle": "ANNOTATION CANVAS"
+  },
+  "conflictLayer": {
+    "toggle": "CONFLICT FRONTS"
+  },
+  "celestialNav": {
+    "collapse": "Collapse",
+    "expand":   "Celestial Navigation"
+  },
+  "person": {
+    "title":             "PERSON",
+    "search":            "Search person",
+    "searchPlaceholder": "Search people…",
+    "agent":             "◈ PERSON INTELLIGENCE",
+    "askAgent":          "Ask about this person…",
+    "keyFigures":        "KEY FIGURES"
+  },
+  "context": {
+    "title":        "MULTI-ENTITY CONTEXT",
+    "agent":        "◈ CROSS-ENTITY INTELLIGENCE",
+    "askAgent":     "Ask cross-entity intelligence analysis…",
+    "clear":        "CLEAR",
+    "clearAll":     "Clear all entities",
+    "limitReached": "ENTITY LIMIT REACHED",
+    "addToContext":  "Add to context panel",
+    "inContext":     "Already in context"
+  },
+  "ui": {
+    "solarSystem": "Solar System",
+    "earth":       "Earth",
+    "annotations": "Annotations",
+    "settings":    "Settings",
+    "liteMode":    "Lite mode",
+    "normalMode":  "Normal mode",
+    "immersive":   "Immersive mode",
+    "aiAnalysis":  "AI Canvas Analysis",
+    "config":      "Configuration",
+    "search":      "Search events…"
+  },
+  "popout": {
+    "catQ": {
+      "ARMED_CONFLICT": { "0": "Escalation Risk Assessment",         "1": "Ceasefire Probability",                "2": "International Intervention Likelihood", "3": "Civilian Casualty Trends"          },
+      "POLITICAL":      { "0": "Political Stability Assessment",     "1": "Electoral Impact Analysis",           "2": "Ally Reaction Prediction",             "3": "Diplomatic Sanctions Probability"   },
+      "ECONOMIC":       { "0": "Market Impact Assessment",           "1": "Supply Chain Risk",                   "2": "Currency Exchange Impact",             "3": "Trade Partner Response"             },
+      "SOCIAL":         { "0": "Social Stability Index",             "1": "Population Migration Trends",         "2": "Media Sentiment Trajectory",           "3": "International Attention Level"      },
+      "SCIENCE_TECH":   { "0": "Technology Proliferation Risk",      "1": "Military Application Potential",      "2": "Export Control Impact",                "3": "Competitive Advantage Shift"        },
+      "ENVIRONMENT":    { "0": "Humanitarian Impact Assessment",     "1": "Resource Competition Escalation",     "2": "Regional Stability Impact",            "3": "Climate-Security Nexus"             },
+      "HEALTH":         { "0": "Cross-Border Transmission Risk",     "1": "Healthcare System Pressure",          "2": "Supply Chain Disruption",              "3": "International Coordination"         },
+      "CRIME_SECURITY": { "0": "Intelligence Network Infiltration",  "1": "Cross-Border Law Enforcement",        "2": "Financial Sanctions Effectiveness",    "3": "Terrorism Escalation Risk"          },
+      "SPACE":          { "0": "Strategic Orbital Impact",           "1": "Space Militarization Risk",           "2": "Satellite Communication Disruption",   "3": "International Treaty Framework"     }
+    },
+    "personQ": {
+      "s0": "{{name}} political stance analysis",
+      "s1": "{{name}} key achievements",
+      "s2": "{{name}} international influence",
+      "s3": "{{name}}'s connection to current events",
+      "m0": "{{n0}} & {{n1}} relationship analysis",
+      "m1": "Political stance comparison: {{n0}} vs {{n1}}",
+      "m2": "Their roles in international affairs"
+    },
+    "contextQ": {
+      "0": "Analyze connection between {{n0}} and {{n1}}",
+      "1": "What roles do these people play in these events?",
+      "2": "Impact assessment of these events on the region",
+      "3": "Cross-entity intelligence summary"
+    }
+  }
+}
