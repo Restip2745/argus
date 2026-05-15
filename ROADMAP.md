@@ -171,6 +171,18 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase P — Deployment & Hardening
+
+> Enable production self-hosting and close remaining operational gaps.
+
+- [x] **Dockerfile + docker-compose** — Multi-stage Dockerfile (client Vite build → server tsc → lean production image); docker-compose.yml with named volume for SQLite + config persistence; Express serves React build in production mode; .env.example updated with all env vars
+- [x] **GitHub Actions CI** — ci.yml with parallel client (Vitest + Vite build) and server (Vitest + tsc) jobs on Node 22; triggers on push/PR to main
+- [x] **Rate limit webhook + export endpoints** — `checkRateLimit` applied to POST `/api/events/webhook` (10/60s) and GET `/api/events/export` (5/60s)
+- [ ] **Server worker unit tests** — Vitest coverage for scraper.ts (feed dedup/hash) and summary.ts (prompt building, offline no-op); ≥8 new tests
+- [ ] **Paginate /api/events** — optional `?limit=N&offset=M` params (default limit 500); validate limit ≤ 1000
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

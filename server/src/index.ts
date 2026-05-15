@@ -57,6 +57,11 @@ const VALID_CATEGORY_SET = new Set<EventCategory>([
 const VALID_INTENSITY_SET = new Set<EventIntensity>(['LOW','MODERATE','HIGH','CRITICAL'])
 
 app.post('/api/events/webhook', (req, res) => {
+  const webhookIp = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()
+    ?? req.socket.remoteAddress ?? 'unknown'
+  if (!checkRateLimit(`webhook:${webhookIp}`, 10, 60_000)) {
+    res.status(429).json({ error: 'Rate limited — please wait 60 seconds' }); return
+  }
   const secret = process.env.WEBHOOK_SECRET
   if (!secret) { res.status(503).json({ error: 'Webhook endpoint not configured' }); return }
   if (req.headers['x-webhook-key'] !== secret) {
@@ -125,6 +130,11 @@ app.post('/api/events/webhook', (req, res) => {
 })
 
 app.get('/api/events/export', (req, res) => {
+  const exportIp = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()
+    ?? req.socket.remoteAddress ?? 'unknown'
+  if (!checkRateLimit(`export:${exportIp}`, 5, 60_000)) {
+    res.status(429).json({ error: 'Rate limited — please wait 60 seconds' }); return
+  }
   try {
     const format  = req.query.format  as string | undefined
     const idsParam = req.query.ids    as string | undefined
@@ -508,6 +518,23 @@ app.get('/api/conflict/fronts', async (_req, res) => {
     res.json(getDemoConflictGeoJSON())
   }
 })
+
+// ── Static files (production) ─────────────────────────────
+// In production the Express server doubles as a static file host for the
+// pre-built React client.  API and Socket.io routes are registered first so
+// they take precedence; the catch-all only fires for unknown paths.
+
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = join(__dirname, '../../client/dist')
+  app.use(express.static(clientDist))
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+    res.sendFile(join(clientDist, 'index.html'))
+  })
+}
 
 // ── Bootstrap ────────────────────────────────────────────
 
