@@ -1074,6 +1074,70 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+---
+
+[DONE][HIGH] Deployment: Dockerfile and docker-compose
+  Description: Created multi-stage Dockerfile (node:22-alpine deps → client Vite build →
+    server tsc build → lean production image with npm ci --omit=dev). docker-compose.yml
+    uses argus_data named volume at /app/data for both SQLite (DB_PATH env var) and
+    config.json. .dockerignore excludes node_modules, dist, .env, *.db. Added DB_PATH env
+    var support to server/src/db/sqlite.ts (defaults to process.cwd()/intelligence.db).
+    Added production static file serving to server/src/index.ts (express.static +
+    catch-all for React router; API routes take precedence). Updated .env.example with
+    OLLAMA_TEMPERATURE, OLLAMA_CTX, LOG_LEVEL, CONFIG_SECRET, DB_PATH.
+  Success Criteria: Met — Dockerfile/docker-compose.yml/.dockerignore present; DB_PATH
+    env var honoured; static serving in production mode; .env.example complete; TS clean;
+    66 server tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] CI: GitHub Actions test and build workflow
+  Description: Created .github/workflows/ci.yml with two parallel jobs: (1) client — installs
+    deps from workspace root, runs Vitest + Vite build; (2) server — installs deps from
+    workspace root, runs Vitest + tsc build. Both use node:22, npm cache keyed on
+    package-lock.json. Triggers on push to main and pull_request targeting main.
+  Success Criteria: Met — .github/workflows/ci.yml present; jobs defined; Node 22; npm cache.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Security: Rate limit /api/events/webhook and /api/events/export
+  Description: Applied checkRateLimit to POST /api/events/webhook (10 req / 60s per IP —
+    rate check placed before auth check to prevent key-enumeration timing) and GET
+    /api/events/export (5 req / 60s per IP). IP extracted from x-forwarded-for or
+    socket.remoteAddress, consistent with existing agent/vision guards.
+  Success Criteria: Met — rate limits applied to both endpoints; TS clean; 66 server tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Test: Server worker unit tests
+  Description: scraper.ts, ollama.ts, summary.ts, and retention.ts have no test coverage.
+    Add server/src/__tests__/scraper.test.ts (feed URL dedup via hash, malformed item skipping)
+    and server/src/__tests__/summary.test.ts (prompt building, truncation, Ollama-offline
+    no-op). Use vi.mock() for Ollama client and node-fetch.
+  Success Criteria: ≥8 new server tests pass; total server test count ≥27; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Perf: Paginate /api/events endpoint
+  Description: GET /api/events returns every analyzed article on each call — unbounded as the
+    DB grows. Add optional ?limit=N&offset=M query params (defaults: limit=500, offset=0).
+    Client useOllamaSocket initial fetch requests limit=500 (no observable change). Validate
+    limit ≤ 1000 via validateExportParams-style check.
+  Success Criteria: ?limit=10&offset=0 returns 10 events; ?limit=10&offset=10 returns next 10;
+    omitting params returns up to 500 (default); server TS clean; server tests updated.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---

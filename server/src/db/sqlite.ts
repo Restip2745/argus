@@ -7,7 +7,8 @@ import { logger } from '../utils/logger'
 let db: Database.Database
 
 export function initDb(): void {
-  db = new Database(join(process.cwd(), 'intelligence.db'))
+  const dbPath = process.env.DB_PATH ?? join(process.cwd(), 'intelligence.db')
+  db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
 
