@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS articles (
   sources_count  INTEGER,              -- Number of corroborating sources mentioned
   reliability    TEXT,                 -- HIGH | MEDIUM | LOW | UNVERIFIED
 
+  image_url      TEXT,                  -- Thumbnail image URL (from RSS enclosure/media)
+
   -- Heat Score System
   heat_score     REAL DEFAULT 0.0,     -- Dynamic heat score determining retention
   expires_at     DATETIME,             -- Expiry time calculated from heat_score

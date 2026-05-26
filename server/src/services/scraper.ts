@@ -7,7 +7,29 @@ import { setLastScraperRun, recordFeedSuccess, recordFeedError } from './healthT
 import type { RawFeedItem } from '../types'
 import { logger } from '../utils/logger'
 
-const parser = new Parser()
+const parser = new Parser({
+  customFields: {
+    item: [
+      ['media:content',   'mediaContent'],
+      ['media:thumbnail', 'mediaThumbnail'],
+    ],
+  },
+})
+
+function extractImageUrl(item: RawFeedItem): string | null {
+  if (item.enclosure?.url && /\.(jpe?g|png|webp|gif)(\?|$)/i.test(item.enclosure.url)) {
+    return item.enclosure.url
+  }
+  if (item.mediaContent) {
+    const mc = Array.isArray(item.mediaContent) ? item.mediaContent[0] : item.mediaContent
+    const url = mc?.$?.url
+    if (url) return url
+  }
+  if (item.mediaThumbnail?.$?.url) {
+    return item.mediaThumbnail.$.url
+  }
+  return null
+}
 
 function sha256(input: string): string {
   return createHash('sha256').update(input).digest('hex')
@@ -46,6 +68,7 @@ async function fetchAllFeeds(): Promise<void> {
           content:      (item.contentSnippet ?? '').slice(0, 800) || null,
           url:          item.link,
           published_at: item.isoDate ?? item.pubDate ?? new Date().toISOString(),
+          image_url:    extractImageUrl(item),
         })
 
         if (wasInserted) inserted++

@@ -55,6 +55,8 @@ export interface Article {
   sources_count: number | null
   reliability: SourceReliability | null
 
+  image_url: string | null
+
   // Heat Score
   heat_score: number
   expires_at: string | null
@@ -111,6 +113,7 @@ export interface ClientEvent {
   heat_score: number
   expires_at: string | null
   last_referenced: string | null
+  image_url: string | null
 }
 
 // ────────────────────────────────────────────────────────────
@@ -123,4 +126,7 @@ export interface RawFeedItem {
   contentSnippet?: string
   pubDate?: string
   isoDate?: string
+  enclosure?: { url?: string; type?: string; length?: string }
+  mediaContent?: { $?: { url?: string } } | { $?: { url?: string } }[]
+  mediaThumbnail?: { $?: { url?: string } }
 }

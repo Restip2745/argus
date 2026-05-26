@@ -29,6 +29,7 @@ function makeEvent(overrides: Partial<ArgusEvent> & Pick<ArgusEvent, 'id'>): Arg
     heat_score:     overrides.heat_score ?? 1.0,
     expires_at:     null,
     last_referenced: null,
+    image_url:      null,
   }
 }
 

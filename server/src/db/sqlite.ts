@@ -30,6 +30,10 @@ export function initDb(): void {
     db.exec("ALTER TABLE articles ADD COLUMN reliability TEXT")
     logger.info('[DB]', 'Migration: added reliability column')
   }
+  if (!cols.some(c => c.name === 'image_url')) {
+    db.exec("ALTER TABLE articles ADD COLUMN image_url TEXT")
+    console.log('[DB] Migration: added image_url column')
+  }
 
   logger.info('[DB]', 'SQLite initialised (articles schema)')
 }
@@ -48,11 +52,12 @@ interface RawArticleInput {
   content: string | null
   url: string
   published_at: string | null
+  image_url: string | null
 }
 
 const _insertRaw = () => getDb().prepare(
-  `INSERT OR IGNORE INTO articles (id, source, title, content, url, published_at)
-   VALUES (@id, @source, @title, @content, @url, @published_at)`
+  `INSERT OR IGNORE INTO articles (id, source, title, content, url, published_at, image_url)
+   VALUES (@id, @source, @title, @content, @url, @published_at, @image_url)`
 )
 
 export function insertRawArticle(article: RawArticleInput): boolean {
@@ -254,6 +259,7 @@ export function articleToClientEvent(row: Article): ClientEvent {
     heat_score:      row.heat_score,
     expires_at:      row.expires_at,
     last_referenced: row.last_referenced,
+    image_url:       row.image_url ?? null,
   }
 }
 

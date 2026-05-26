@@ -69,6 +69,7 @@ export interface ArgusEvent {
   tags: string[]            // Parsed from JSON string
   sources_count: number
   reliability: SourceReliability
+  image_url: string | null
   // Heat Score
   heat_score: number
   expires_at: string | null
