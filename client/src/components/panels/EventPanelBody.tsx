@@ -134,10 +134,10 @@ export function EventPanelBody({
     <div style={{ overflowY: 'auto', height: '100%', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
 
       {/* ── Thumbnail image ─────────────────────────────────────────────────── */}
-      {event.thumbnail && (
+      {event.image_url && (
         <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderBottom: `1px solid ${accentColor}18` }}>
           <img
-            src={event.thumbnail}
+            src={event.image_url}
             alt=""
             referrerPolicy="no-referrer"
             loading="lazy"

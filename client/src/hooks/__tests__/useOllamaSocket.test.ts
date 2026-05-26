@@ -51,6 +51,7 @@ function makeEvent(id: string): ArgusEvent {
     heat_score: 1.0,
     expires_at: null,
     last_referenced: null,
+    image_url: null,
   }
 }
 

@@ -32,7 +32,7 @@ export function initDb(): void {
   }
   if (!cols.some(c => c.name === 'image_url')) {
     db.exec("ALTER TABLE articles ADD COLUMN image_url TEXT")
-    console.log('[DB] Migration: added image_url column')
+    logger.info('[DB]', 'Migration: added image_url column')
   }
 
   logger.info('[DB]', 'SQLite initialised (articles schema)')
