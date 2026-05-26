@@ -270,7 +270,7 @@ export function RegionPanelOverview({
                 {e.category.replace(/_/g, ' ').slice(0, 8)}
               </span>
               <span style={{ color: '#6a8090', fontSize: '8px', lineHeight: 1.4 }}>
-                {(e.title_zh || e.title).slice(0, 40)}{(e.title_zh || e.title).length > 40 ? '…' : ''}
+                {e.title.slice(0, 40)}{e.title.length > 40 ? '…' : ''}
               </span>
             </div>
           ))

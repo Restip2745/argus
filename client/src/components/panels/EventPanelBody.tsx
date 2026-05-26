@@ -70,8 +70,7 @@ export function EventPanelBody({
   agentScrollRef,
   hideAgent = false,
 }: Props) {
-  const { t, i18n } = useTranslation()
-  const isEN = i18n.language === 'en'
+  const { t } = useTranslation()
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const searchQuery    = useAppStore((s) => s.searchQuery)
   const eventNotes     = useAppStore((s) => s.eventNotes)
@@ -97,9 +96,7 @@ export function EventPanelBody({
   const title = event.title
   // In EN mode: prefer original English content; fall back to title as last resort.
   // In zh-TW mode: prefer the Chinese summary, fall back to content.
-  const summary = isEN
-    ? (event.content || null)
-    : (event.summary_zh || event.content)
+  const summary = event.content || null
 
   function resolveCountry() {
     const label = event.location_label

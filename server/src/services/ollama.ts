@@ -31,8 +31,6 @@ You MUST respond with a single valid JSON object only. No explanation, no markdo
 Follow this schema exactly:
 {
   "category": string,         // One of: ARMED_CONFLICT | POLITICAL | ECONOMIC | SOCIAL | SCIENCE_TECH | ENVIRONMENT | HEALTH | CRIME_SECURITY | SPACE
-  "title_zh": string,         // Article title translated or summarised in Traditional Chinese, max 40 characters
-  "summary_zh": string,       // Neutral summary in Traditional Chinese, max 120 characters
   "intensity": string,        // One of: LOW | MODERATE | HIGH | CRITICAL
   "location": {
     "type": string,           // "geo" for Earth surface events | "orbital" for space events
@@ -124,8 +122,6 @@ function validateClassification(raw: Record<string, unknown>): OllamaClassificat
 
   return {
     category: category as EventCategory,
-    title_zh:    String(raw.title_zh ?? '').slice(0, 40),
-    summary_zh:  String(raw.summary_zh ?? '').slice(0, 120),
     intensity: intensity as EventIntensity,
     location: {
       type:  locType,

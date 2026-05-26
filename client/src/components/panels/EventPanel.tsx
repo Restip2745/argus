@@ -154,12 +154,12 @@ export function EventPanel() {
   const agentContext = useMemo(() => {
     if (!displayedEvent) return ''
     return [
-      `Event: ${displayedEvent.title_zh || displayedEvent.title}`,
+      `Event: ${displayedEvent.title}`,
       `Category: ${displayedEvent.category}`,
       `Intensity: ${displayedEvent.intensity}`,
       `Location: ${displayedEvent.location_label ?? 'Unknown'}`,
       `Source: ${displayedEvent.source}`,
-      displayedEvent.summary_zh ? `Summary: ${displayedEvent.summary_zh}` : '',
+      displayedEvent.content ? `Summary: ${displayedEvent.content.slice(0, 300)}` : '',
       displayedEvent.actors?.length ? `Actors: ${displayedEvent.actors.join(', ')}` : '',
       displayedEvent.lat !== null ? `Coordinates: ${displayedEvent.lat?.toFixed(3)}, ${displayedEvent.lng?.toFixed(3)}` : '',
     ].filter(Boolean).join('\n')
@@ -183,7 +183,7 @@ export function EventPanel() {
       e.location_label ? `**Location:** ${e.location_label}  ` : '',
       e.heat_score != null ? `**Heat Score:** ${e.heat_score.toFixed(2)}  ` : '',
       e.reliability ? `**Reliability:** ${e.reliability}  ` : '',
-      '', e.summary_zh ? `## Summary\n\n${e.summary_zh}` : '',
+      '', e.content ? `## Summary\n\n${e.content}` : '',
       e.actors?.length ? `\n## Actors\n\n${e.actors.join(', ')}` : '',
       e.tags?.length   ? `\n## Tags\n\n${e.tags.join(', ')}`   : '',
       '', `## Source\n\n[${e.source}](${e.url})`,
@@ -308,7 +308,7 @@ export function EventPanel() {
                         id: displayedEvent.id,
                         type: 'event',
                         name: displayedEvent.title,
-                        summary: displayedEvent.summary_zh || displayedEvent.content || displayedEvent.title,
+                        summary: displayedEvent.content || displayedEvent.title,
                       }
                       addContextEntity(ce)
                     }}

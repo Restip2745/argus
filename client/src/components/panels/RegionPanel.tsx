@@ -136,7 +136,7 @@ export function RegionPanel() {
     if (dynamicTags.length) lines.push(`Status: ${dynamicTags.join(', ')}`)
     if (recentEvents.length) {
       lines.push(`\nRecent events (24h):`)
-      recentEvents.forEach(e => lines.push(`- [${e.category}] ${e.title_zh || e.title}`))
+      recentEvents.forEach(e => lines.push(`- [${e.category}] ${e.title}`))
     }
     return lines.join('\n')
   }, [selectedCountry, info, dynamicTags, recentEvents])

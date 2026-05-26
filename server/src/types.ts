@@ -69,8 +69,6 @@ export interface Article {
 
 export interface OllamaClassification {
   category: EventCategory
-  title_zh: string
-  summary_zh: string
   intensity: EventIntensity
   location: {
     type: 'geo' | 'orbital'

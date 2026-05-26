@@ -223,12 +223,12 @@ export default function PopoutPage() {
   const eventAgentContext = useMemo(() => {
     if (!event) return ''
     return [
-      `Event: ${event.title_zh || event.title}`,
+      `Event: ${event.title}`,
       `Category: ${event.category}`,
       `Intensity: ${event.intensity}`,
       `Location: ${event.location_label ?? 'Unknown'}`,
       `Source: ${event.source}`,
-      event.summary_zh ? `Summary: ${event.summary_zh}` : '',
+      event.content ? `Summary: ${event.content.slice(0, 300)}` : '',
       event.actors?.length ? `Actors: ${event.actors.join(', ')}` : '',
     ].filter(Boolean).join('\n')
   }, [event])

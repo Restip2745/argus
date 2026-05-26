@@ -161,8 +161,8 @@ export function markAnalyzed(
   ).run({
     id,
     category:       data.category,
-    title_zh:       data.title_zh,
-    summary_zh:     data.summary_zh,
+    title_zh:       '',
+    summary_zh:     '',
     intensity:      data.intensity,
     location_type:  data.location.type,
     location_label: data.location.label,
