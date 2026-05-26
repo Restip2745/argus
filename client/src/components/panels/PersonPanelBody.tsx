@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useWikiSummary } from '../../hooks/useWikiSummary'
 import type { SelectedPerson } from '../../store'
 
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
+  const { t } = useTranslation()
   const wikiTitle = person.wikiTitle ?? person.name
   const { data, loading, error } = useWikiSummary(wikiTitle)
 
@@ -49,7 +51,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
           </div>
           {data && (
             <div style={{ color: accentColor, fontSize: '8px', letterSpacing: '0.08em', marginTop: '2px', opacity: 0.8 }}>
-              PERSON
+              {t('person.title')}
             </div>
           )}
         </div>
@@ -57,7 +59,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
 
       {loading && (
         <div style={{ color: '#2a4060', fontSize: '8px', letterSpacing: '0.08em', textAlign: 'center', padding: '12px 0' }}>
-          ↻ Loading…
+          {t('person.loading')}
         </div>
       )}
 
@@ -67,7 +69,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
 
       {extract && (
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '4px' }}>BIOGRAPHY</div>
+          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '4px' }}>{t('person.biography')}</div>
           <p style={{ color: '#7a9ab0', fontSize: '9px', lineHeight: 1.55, margin: 0 }}>
             {extract}
           </p>
@@ -90,7 +92,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
           onMouseLeave={e => { e.currentTarget.style.color = '#4a6fa5'; e.currentTarget.style.background = `${accentColor}06` }}
         >
           <span style={{ fontSize: '10px', opacity: 0.7 }}>↗</span>
-          <span>Wikipedia</span>
+          <span>{t('person.wikiLink')}</span>
         </a>
       )}
     </div>

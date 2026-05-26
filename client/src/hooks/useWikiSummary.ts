@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import i18next from 'i18next'
 
 export interface WikiSummary {
   title:        string
@@ -44,7 +45,8 @@ export function useWikiSummary(title: string | null): State {
     setState((s) => ({ ...s, loading: true, error: null }))
 
     const encoded = encodeURIComponent(title.replace(/ /g, '_'))
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`
+    const wikiLang = i18next.language.startsWith('zh') ? 'zh' : 'en'
+    const url = `https://${wikiLang}.wikipedia.org/api/rest_v1/page/summary/${encoded}`
 
     fetch(url, {
       signal: ctrl.signal,
