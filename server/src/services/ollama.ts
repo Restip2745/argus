@@ -3,6 +3,7 @@ import cron from 'node-cron'
 import type { Server } from 'socket.io'
 import type { Article, OllamaClassification, EventCategory, EventIntensity, SourceReliability } from '../types'
 import { VALID_CATEGORIES, VALID_INTENSITIES } from '../types'
+import { logger } from '../utils/logger'
 
 const VALID_RELIABILITIES: SourceReliability[] = ['HIGH', 'MEDIUM', 'LOW', 'UNVERIFIED']
 import {
@@ -160,12 +161,12 @@ async function processOne(article: Article, io: Server): Promise<void> {
         broadcastEvent(io, articleToClientEvent(updated))
       }
 
-      console.log(`[Ollama] Classified: "${article.title.slice(0, 50)}…" → ${data.category} (heat=${heatScore})`)
+      logger.debug('[Ollama]', `Classified: "${article.title.slice(0, 50)}…" → ${data.category} (heat=${heatScore})`)
       return
     } catch (err) {
       attempts++
       if (attempts >= 2) {
-        console.error(`[Ollama] Failed 2x for "${article.title.slice(0, 50)}…":`, (err as Error).message)
+        logger.error('[Ollama]', `Failed 2x for "${article.title.slice(0, 50)}…":`, (err as Error).message)
       }
     }
   }
@@ -178,7 +179,7 @@ async function processPendingArticles(io: Server): Promise<void> {
   const pending = getPendingArticles(20)
   if (pending.length === 0) return
 
-  console.log(`[Ollama] Processing ${pending.length} pending article(s)`)
+  logger.info('[Ollama]', `Processing ${pending.length} pending article(s)`)
   for (const article of pending) {
     await processOne(article, io)
   }
@@ -188,7 +189,7 @@ export function startOllamaWorker(io: Server): void {
   // On startup: reset failed articles so they get another chance
   const retried = resetFailedArticles()
   if (retried > 0) {
-    console.log(`[Ollama] Reset ${retried} previously-failed article(s) for retry`)
+    logger.info('[Ollama]', `Reset ${retried} previously-failed article(s) for retry`)
   }
 
   // Poll every 30 seconds
@@ -199,5 +200,5 @@ export function startOllamaWorker(io: Server): void {
   // Also run once after a short delay
   setTimeout(() => void processPendingArticles(io), 5000)
 
-  console.log('[Ollama] Worker scheduled — polling every 30s')
+  logger.info('[Ollama]', 'Worker scheduled — polling every 30s')
 }

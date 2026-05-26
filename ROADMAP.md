@@ -147,6 +147,42 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 
 ---
 
+## Phase N — Accessibility & Test Depth
+
+> Improve keyboard/screen-reader accessibility and expand automated test coverage.
+
+- [x] **Modal Focus Trapping** — `useFocusTrap` hook traps Tab/Shift+Tab within Config Modal, KeyboardShortcutsModal, and Intel Brief modal; `role="dialog"` + `aria-modal="true"` on all three; restores focus on close
+- [x] **Panel ARIA Roles** — Panel.tsx base component adds `role="dialog"` + `aria-modal="true"` + `aria-labelledby` (auto-generated via `useId()`) to all 5 floating panels (EventPanel, RegionPanel, PersonPanel, CelestialBodyPanel, MultiEntityContextPanel)
+- [x] **Hook Integration Tests** — 7 tests for `useServiceHealth` (healthy/unhealthy states, stale scraper, fetch error, document.hidden, visibilitychange) + 8 tests for `useConflictLayer` (loading, success, error, disable/re-enable, document.hidden, visibilitychange); 58 client tests pass
+- [x] **Server SQLite Integration Test** — 9 tests using in-memory SQLite DB covering `insertWebhookEvent` (insert, dedup, JSON actors/tags), `getRelatedEvents` (actor/tag/location overlap scoring), and `deleteExpiredArticles` (expiry conditions); 19 server tests pass
+
+---
+
+## Phase O — Security, Observability & Coverage
+
+> Close API security gaps, improve server-side logging, and expand test coverage for critical paths.
+
+- [x] **API Input Validation** — `server/src/utils/validation.ts` with 4 pure validators (export params, event id, llm config body, feeds body); 34 unit tests; all 5 affected routes updated
+- [x] **Config Endpoint Auth** — optional `CONFIG_SECRET` env var; `validateConfigAuth()` in validation.ts; `checkConfigAuth()` guard on POST `/api/config/llm` and `/api/config/feeds`; 6 tests
+- [x] **Structured Logging** — `server/src/utils/logger.ts` with `LOG_LEVEL` env var (debug/info/warn/error/silent); all 28 server `console.*` calls replaced; 7 logger tests; 66 server tests total
+- [x] **Accessibility: Button aria-labels** — 10 interactive elements across 5 files (EventPanelBody, CategoryFilterBar, PersonPanel, RegionPanel, CelestialBodyPanel); icon-only buttons and sort `<select>` now have `aria-label`
+- [x] **Test: useOllamaSocket hook** — 8 Vitest tests (initial fetch, eventsLoaded on failure, connect/disconnect state, new_event, deduplication, intel_brief, reconnect re-fetch, unmount); 67 client tests total
+- [x] **Perf: Lazy-load i18n locale** — `i18next-http-backend` installed; locale JSON moved to `public/locales/{lng}/translation.json`; static imports removed from i18n/index.ts; only active locale fetched at startup
+
+---
+
+## Phase P — Deployment & Hardening
+
+> Enable production self-hosting and close remaining operational gaps.
+
+- [x] **Dockerfile + docker-compose** — Multi-stage Dockerfile (client Vite build → server tsc → lean production image); docker-compose.yml with named volume for SQLite + config persistence; Express serves React build in production mode; .env.example updated with all env vars
+- [x] **GitHub Actions CI** — ci.yml with parallel client (Vitest + Vite build) and server (Vitest + tsc) jobs on Node 22; triggers on push/PR to main
+- [x] **Rate limit webhook + export endpoints** — `checkRateLimit` applied to POST `/api/events/webhook` (10/60s) and GET `/api/events/export` (5/60s)
+- [ ] **Server worker unit tests** — Vitest coverage for scraper.ts (feed dedup/hash) and summary.ts (prompt building, offline no-op); ≥8 new tests
+- [ ] **Paginate /api/events** — optional `?limit=N&offset=M` params (default limit 500); validate limit ≤ 1000
+
+---
+
 ## Completed
 
 > Features fully implemented and stable.

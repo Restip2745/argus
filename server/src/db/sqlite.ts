@@ -2,11 +2,13 @@ import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import type { Article, OllamaClassification, ClientEvent, SourceReliability } from '../types'
+import { logger } from '../utils/logger'
 
 let db: Database.Database
 
 export function initDb(): void {
-  db = new Database(join(process.cwd(), 'intelligence.db'))
+  const dbPath = process.env.DB_PATH ?? join(process.cwd(), 'intelligence.db')
+  db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
 
@@ -15,7 +17,7 @@ export function initDb(): void {
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
     .get()
   if (oldTable) {
-    console.log('[DB] Migrating: dropping old events table')
+    logger.info('[DB]', 'Migrating: dropping old events table')
     db.exec('DROP TABLE IF EXISTS events')
   }
 
@@ -26,10 +28,10 @@ export function initDb(): void {
   const cols = db.prepare("PRAGMA table_info(articles)").all() as { name: string }[]
   if (!cols.some(c => c.name === 'reliability')) {
     db.exec("ALTER TABLE articles ADD COLUMN reliability TEXT")
-    console.log('[DB] Migration: added reliability column')
+    logger.info('[DB]', 'Migration: added reliability column')
   }
 
-  console.log('[DB] SQLite initialised (articles schema)')
+  logger.info('[DB]', 'SQLite initialised (articles schema)')
 }
 
 export function getDb(): Database.Database {
@@ -208,7 +210,7 @@ export function deleteExpiredArticles(): number {
   // Condition 1: expired + not recently referenced
   const r1 = getDb().prepare(
     `DELETE FROM articles
-     WHERE expires_at < datetime('now')
+     WHERE datetime(expires_at) < datetime('now')
        AND (last_referenced < datetime('now', '-24 hours') OR last_referenced IS NULL)`
   ).run()
   total += r1.changes
@@ -218,7 +220,7 @@ export function deleteExpiredArticles(): number {
   const r2 = getDb().prepare(
     `DELETE FROM articles
      WHERE heat_score < 0.2 AND is_analyzed = 1
-       AND expires_at < datetime('now')`
+       AND datetime(expires_at) < datetime('now')`
   ).run()
   total += r2.changes
 

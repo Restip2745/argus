@@ -275,6 +275,7 @@ export function CategoryFilterBar() {
           backgroundPosition: 'right 4px center',
         }}
         title="Sort order"
+        aria-label="Sort order"
       >
         <option value="newest">NEWEST</option>
         <option value="heat">HEAT ↓</option>
@@ -311,6 +312,7 @@ export function CategoryFilterBar() {
         />
         {searchQuery && (
           <button
+            aria-label="Clear search"
             onClick={() => setSearchQuery('')}
             style={{
               fontSize: '8px',

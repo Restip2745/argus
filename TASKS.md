@@ -20,6 +20,97 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][HIGH] Security: API Input Validation
+  Description: Extracted all route validation into server/src/utils/validation.ts:
+    validateExportParams() — enum-checks format ('json'|'csv'), length-checks ids (≤10KB);
+    validateEventId() — regex-guards :id against path traversal (/^[a-zA-Z0-9_-]{1,120}$/);
+    validateLlmConfigBody() — type-checks object shape (host/model=string, temperature/contextSize=number);
+    validateFeedsBody() — validates array of {url:string, enabled:boolean} objects.
+    All 5 routes updated to call the relevant validator and return 400 on failure.
+    Added 34 unit tests in validation.test.ts covering valid and invalid inputs for all four validators.
+  Success Criteria: Met — invalid format/id/body return 400; valid requests unaffected;
+    server TS clean; 53 server tests pass (was 19).
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Security: Config Endpoint Auth Guard
+  Description: Added validateConfigAuth(headerValue, secret) to validation.ts — returns null
+    if auth passes, error string if it fails; no-op when secret is undefined/empty.
+    checkConfigAuth() helper in index.ts reads req.headers['x-config-key'] and
+    process.env.CONFIG_SECRET then calls validateConfigAuth; sends 401 on failure.
+    Applied to POST /api/config/llm and POST /api/config/feeds. No breaking change when
+    CONFIG_SECRET is unset (self-hosted default).
+    Added 6 unit tests for validateConfigAuth covering: no secret (undefined/empty),
+    correct key, wrong key, missing header, empty header.
+  Success Criteria: Met — CONFIG_SECRET set: missing/wrong key returns 401, correct key
+    passes; CONFIG_SECRET unset: all requests succeed; server TS clean; 59 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Refactor: Structured Server Logging
+  Description: Created server/src/utils/logger.ts — env-gated logger with LOG_LEVEL
+    (debug|info|warn|error|silent, default 'info'). Replaced all 28 console.* calls across
+    index.ts, sqlite.ts, ollama.ts, scraper.ts, socket.ts, retention.ts, summary.ts,
+    configStore.ts, and llmConfig.ts with logger.debug/info/warn/error.
+    Per-connection socket.io events downgraded to logger.debug (high-frequency).
+    Ollama per-article classification log downgraded to logger.debug.
+    Added 7 tests in logger.test.ts: info suppresses debug, debug level emits debug,
+    warn uses console.warn, error uses console.error, silent suppresses all, tag included.
+  Success Criteria: Met — logger.ts created; 0 console.* in server src outside tests;
+    LOG_LEVEL=silent suppresses all output; server TS clean; 66 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Accessibility: Button aria-labels
+  Description: Added aria-label to 10 interactive elements across 5 files:
+    EventPanelBody.tsx — note SAVE/CLEAR/ESC buttons (aria-label="Save note",
+    "Clear note", "Cancel note"); CategoryFilterBar.tsx — sort <select> (aria-label
+    mirrors title="Sort order") and ✕ clear-search button (aria-label="Clear search");
+    PersonPanel.tsx — ⊕ add-context, ⌕ search toggle, ⊡ popout buttons (aria-label
+    mirrors dynamic title text); RegionPanel.tsx — ⊕ add-context and ⊡ popout (same
+    pattern); CelestialBodyPanel.tsx — ⊕ add-context button.
+  Success Criteria: Met — all icon-only/symbol buttons have aria-label; no existing
+    functionality changed; TS clean; 58 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Test: useOllamaSocket hook unit tests
+  Description: Added client/src/hooks/__tests__/useOllamaSocket.test.ts with 8 tests:
+    (1) initial fetch populates events + sets eventsLoaded; (2) eventsLoaded=true even on
+    fetch failure; (3) connect event sets socketConnected=true; (4) disconnect sets false;
+    (5) new_event appends to store; (6) duplicate new_event is deduplicated; (7) intel_brief
+    updates store; (8) reconnect triggers second fetch; (9) unmount disconnects socket.
+    Mocks socket.io-client via vi.mock() with a factory returning per-test mock sockets.
+    Also removed 4 console.log/warn calls from useOllamaSocket.ts.
+  Success Criteria: Met — 8 new tests; 67 client tests pass total; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Perf: Lazy-load i18n locale files
+  Description: Installed i18next-http-backend. Copied locale JSON files from
+    client/src/i18n/locales/ to client/public/locales/{lng}/translation.json so they are
+    served as static assets. Removed static import of both locale files from i18n/index.ts;
+    added HttpBackend plugin with loadPath='/locales/{{lng}}/translation.json' and
+    initImmediate=false (waits for active locale before ready). Only the active locale
+    (zh-TW at startup) is fetched; en.json loaded only if user switches language.
+    Tests unaffected — they mock react-i18next directly.
+  Success Criteria: Met — static JSON imports removed; locale files in public/; TS clean;
+    67 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 [DONE][HIGH] Bugfix: Fix null/invalid date handling in EventStack
   Description: EventStack.tsx had two silent failure modes in date handling:
     (1) Sort used localeCompare on published_at strings — malformed/null dates silently
@@ -983,6 +1074,70 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+---
+
+[DONE][HIGH] Deployment: Dockerfile and docker-compose
+  Description: Created multi-stage Dockerfile (node:22-alpine deps → client Vite build →
+    server tsc build → lean production image with npm ci --omit=dev). docker-compose.yml
+    uses argus_data named volume at /app/data for both SQLite (DB_PATH env var) and
+    config.json. .dockerignore excludes node_modules, dist, .env, *.db. Added DB_PATH env
+    var support to server/src/db/sqlite.ts (defaults to process.cwd()/intelligence.db).
+    Added production static file serving to server/src/index.ts (express.static +
+    catch-all for React router; API routes take precedence). Updated .env.example with
+    OLLAMA_TEMPERATURE, OLLAMA_CTX, LOG_LEVEL, CONFIG_SECRET, DB_PATH.
+  Success Criteria: Met — Dockerfile/docker-compose.yml/.dockerignore present; DB_PATH
+    env var honoured; static serving in production mode; .env.example complete; TS clean;
+    66 server tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] CI: GitHub Actions test and build workflow
+  Description: Created .github/workflows/ci.yml with two parallel jobs: (1) client — installs
+    deps from workspace root, runs Vitest + Vite build; (2) server — installs deps from
+    workspace root, runs Vitest + tsc build. Both use node:22, npm cache keyed on
+    package-lock.json. Triggers on push to main and pull_request targeting main.
+  Success Criteria: Met — .github/workflows/ci.yml present; jobs defined; Node 22; npm cache.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Security: Rate limit /api/events/webhook and /api/events/export
+  Description: Applied checkRateLimit to POST /api/events/webhook (10 req / 60s per IP —
+    rate check placed before auth check to prevent key-enumeration timing) and GET
+    /api/events/export (5 req / 60s per IP). IP extracted from x-forwarded-for or
+    socket.remoteAddress, consistent with existing agent/vision guards.
+  Success Criteria: Met — rate limits applied to both endpoints; TS clean; 66 server tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][MEDIUM] Test: Server worker unit tests
+  Description: scraper.ts, ollama.ts, summary.ts, and retention.ts have no test coverage.
+    Add server/src/__tests__/scraper.test.ts (feed URL dedup via hash, malformed item skipping)
+    and server/src/__tests__/summary.test.ts (prompt building, truncation, Ollama-offline
+    no-op). Use vi.mock() for Ollama client and node-fetch.
+  Success Criteria: ≥8 new server tests pass; total server test count ≥27; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[TODO][LOW] Perf: Paginate /api/events endpoint
+  Description: GET /api/events returns every analyzed article on each call — unbounded as the
+    DB grows. Add optional ?limit=N&offset=M query params (defaults: limit=500, offset=0).
+    Client useOllamaSocket initial fetch requests limit=500 (no observable change). Validate
+    limit ≤ 1000 via validateExportParams-style check.
+  Success Criteria: ?limit=10&offset=0 returns 10 events; ?limit=10&offset=10 returns next 10;
+    omitting params returns up to 500 (default); server TS clean; server tests updated.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
 ## Completed Tasks
 
 ---
@@ -1111,5 +1266,54 @@ Managed by the autonomous development agent. Follow strict format below.
     names correctly (3 tests), LinkedText renders plain text / buttons / handles click / multi-
     person / case-insensitive matching (5 tests). All 17 tests pass (9 Panel + 8 PersonPanel).
   Success Criteria: Met — core flows covered; no regression; 17/17 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][HIGH] Accessibility: Modal focus trapping
+  Description: Created client/src/hooks/useFocusTrap.ts — accepts containerRef + enabled boolean,
+    traps Tab/Shift+Tab within focusable elements, restores focus on unmount/disable.
+    Applied to ConfigModal.tsx (existing cardRef), KeyboardShortcutsModal.tsx (new modalRef),
+    and FloatDock.tsx Intel Brief modal (new briefModalRef + useFocusTrap(briefModalRef, showBrief)).
+    All three receive role="dialog" aria-modal="true" ARIA attributes.
+  Success Criteria: Met — Tab cycles within modals; Escape/close restores focus; TS clean; 58 client tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Accessibility: Panel ARIA roles
+  Description: Panel.tsx base component now uses useId() to generate a stable titleId, passes
+    id={titleId} to the title span, and renders role="dialog" aria-modal="true"
+    aria-labelledby={titleId} on the outer container div. All 5 floating panels
+    (EventPanel, RegionPanel, PersonPanel, CelestialBodyPanel, MultiEntityContextPanel)
+    inherit ARIA roles automatically via Panel.tsx.
+  Success Criteria: Met — all panels have dialog role; title spans have matching ids; TS clean; 58 tests pass.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][MEDIUM] Test: Hook integration tests for useServiceHealth and useConflictLayer
+  Description: Added client/src/hooks/__tests__/useServiceHealth.test.ts (7 tests: default
+    state, healthy response, unhealthy ollama, stale scraper, fetch error, hidden skip,
+    visibility resume) and useConflictLayer.test.ts (8 tests: disabled state, loading flag,
+    success, 503 error, network error, disable-after-load, hidden skip, visibility resume).
+    Uses vi.spyOn(globalThis, 'fetch') + real timers + waitFor pattern.
+  Success Criteria: Met — 15 new tests pass; 58 client tests pass total; TS clean.
+  Retry Count: 0
+  Source: ROADMAP
+
+---
+
+[DONE][LOW] Test: Server SQLite integration test
+  Description: Added server/src/__tests__/sqlite.test.ts with 9 tests using in-memory
+    better-sqlite3 DB (createTestDb() runs schema.sql against :memory:). Tests cover:
+    insertWebhookEvent (row persisted, dedup via OR IGNORE, JSON arrays), getRelatedEvents
+    (empty when no overlap, actor overlap scoring, location label scoring),
+    deleteExpiredArticles (past-expiry delete, low-heat delete, non-expired preserved).
+    Dates use SQLite native format (YYYY-MM-DD HH:MM:SS) via toSqliteDt() helper.
+  Success Criteria: Met — 9 new server tests pass; 19 server tests pass total; TS clean.
   Retry Count: 0
   Source: ROADMAP

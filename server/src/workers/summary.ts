@@ -5,6 +5,7 @@ import { Ollama } from 'ollama'
 import { getTopHeatEvents } from '../db/sqlite'
 import { broadcastBrief } from '../services/socket'
 import { getLlmConfig } from '../config/llmConfig'
+import { logger } from '../utils/logger'
 
 const SYSTEM_PROMPT = `You are a senior intelligence analyst. Based on the top intelligence events provided, write a concise situational brief (3-5 sentences maximum).
 Focus on the most critical developments, emerging patterns, and operational significance.
@@ -43,23 +44,23 @@ async function generateBrief(io: Server): Promise<void> {
     topEventIds:  topEvents.map(e => e.id),
   })
 
-  console.log(`[Summary] Intel brief generated (${topEvents.length} events)`)
+  logger.info('[Summary]', `Intel brief generated (${topEvents.length} events)`)
 }
 
 export function startSummaryWorker(io: Server): void {
   // Run every 30 minutes
   cron.schedule('*/30 * * * *', () => {
     generateBrief(io).catch(err =>
-      console.warn('[Summary] Brief generation failed:', (err as Error).message)
+      logger.warn('[Summary]', 'Brief generation failed:', (err as Error).message)
     )
   })
 
   // Run once after 60 seconds to populate on first startup
   setTimeout(() => {
     generateBrief(io).catch(err =>
-      console.warn('[Summary] Initial brief failed:', (err as Error).message)
+      logger.warn('[Summary]', 'Initial brief failed:', (err as Error).message)
     )
   }, 60_000)
 
-  console.log('[Summary] Worker scheduled — every 30 min')
+  logger.info('[Summary]', 'Worker scheduled — every 30 min')
 }

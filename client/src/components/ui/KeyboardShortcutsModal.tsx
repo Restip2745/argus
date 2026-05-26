@@ -2,6 +2,9 @@ import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 
+import { useRef } from 'react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
+
 interface Props {
   onClose: () => void
 }

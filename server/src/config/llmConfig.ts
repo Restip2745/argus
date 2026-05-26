@@ -4,6 +4,7 @@
  * reloaded on startup, so changes survive server restarts.
  */
 import { loadPersistedConfig, persistConfig } from './configStore'
+import { logger } from '../utils/logger'
 
 export interface LlmConfig {
   host:        string   // Ollama base URL
@@ -33,6 +34,6 @@ export function setLlmConfig(patch: Partial<LlmConfig>): LlmConfig {
   if (patch.temperature !== undefined) config.temperature = Math.max(0, Math.min(1, patch.temperature))
   if (patch.contextSize !== undefined) config.contextSize = Math.max(512, Math.min(32768, patch.contextSize))
   persistConfig({ llm: config as unknown as Record<string, unknown> })
-  console.log('[Config] LLM config updated:', config)
+  logger.info('[Config]', 'LLM config updated:', config)
   return { ...config }
 }

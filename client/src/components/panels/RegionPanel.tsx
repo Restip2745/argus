@@ -233,6 +233,7 @@ export function RegionPanel() {
                     }
                     addContextEntity(ce)
                   }}
+                  aria-label={inContext ? 'Already in context' : 'Add to context panel'}
                   title={inContext ? 'Already in context' : 'Add to context panel'}
                   disabled={inContext}
                   style={{
@@ -251,6 +252,7 @@ export function RegionPanel() {
             })()}
             <button
               onClick={popoutOpen}
+              aria-label={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
               title={isPopped ? 'Panel is open in separate window' : 'Pop out to separate window'}
               style={{ background: 'none', border: 'none', color: isPopped ? '#00d4ff' : '#4a6070', cursor: 'pointer', fontSize: '11px', lineHeight: 1 }}
             >⊡</button>
