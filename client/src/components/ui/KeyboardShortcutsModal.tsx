@@ -1,21 +1,32 @@
-const SHORTCUTS: { key: string; description: string }[] = [
-  { key: '/',         description: 'Focus event search input' },
-  { key: 'Escape',    description: 'Close active panel / deselect region' },
-  { key: 'i / I',     description: 'Toggle immersive mode' },
-  { key: 'b / B',     description: 'Bookmark / unbookmark active event' },
-  { key: '[',         description: 'Navigate to previous event' },
-  { key: ']',         description: 'Navigate to next event' },
-  { key: '?',         description: 'Show this keyboard shortcuts overlay' },
-]
+import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 interface Props {
   onClose: () => void
 }
 
 export function KeyboardShortcutsModal({ onClose }: Props) {
+  const { t } = useTranslation()
+  const modalRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(modalRef, true)
+
+  const SHORTCUTS: { key: string; descKey: string }[] = [
+    { key: '/',      descKey: 'keyboard.shortcuts.search' },
+    { key: 'Escape', descKey: 'keyboard.shortcuts.close' },
+    { key: 'i / I',  descKey: 'keyboard.shortcuts.immersive' },
+    { key: 'b / B',  descKey: 'keyboard.shortcuts.bookmark' },
+    { key: '[',      descKey: 'keyboard.shortcuts.prevEvent' },
+    { key: ']',      descKey: 'keyboard.shortcuts.nextEvent' },
+    { key: '?',      descKey: 'keyboard.shortcuts.help' },
+  ]
+
   return (
     <div
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('keyboard.title')}
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(4,9,22,0.75)',
@@ -26,6 +37,7 @@ export function KeyboardShortcutsModal({ onClose }: Props) {
       }}
     >
       <div
+        ref={modalRef}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'rgba(4,9,22,0.97)',
@@ -39,16 +51,16 @@ export function KeyboardShortcutsModal({ onClose }: Props) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <span style={{ color: '#00d4ff', fontSize: '9px', letterSpacing: '0.15em', fontWeight: 700 }}>⌨ KEYBOARD SHORTCUTS</span>
+          <span style={{ color: '#00d4ff', fontSize: '9px', letterSpacing: '0.15em', fontWeight: 700 }}>{t('keyboard.title')}</span>
           <button
             onClick={onClose}
             style={{ color: '#4a6070', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}
-            aria-label="Close"
+            aria-label={t('config.actions.close')}
           >✕</button>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
-            {SHORTCUTS.map(({ key, description }) => (
+            {SHORTCUTS.map(({ key, descKey }) => (
               <tr key={key} style={{ borderBottom: '1px solid rgba(0,180,255,0.06)' }}>
                 <td style={{ padding: '5px 8px 5px 0', width: '90px' }}>
                   <kbd style={{
@@ -65,14 +77,14 @@ export function KeyboardShortcutsModal({ onClose }: Props) {
                   </kbd>
                 </td>
                 <td style={{ padding: '5px 0', fontSize: '9px', color: '#6a90a8', letterSpacing: '0.04em' }}>
-                  {description}
+                  {t(descKey)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
         <div style={{ marginTop: '10px', fontSize: '7px', color: '#2a4060', letterSpacing: '0.08em', textAlign: 'center' }}>
-          Press ? or click outside to close
+          {t('keyboard.closeHint')}
         </div>
       </div>
     </div>

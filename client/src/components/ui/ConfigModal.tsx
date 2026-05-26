@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { useDraggable } from '../../hooks/useDraggable'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { copyToClipboard } from '../../utils/clipboard'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
@@ -51,13 +53,15 @@ function FieldLabel({ text, value }: { text: string; value?: React.ReactNode }) 
 }
 
 export function ConfigModal() {
+  const { t } = useTranslation()
   const filteredEvents = useFilteredEvents()
   const allEvents      = useAppStore((s) => s.events)
   const setShowConfig  = useAppStore((s) => s.setShowConfig)
   const [curlCopied, setCurlCopied] = useState(false)
   const uiScale       = useAppStore((s) => s.uiScale)
   const setUiScale    = useAppStore((s) => s.setUiScale)
-  const cardRef       = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(cardRef, true)
 
   const [config,   setConfig]   = useState<LlmConfig | null>(null)
   const [models,   setModels]   = useState<string[]>([])
@@ -225,6 +229,9 @@ export function ConfigModal() {
       className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={handleBackdrop}
       style={{ zIndex: 200 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('config.title')}
     >
       <div
         ref={cardRef}
@@ -248,11 +255,11 @@ export function ConfigModal() {
             style={{ background: '#04090e', cursor: dragging ? 'grabbing' : 'grab' }}
             onMouseDown={handleHeaderMouseDown}
           >
-            <span className="text-[#00d4ff] tracking-[0.15em] text-[10px] uppercase font-semibold">⚙ Configuration</span>
+            <span className="text-[#00d4ff] tracking-[0.15em] text-[10px] uppercase font-semibold">{t('config.title')}</span>
             <button
               onClick={handleCancel}
               className="text-[#4a6070] hover:text-[#00d4ff] transition-colors text-base leading-none"
-              aria-label="Close"
+              aria-label={t('config.actions.close')}
             >✕</button>
           </div>
 
@@ -261,16 +268,16 @@ export function ConfigModal() {
 
             {/* ── LEFT: LLM Settings ── */}
             <div className="space-y-4">
-              <SectionTitle label="LLM Settings" />
+              <SectionTitle label={t('config.sections.llm')} />
 
               {status === 'loading' && !config ? (
-                <div className="text-[#2a4060] py-4 text-center tracking-widest">LOADING…</div>
+                <div className="text-[#2a4060] py-4 text-center tracking-widest">{t('config.status.loading')}</div>
               ) : status === 'error' && !config ? (
                 <div className="text-[#ff4d4d] py-2">{errMsg}</div>
               ) : config ? (<>
 
                 <label className="block">
-                  <FieldLabel text="OLLAMA HOST" />
+                  <FieldLabel text={t('config.fields.ollamaHost')} />
                   <input
                     type="text" value={config.host}
                     onChange={(e) => patch('host', e.target.value)}
@@ -282,11 +289,11 @@ export function ConfigModal() {
 
                 <label className="block">
                   <div className="flex justify-between mb-1">
-                    <FieldLabel text="MODEL" />
+                    <FieldLabel text={t('config.fields.model')} />
                     <button
                       onClick={fetchAll} disabled={isLoading}
                       className="text-[#4a6070] hover:text-[#00d4ff] transition-colors text-[9px]"
-                    >↻ Refresh</button>
+                    >{t('config.model.refresh')}</button>
                   </div>
                   {models.length > 0 ? (
                     <select
@@ -306,12 +313,14 @@ export function ConfigModal() {
                     />
                   )}
                   <span className="text-[#2a4060] text-[9px] mt-1 block">
-                    {models.length > 0 ? `${models.length} model(s) available` : 'No models detected — enter manually'}
+                    {models.length > 0
+                      ? t('config.model.available', { count: models.length })
+                      : t('config.model.enterManually')}
                   </span>
                 </label>
 
                 <label className="block">
-                  <FieldLabel text="TEMPERATURE" value={config.temperature.toFixed(2)} />
+                  <FieldLabel text={t('config.fields.temperature')} value={config.temperature.toFixed(2)} />
                   <input
                     type="range" min={0} max={1} step={0.05}
                     value={config.temperature}
@@ -319,12 +328,12 @@ export function ConfigModal() {
                     className="w-full cursor-pointer" disabled={isLoading}
                   />
                   <div className="flex justify-between text-[#2a4060] text-[9px] mt-0.5">
-                    <span>0.0 precise</span><span>1.0 creative</span>
+                    <span>{t('config.temp.precise')}</span><span>{t('config.temp.creative')}</span>
                   </div>
                 </label>
 
                 <label className="block">
-                  <FieldLabel text="CONTEXT SIZE (tokens)" value={config.contextSize.toLocaleString()} />
+                  <FieldLabel text={t('config.fields.contextSize')} value={config.contextSize.toLocaleString()} />
                   <input
                     type="range" min={512} max={32768} step={512}
                     value={config.contextSize}
@@ -346,9 +355,9 @@ export function ConfigModal() {
 
               {/* Display */}
               <div>
-                <SectionTitle label="Display" />
+                <SectionTitle label={t('config.sections.display')} />
                 <label className="block">
-                  <FieldLabel text="UI SCALE" value={`${Math.round(localScale * 100)}%`} />
+                  <FieldLabel text={t('config.fields.uiScale')} value={`${Math.round(localScale * 100)}%`} />
                   <input
                     type="range" min={0.75} max={1.5} step={0.05}
                     value={localScale}
@@ -363,23 +372,23 @@ export function ConfigModal() {
 
               {/* RSS Feeds */}
               <div>
-                <SectionTitle label="RSS Feeds" />
+                <SectionTitle label={t('config.sections.feeds')} />
 
                 <div
                   className="space-y-0.5 mb-3 overflow-y-auto"
                   style={{ maxHeight: 200, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.12) transparent' }}
                 >
                   {feeds.length === 0 && (
-                    <div className="text-[#2a4060] py-2 text-center">No feeds configured</div>
+                    <div className="text-[#2a4060] py-2 text-center">{t('config.feed.noFeeds')}</div>
                   )}
                   {feeds.map((feed, i) => {
                     const fs = feedStatuses[feed.name]
                     const dotColor = !fs ? '#2a4060'
                       : fs.lastError && (!fs.lastSuccess || fs.lastError > fs.lastSuccess) ? '#ff4d4d'
                       : '#39ff8a'
-                    const dotTitle = !fs ? 'No data yet'
-                      : fs.errorMessage ? `Error: ${fs.errorMessage}`
-                      : fs.lastSuccess ? `Last OK: ${new Date(fs.lastSuccess).toLocaleTimeString()}` : ''
+                    const dotTitle = !fs ? t('config.feed.noData')
+                      : fs.errorMessage ? t('config.feed.error', { msg: fs.errorMessage })
+                      : fs.lastSuccess ? t('config.feed.lastOk', { time: new Date(fs.lastSuccess).toLocaleTimeString() }) : ''
                     return (
                       <div key={i} className="flex items-center gap-2 py-1 border-b border-[rgba(0,180,255,0.06)]">
                         <button
@@ -388,7 +397,7 @@ export function ConfigModal() {
                             ${feed.enabled
                               ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.15)] text-[#00d4ff]'
                               : 'border-[rgba(0,180,255,0.2)] text-[#2a4060]'}`}
-                          title={feed.enabled ? 'Disable' : 'Enable'}
+                          title={feed.enabled ? t('config.feed.disable') : t('config.feed.enable')}
                         >
                           {feed.enabled ? '✓' : ''}
                         </button>
@@ -412,7 +421,7 @@ export function ConfigModal() {
                         <button
                           onClick={() => deleteFeed(i)} disabled={isLoading}
                           className="text-[#4a6070] hover:text-[#ff4d4d] transition-colors text-[10px] flex-shrink-0"
-                          title="Remove"
+                          title={t('config.feed.remove')}
                         >✕</button>
                       </div>
                     )
@@ -424,7 +433,7 @@ export function ConfigModal() {
                   <input
                     type="text" value={newFeedName}
                     onChange={(e) => setNewFeedName(e.target.value)}
-                    placeholder="Name"
+                    placeholder={t('config.feed.namePlaceholder')}
                     className="argus-input border rounded px-2 py-1.5 transition-colors w-[30%] text-[10px]"
                     disabled={isLoading}
                     onKeyDown={(e) => e.key === 'Enter' && addFeed()}
@@ -432,7 +441,7 @@ export function ConfigModal() {
                   <input
                     type="text" value={newFeedUrl}
                     onChange={(e) => setNewFeedUrl(e.target.value)}
-                    placeholder="https://…/feed"
+                    placeholder={t('config.feed.urlPlaceholder')}
                     className="argus-input border rounded px-2 py-1.5 transition-colors flex-1 text-[10px]"
                     disabled={isLoading}
                     onKeyDown={(e) => e.key === 'Enter' && addFeed()}
@@ -442,7 +451,7 @@ export function ConfigModal() {
                     disabled={isLoading || !newFeedName.trim() || !newFeedUrl.trim()}
                     className="px-2 py-1.5 border rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-[rgba(0,212,255,0.4)] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.08)] text-[10px] flex-shrink-0"
                   >
-                    + Add
+                    {t('config.feed.add')}
                   </button>
                 </div>
               </div>
@@ -450,9 +459,9 @@ export function ConfigModal() {
               {/* Webhook */}
               {serviceHealth.webhookEnabled && (
                 <div>
-                  <SectionTitle label="Webhook" />
+                  <SectionTitle label={t('config.sections.webhook')} />
                   <div className="text-[#2a4060] text-[9px] mb-2 leading-relaxed">
-                    External events can be pushed to ARGUS via:
+                    {t('config.webhook.description')}
                     <code className="block mt-1 text-[#4a6070] bg-[rgba(0,180,255,0.05)] border border-[rgba(0,180,255,0.12)] rounded px-2 py-1">
                       POST {API}/api/events/webhook
                     </code>
@@ -469,7 +478,7 @@ export function ConfigModal() {
                     }}
                     className="px-3 py-1 text-[9px] tracking-widest border rounded transition-colors border-[rgba(0,180,255,0.2)] text-[#2a5070] hover:text-[#00d4ff] hover:border-[rgba(0,212,255,0.4)]"
                   >
-                    {curlCopied ? '✓ COPIED' : 'COPY CURL EXAMPLE'}
+                    {curlCopied ? t('config.webhook.copied') : t('config.webhook.copyCurl')}
                   </button>
                 </div>
               )}
@@ -490,9 +499,9 @@ export function ConfigModal() {
           >
             <div className="flex items-center gap-3">
               <span className="text-[9px] tracking-widest">
-                {status === 'saving' && <span className="text-[#00d4ff]">SAVING…</span>}
-                {status === 'idle' && !dirty && <span className="text-[#2a4060]">NO UNSAVED CHANGES</span>}
-                {status === 'idle' &&  dirty && <span className="text-[#ff9c2a]">● UNSAVED CHANGES</span>}
+                {status === 'saving' && <span className="text-[#00d4ff]">{t('config.status.saving')}</span>}
+                {status === 'idle' && !dirty && <span className="text-[#2a4060]">{t('config.status.noChanges')}</span>}
+                {status === 'idle' &&  dirty && <span className="text-[#ff9c2a]">{t('config.status.unsaved')}</span>}
               </span>
               <a
                 href={`${API}/api/events/export?format=json`}
@@ -528,14 +537,14 @@ export function ConfigModal() {
                 onClick={handleCancel}
                 className="px-4 py-1.5 text-[10px] tracking-widest text-[#4a6070] border border-[rgba(0,180,255,0.15)] rounded hover:text-[#a8c4d8] hover:border-[rgba(0,180,255,0.3)] transition-colors"
               >
-                CANCEL
+                {t('config.actions.cancel')}
               </button>
               <button
                 onClick={handleApply}
                 disabled={!dirty || isLoading}
                 className="px-4 py-1.5 text-[10px] tracking-widest border rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-[rgba(0,212,255,0.45)] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)]"
               >
-                APPLY
+                {t('config.actions.apply')}
               </button>
             </div>
           </div>

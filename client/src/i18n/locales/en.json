@@ -66,7 +66,10 @@
     "searchPlaceholder": "Search people…",
     "agent":             "◈ PERSON INTELLIGENCE",
     "askAgent":          "Ask about this person…",
-    "keyFigures":        "KEY FIGURES"
+    "keyFigures":        "KEY FIGURES",
+    "biography":         "BIOGRAPHY",
+    "wikiLink":          "Wikipedia",
+    "loading":           "↻ Loading…"
   },
   "context": {
     "title":        "MULTI-ENTITY CONTEXT",
@@ -89,6 +92,80 @@
     "aiAnalysis":  "AI Canvas Analysis",
     "config":      "Configuration",
     "search":      "Search events…"
+  },
+  "note": {
+    "add":         "+ ADD NOTE",
+    "save":        "SAVE",
+    "clear":       "CLEAR",
+    "esc":         "ESC",
+    "placeholder": "Personal note (max 500 chars)…",
+    "editHint":    "Click to edit note"
+  },
+  "config": {
+    "title": "⚙ Configuration",
+    "sections": {
+      "llm":     "LLM Settings",
+      "display": "Display",
+      "feeds":   "RSS Feeds",
+      "webhook": "Webhook"
+    },
+    "fields": {
+      "ollamaHost":  "OLLAMA HOST",
+      "model":       "MODEL",
+      "temperature": "TEMPERATURE",
+      "contextSize": "CONTEXT SIZE (tokens)",
+      "uiScale":     "UI SCALE"
+    },
+    "model": {
+      "refresh":      "↻ Refresh",
+      "available":    "{{count}} model(s) available",
+      "enterManually":"No models detected — enter manually"
+    },
+    "temp": {
+      "precise":  "0.0 precise",
+      "creative": "1.0 creative"
+    },
+    "status": {
+      "loading":   "LOADING…",
+      "saving":    "SAVING…",
+      "noChanges": "NO UNSAVED CHANGES",
+      "unsaved":   "● UNSAVED CHANGES"
+    },
+    "feed": {
+      "noFeeds":         "No feeds configured",
+      "noData":          "No data yet",
+      "lastOk":          "Last OK: {{time}}",
+      "error":           "Error: {{msg}}",
+      "namePlaceholder": "Name",
+      "urlPlaceholder":  "https://…/feed",
+      "add":             "+ Add",
+      "enable":          "Enable",
+      "disable":         "Disable",
+      "remove":          "Remove"
+    },
+    "webhook": {
+      "description": "External events can be pushed to ARGUS via:",
+      "copyCurl":    "COPY CURL EXAMPLE",
+      "copied":      "✓ COPIED"
+    },
+    "actions": {
+      "cancel": "CANCEL",
+      "apply":  "APPLY",
+      "close":  "Close"
+    }
+  },
+  "keyboard": {
+    "title":     "⌨ KEYBOARD SHORTCUTS",
+    "closeHint": "Press ? or click outside to close",
+    "shortcuts": {
+      "search":    "Focus event search input",
+      "close":     "Close active panel / deselect region",
+      "immersive": "Toggle immersive mode",
+      "bookmark":  "Bookmark / unbookmark active event",
+      "prevEvent": "Navigate to previous event",
+      "nextEvent": "Navigate to next event",
+      "help":      "Show this keyboard shortcuts overlay"
+    }
   },
   "popout": {
     "catQ": {

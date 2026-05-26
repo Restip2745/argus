@@ -133,6 +133,30 @@ export function EventPanelBody({
   return (
     <div style={{ overflowY: 'auto', height: '100%', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
 
+      {/* ── Thumbnail image ─────────────────────────────────────────────────── */}
+      {event.thumbnail && (
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderBottom: `1px solid ${accentColor}18` }}>
+          <img
+            src={event.thumbnail}
+            alt=""
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
+            style={{
+              width: '100%', height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+              filter: 'brightness(0.82) saturate(0.85)',
+            }}
+          />
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: `linear-gradient(to bottom, transparent 50%, rgba(10,18,26,0.85) 100%)`,
+            pointerEvents: 'none',
+          }} />
+        </div>
+      )}
+
       {/* ── Main info ──────────────────────────────────────────────────────── */}
       <div className="relative px-3 py-3 space-y-2.5">
         <h2 className="text-[#c8dde8] text-[11px] font-semibold leading-snug">{highlightText(title, searchQuery)}</h2>
@@ -144,7 +168,7 @@ export function EventPanelBody({
               <button
                 onClick={openNote}
                 style={{ fontSize: '8px', color: '#4a6070', textAlign: 'left', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', maxWidth: '100%', fontFamily: 'JetBrains Mono, monospace', lineHeight: 1.4 }}
-                title="Click to edit note"
+                title={t('note.editHint')}
               >
                 ✏ {existingNote.slice(0, 80)}{existingNote.length > 80 ? '…' : ''}
               </button>
@@ -152,7 +176,7 @@ export function EventPanelBody({
               <button
                 onClick={openNote}
                 style={{ fontSize: '7px', color: '#2a4060', letterSpacing: '0.08em', background: 'none', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}
-              >+ ADD NOTE</button>
+              >{t('note.add')}</button>
             )}
           </div>
         )}
@@ -163,14 +187,14 @@ export function EventPanelBody({
               value={noteDraft}
               onChange={(e) => setNoteDraft(e.target.value.slice(0, 500))}
               onKeyDown={(e) => { if (e.key === 'Escape') { setNoteOpen(false) } if (e.key === 'Enter' && e.ctrlKey) saveNote() }}
-              placeholder="Personal note (max 500 chars)…"
+              placeholder={t('note.placeholder')}
               rows={3}
               style={{ fontSize: '9px', color: '#a8c4d8', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.2)', borderRadius: '3px', padding: '5px 7px', resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', outline: 'none', lineHeight: 1.5, width: '100%' }}
             />
             <div style={{ display: 'flex', gap: '4px', fontSize: '8px' }}>
-              <button onClick={saveNote} style={{ color: '#00d4ff', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>SAVE</button>
-              {existingNote && <button onClick={() => { setNoteDraft(''); saveNote() }} style={{ color: '#ff4d4d', background: 'none', border: '1px solid rgba(255,77,77,0.25)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>CLEAR</button>}
-              <button onClick={() => setNoteOpen(false)} style={{ color: '#2a4060', background: 'none', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>ESC</button>
+              <button onClick={saveNote} style={{ color: '#00d4ff', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{t('note.save')}</button>
+              {existingNote && <button onClick={() => { setNoteDraft(''); saveNote() }} style={{ color: '#ff4d4d', background: 'none', border: '1px solid rgba(255,77,77,0.25)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{t('note.clear')}</button>}
+              <button onClick={() => setNoteOpen(false)} style={{ color: '#2a4060', background: 'none', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{t('note.esc')}</button>
               <span style={{ color: '#1a3050', marginLeft: 'auto', letterSpacing: '0.06em' }}>{noteDraft.length}/500</span>
             </div>
           </div>

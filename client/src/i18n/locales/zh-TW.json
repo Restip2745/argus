@@ -66,7 +66,10 @@
     "searchPlaceholder": "搜尋人物…",
     "agent":             "◈ 人物情報分析",
     "askAgent":          "詢問人物情報…",
-    "keyFigures":        "關鍵人物"
+    "keyFigures":        "關鍵人物",
+    "biography":         "傳記",
+    "wikiLink":          "維基百科",
+    "loading":           "↻ 載入中…"
   },
   "context": {
     "title":        "多實體情境",
@@ -89,6 +92,80 @@
     "aiAnalysis":  "AI 畫面分析",
     "config":      "設定",
     "search":      "搜尋事件…"
+  },
+  "note": {
+    "add":         "+ 新增筆記",
+    "save":        "儲存",
+    "clear":       "清除",
+    "esc":         "取消",
+    "placeholder": "個人筆記（最多 500 字）…",
+    "editHint":    "點擊編輯筆記"
+  },
+  "config": {
+    "title": "⚙ 設定",
+    "sections": {
+      "llm":     "LLM 設定",
+      "display": "顯示",
+      "feeds":   "RSS 訂閱",
+      "webhook": "Webhook"
+    },
+    "fields": {
+      "ollamaHost":  "OLLAMA 主機",
+      "model":       "模型",
+      "temperature": "溫度",
+      "contextSize": "上下文大小（tokens）",
+      "uiScale":     "介面縮放"
+    },
+    "model": {
+      "refresh":      "↻ 重新整理",
+      "available":    "{{count}} 個模型可用",
+      "enterManually":"未偵測到模型 — 請手動輸入"
+    },
+    "temp": {
+      "precise":  "0.0 精確",
+      "creative": "1.0 創意"
+    },
+    "status": {
+      "loading":   "載入中…",
+      "saving":    "儲存中…",
+      "noChanges": "無未儲存變更",
+      "unsaved":   "● 有未儲存變更"
+    },
+    "feed": {
+      "noFeeds":         "尚未設定訂閱",
+      "noData":          "尚無資料",
+      "lastOk":          "最後成功：{{time}}",
+      "error":           "錯誤：{{msg}}",
+      "namePlaceholder": "名稱",
+      "urlPlaceholder":  "https://…/feed",
+      "add":             "+ 新增",
+      "enable":          "啟用",
+      "disable":         "停用",
+      "remove":          "移除"
+    },
+    "webhook": {
+      "description": "可透過以下方式將外部事件推送至 ARGUS：",
+      "copyCurl":    "複製 CURL 範例",
+      "copied":      "✓ 已複製"
+    },
+    "actions": {
+      "cancel": "取消",
+      "apply":  "套用",
+      "close":  "關閉"
+    }
+  },
+  "keyboard": {
+    "title":     "⌨ 鍵盤快捷鍵",
+    "closeHint": "按 ? 或點擊外部關閉",
+    "shortcuts": {
+      "search":    "聚焦事件搜尋欄",
+      "close":     "關閉面板 / 取消選取地區",
+      "immersive": "切換沉浸模式",
+      "bookmark":  "書籤 / 取消書籤當前事件",
+      "prevEvent": "前往上一個事件",
+      "nextEvent": "前往下一個事件",
+      "help":      "顯示此鍵盤快捷鍵說明"
+    }
   },
   "popout": {
     "catQ": {
