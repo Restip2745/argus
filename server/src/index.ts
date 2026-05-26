@@ -121,6 +121,7 @@ app.post('/api/events/webhook', (req, res) => {
       actors: JSON.stringify(event.actors), tags: JSON.stringify(event.tags),
       sources_count: 1, reliability: 'MEDIUM',
       heat_score: event.heat_score, expires_at: event.expires_at, last_referenced: null,
+      image_url: null,
     })
     io.emit('new_event', clientEvent)
     res.json({ id, message: 'Event ingested' })

@@ -214,6 +214,18 @@ export function EventPanelBody({
           </div>
         )}
 
+        {/* News thumbnail */}
+        {event.image_url && (
+          <div style={{ borderRadius: '3px', overflow: 'hidden', border: `1px solid ${accentColor}18` }}>
+            <img
+              src={event.image_url}
+              alt=""
+              onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
+              style={{ width: '100%', maxHeight: '130px', objectFit: 'cover', display: 'block', opacity: 0.85 }}
+            />
+          </div>
+        )}
+
         {summary && (
           <p className="text-[#4a6070] text-[10px] leading-relaxed">
             <LinkedText
