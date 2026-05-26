@@ -230,11 +230,8 @@ export function ConfigModal() {
       onClick={handleBackdrop}
       role="dialog"
       aria-modal="true"
-      aria-label="Configuration"
-      style={{ zIndex: 200 }}
-      role="dialog"
-      aria-modal="true"
       aria-label={t('config.title')}
+      style={{ zIndex: 200 }}
     >
       <div
         ref={cardRef}
