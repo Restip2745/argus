@@ -7,7 +7,7 @@ import { EventPanel } from './components/panels/EventPanel'
 import { RegionPanel } from './components/panels/RegionPanel'
 import { Sidebar } from './components/ui/Sidebar'
 import { LanguageSwitcher } from './components/ui/LanguageSwitcher'
-import { AnnotationCanvas } from './components/canvas/AnnotationCanvas'
+import { AnnotationToolbar } from './components/ui/AnnotationToolbar'
 import { CelestialNavList } from './components/ui/CelestialNavList'
 import { ConfigModal } from './components/ui/ConfigModal'
 import { EventStack } from './components/ui/EventStack'
@@ -29,7 +29,6 @@ import './i18n'
 export default function App() {
   useOllamaSocket()
   usePopoutSync('host')
-  const showAnnotationCanvas    = useAppStore((s) => s.showAnnotationCanvas)
   const showConfig    = useAppStore((s) => s.showConfig)
   const setShowConfig = useAppStore((s) => s.setShowConfig)
   const uiScale       = useAppStore((s) => s.uiScale)
@@ -128,8 +127,8 @@ export default function App() {
         </Suspense>
       </Canvas>
 
-      {/* ── Annotation overlay (always on top of canvas, outside HUD scale) ── */}
-      {showAnnotationCanvas && <AnnotationCanvas />}
+      {/* ── Annotation toolbar (3D pins live inside Canvas; toolbar is DOM overlay) ── */}
+      <AnnotationToolbar />
 
       {/* ── Toast notifications (outside HUD scale, always visible) ─────── */}
       <ToastContainer />

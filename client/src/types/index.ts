@@ -102,7 +102,7 @@ export interface ContextEntity {
 }
 
 // ────────────────────────────────────────────────────────────
-// Annotation canvas
+// Annotation canvas (legacy strokes — kept for type compat)
 // ────────────────────────────────────────────────────────────
 
 export interface AnnotationStroke {
@@ -112,4 +112,39 @@ export interface AnnotationStroke {
   color: string
   width: number
   createdAt: string
+}
+
+// ────────────────────────────────────────────────────────────
+// 3D Annotation system — pins + links
+// ────────────────────────────────────────────────────────────
+
+export interface AnnotationPin {
+  id: string
+  bodyId: CelestialBodyName
+  lat: number
+  lng: number
+  icon: string    // emoji character
+  color: string   // hex color
+  label: string
+}
+
+export interface AnnotationLink {
+  id: string
+  fromId: string  // AnnotationPin.id
+  toId: string    // AnnotationPin.id
+  label: string
+  color: string   // hex color
+}
+
+export type AnnotationTool = 'pin' | 'link' | 'erase'
+
+export interface PendingPin {
+  bodyId: CelestialBodyName
+  lat: number
+  lng: number
+}
+
+export interface PendingLink {
+  fromId: string
+  toId: string
 }

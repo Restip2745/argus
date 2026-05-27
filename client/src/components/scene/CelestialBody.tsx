@@ -7,6 +7,7 @@ import type { BodyDef } from '../../data/celestialBodies'
 import type { CelestialBodyName } from '../../types'
 import { useAppStore } from '../../store'
 import { getGAST, gastToRotY } from '../../hooks/useGAST'
+import { worldToLatLng } from '../../lib/coordinates'
 
 interface Props {
   def: BodyDef
@@ -131,12 +132,27 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation()
+      const store = useAppStore.getState()
+
+      // Annotation pin placement: intercept click to place a marker
+      if (store.showAnnotationCanvas && store.annotationTool === 'pin') {
+        const bodyPos = positionsRef.current.get(def.id)
+        if (bodyPos) {
+          const { lat, lng } = worldToLatLng(e.point, bodyPos, def.id)
+          store.setPendingPin({ bodyId: def.id, lat, lng })
+        }
+        return
+      }
+
+      // In link/erase mode, body-surface clicks are ignored (only pin clicks matter)
+      if (store.showAnnotationCanvas && (store.annotationTool === 'link' || store.annotationTool === 'erase')) {
+        return
+      }
 
       // When GeoJSON political layer is active, route Earth clicks to the
       // country-selection handler (registered by GeoJsonLayer) instead of
       // the generic focus handler — avoids re-focusing an already-focused body.
       if (def.id === 'earth') {
-        const store = useAppStore.getState()
         if (store.showGeoJsonLayer && store.onEarthSurfaceClick) {
           store.onEarthSurfaceClick(e.point)
           return
@@ -147,7 +163,7 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
       if (pos) onFocus(def.id, pos.clone())
 
       // Open the celestial body info panel
-      useAppStore.getState().setSelectedBody(def.id)
+      store.setSelectedBody(def.id)
     },
     [def.id, positionsRef, onFocus]
   )

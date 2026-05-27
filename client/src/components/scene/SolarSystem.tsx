@@ -16,6 +16,7 @@ import { EventMarkers } from './EventMarkers'
 import { GeoJsonLayer } from './GeoJsonLayer'
 import { TrackingLayer } from './TrackingLayer'
 import { ConflictLayer } from './ConflictLayer'
+import { AnnotationLayer } from './AnnotationLayer'
 import { useAppStore } from '../../store'
 import type { CelestialBodyName } from '../../types'
 
@@ -345,6 +346,9 @@ export function SolarSystem() {
 
       {/* Dynamic conflict front lines and controlled-territory fills */}
       <ConflictLayer positionsRef={positionsRef} />
+
+      {/* 3D annotation pins and connections */}
+      <AnnotationLayer positionsRef={positionsRef} />
 
       {/* Keeps useGlobeProjection singleton up-to-date for DOM panels */}
       <GlobeProjectorSetup positionsRef={positionsRef} />

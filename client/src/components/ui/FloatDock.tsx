@@ -408,10 +408,10 @@ export function FloatDock() {
         onClick={() => setShowHeatmapLayer(!showHeatmapLayer)}
       />
 
-      {/* Annotation canvas toggle */}
+      {/* Annotation system toggle */}
       <DockBtn
-        icon="✏"
-        label={t('canvas.toggle', 'ANNOTATION CANVAS')}
+        icon="📍"
+        label={t('annotation.toggle', 'ANNOTATION')}
         color="#9b6dff"
         active={showAnnotationCanvas}
         onClick={() => setShowAnnotationCanvas(!showAnnotationCanvas)}

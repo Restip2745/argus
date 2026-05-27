@@ -13,8 +13,10 @@ import { getGAST, gastToRotY } from '../hooks/useGAST'
 
 export const AXIAL_TILT_RAD = (23.44 * Math.PI) / 180
 
-const _ea = new THREE.Euler(0, 0, 0, 'XYZ')
-const _et = new THREE.Euler(0, 0, AXIAL_TILT_RAD, 'XYZ')
+const _ea  = new THREE.Euler(0, 0, 0, 'XYZ')
+const _et  = new THREE.Euler(0, 0, AXIAL_TILT_RAD, 'XYZ')
+const _eaI = new THREE.Euler(0, 0, 0, 'XYZ')
+const _etI = new THREE.Euler(0, 0, -AXIAL_TILT_RAD, 'XYZ')
 
 /**
  * Converts lat/lng (degrees) + radius to a local-sphere Vector3.
@@ -29,6 +31,30 @@ export function latLngToLocal(latDeg: number, lngDeg: number, R: number): THREE.
     R * Math.sin(lat),
     -R * Math.cos(lat) * Math.sin(lng),
   )
+}
+
+/**
+ * Inverse of latLngToWorld for Earth: maps a world-space point back to lat/lng.
+ * Subtracts earthPos, undoes axial-tilt Z-rotation, undoes GAST Y-rotation,
+ * then converts Cartesian → spherical.
+ * For non-Earth bodies, pass bodyId !== 'earth' to skip GAST/tilt (local frame only).
+ */
+export function worldToLatLng(
+  worldPt: THREE.Vector3,
+  bodyPos: THREE.Vector3,
+  bodyId = 'earth',
+): { lat: number; lng: number } {
+  const local = worldPt.clone().sub(bodyPos)
+  if (bodyId === 'earth') {
+    _etI.set(0, 0, -AXIAL_TILT_RAD)
+    local.applyEuler(_etI)
+    _eaI.set(0, -gastToRotY(getGAST()), 0)
+    local.applyEuler(_eaI)
+  }
+  const R = local.length()
+  const lat = Math.asin(Math.max(-1, Math.min(1, local.y / R))) * 180 / Math.PI
+  const lng = Math.atan2(-local.z, local.x) * 180 / Math.PI
+  return { lat, lng }
 }
 
 /**

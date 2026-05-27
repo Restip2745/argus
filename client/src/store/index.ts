@@ -1,5 +1,8 @@
 import { create } from 'zustand'
-import type { ArgusEvent, CelestialBodyName, AnnotationStroke, ContextEntity } from '../types'
+import type {
+  ArgusEvent, CelestialBodyName, AnnotationStroke, ContextEntity,
+  AnnotationPin, AnnotationLink, AnnotationTool, PendingPin, PendingLink,
+} from '../types'
 import type { NavLevelId } from '../config/navLevels'
 import { NAV_LEVELS } from '../config/navLevels'
 import type { BodyDef } from '../data/celestialBodies'
@@ -104,10 +107,29 @@ interface AppState {
   focusOnEarthSurface: ((lat: number, lng: number) => void) | null
   setFocusOnEarthSurface: (fn: (lat: number, lng: number) => void) => void
 
-  // ── Annotations ───────────────────────────────────────────
+  // ── Annotations (legacy 2D strokes) ──────────────────────
   strokes: AnnotationStroke[]
   addStroke: (stroke: AnnotationStroke) => void
   clearStrokes: () => void
+
+  // ── 3D Annotation system ──────────────────────────────────
+  annotationPins: AnnotationPin[]
+  annotationLinks: AnnotationLink[]
+  annotationTool: AnnotationTool
+  pendingPin: PendingPin | null
+  pendingLink: PendingLink | null
+  pendingLinkFrom: string | null
+  addAnnotationPin: (pin: AnnotationPin) => void
+  removeAnnotationPin: (id: string) => void
+  updateAnnotationPin: (id: string, patch: Partial<Omit<AnnotationPin, 'id'>>) => void
+  addAnnotationLink: (link: AnnotationLink) => void
+  removeAnnotationLink: (id: string) => void
+  updateAnnotationLink: (id: string, patch: Partial<Omit<AnnotationLink, 'id'>>) => void
+  setAnnotationTool: (tool: AnnotationTool) => void
+  setPendingPin: (p: PendingPin | null) => void
+  setPendingLink: (p: PendingLink | null) => void
+  setPendingLinkFrom: (id: string | null) => void
+  clearAnnotations: () => void
 
   // ── i18n ──────────────────────────────────────────────────
   language: string
@@ -284,10 +306,38 @@ export const useAppStore = create<AppState>((set) => ({
   focusOnEarthSurface:    null,
   setFocusOnEarthSurface: (fn) => set({ focusOnEarthSurface: fn }),
 
-  // Annotations
+  // Annotations (legacy 2D)
   strokes:      [],
   addStroke:    (stroke) => set((s) => ({ strokes: [...s.strokes, stroke] })),
   clearStrokes: () => set({ strokes: [] }),
+
+  // 3D Annotation system
+  annotationPins:    [],
+  annotationLinks:   [],
+  annotationTool:    'pin',
+  pendingPin:        null,
+  pendingLink:       null,
+  pendingLinkFrom:   null,
+  addAnnotationPin:  (pin) => set((s) => ({ annotationPins: [...s.annotationPins, pin] })),
+  removeAnnotationPin: (id) => set((s) => ({
+    annotationPins:  s.annotationPins.filter(p => p.id !== id),
+    annotationLinks: s.annotationLinks.filter(l => l.fromId !== id && l.toId !== id),
+  })),
+  updateAnnotationPin: (id, patch) => set((s) => ({
+    annotationPins: s.annotationPins.map(p => p.id === id ? { ...p, ...patch } : p),
+  })),
+  addAnnotationLink:  (link) => set((s) => ({ annotationLinks: [...s.annotationLinks, link] })),
+  removeAnnotationLink: (id) => set((s) => ({
+    annotationLinks: s.annotationLinks.filter(l => l.id !== id),
+  })),
+  updateAnnotationLink: (id, patch) => set((s) => ({
+    annotationLinks: s.annotationLinks.map(l => l.id === id ? { ...l, ...patch } : l),
+  })),
+  setAnnotationTool:  (annotationTool) => set({ annotationTool, pendingLinkFrom: null }),
+  setPendingPin:      (pendingPin) => set({ pendingPin }),
+  setPendingLink:     (pendingLink) => set({ pendingLink }),
+  setPendingLinkFrom: (pendingLinkFrom) => set({ pendingLinkFrom }),
+  clearAnnotations:   () => set({ annotationPins: [], annotationLinks: [], pendingPin: null, pendingLink: null, pendingLinkFrom: null }),
 
   // i18n
   language:    'zh-TW',
