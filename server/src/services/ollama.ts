@@ -171,13 +171,24 @@ async function processOne(article: Article, io: Server): Promise<void> {
   markAnalysisFailed(article.id)
 }
 
-async function processPendingArticles(io: Server): Promise<void> {
-  const pending = getPendingArticles(20)
-  if (pending.length === 0) return
+// Guard against overlapping runs: the 30s cron and the startup timer (or a
+// long-running batch) can otherwise fire concurrently and both grab the same
+// pending rows, doubling Ollama load and wasting work on duplicates.
+let isProcessing = false
 
-  logger.info('[Ollama]', `Processing ${pending.length} pending article(s)`)
-  for (const article of pending) {
-    await processOne(article, io)
+async function processPendingArticles(io: Server): Promise<void> {
+  if (isProcessing) return
+  isProcessing = true
+  try {
+    const pending = getPendingArticles(20)
+    if (pending.length === 0) return
+
+    logger.info('[Ollama]', `Processing ${pending.length} pending article(s)`)
+    for (const article of pending) {
+      await processOne(article, io)
+    }
+  } finally {
+    isProcessing = false
   }
 }
 
