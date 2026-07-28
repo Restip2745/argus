@@ -57,6 +57,33 @@ export function worldToLatLng(
   return { lat, lng }
 }
 
+const _hp = new THREE.Vector3()
+const _hc = new THREE.Vector3()
+
+/**
+ * True when a point just above a body's surface is on the camera-facing cap,
+ * i.e. not hidden behind the body itself.
+ *
+ * With p = point offset from the body centre and c = camera offset from that
+ * same centre, the horizon (tangent) plane is p·ĉ = R²/|c|, so the visible cap
+ * reduces to p·c ≥ R².
+ *
+ * Both offsets are taken relative to `bodyPos` here on purpose: feeding in
+ * world-space vectors instead leaves the body's own position inside the dot
+ * product, and that term swamps the real one once the body sits far from the
+ * scene origin — every marker then shows or hides together.
+ */
+export function isAboveHorizon(
+  worldPt: THREE.Vector3,
+  bodyPos: THREE.Vector3,
+  cameraPos: THREE.Vector3,
+  bodyRadius: number,
+): boolean {
+  _hp.subVectors(worldPt, bodyPos)
+  _hc.subVectors(cameraPos, bodyPos)
+  return _hp.dot(_hc) >= bodyRadius * bodyRadius
+}
+
 /**
  * Converts lat/lng (degrees) + radius to a world-space position.
  * Applies GAST Y-rotation, axial-tilt Z-rotation, then offsets by earthPos.
