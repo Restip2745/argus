@@ -6,7 +6,7 @@ import { useAppStore } from '../../store'
 import { BODY_MAP } from '../../data/celestialBodies'
 import { getCountryCentroid, resolveCountryName } from '../../data/countryData'
 import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
-import { latLngToWorld } from '../../lib/coordinates'
+import { latLngToWorld, isAboveHorizon } from '../../lib/coordinates'
 import type { ArgusEvent, CelestialBodyName } from '../../types'
 
 /** Resolve lat/lng for an event — explicit coords first, centroid fallback. */
@@ -79,7 +79,8 @@ function clusterGeoEvents(items: GeoItem[], radiusKm: number): GeoCluster[] {
   return clusters
 }
 
-const _local = new THREE.Vector3()
+// World-space scratch vector — latLngToWorld() bakes in the Earth offset.
+const _world = new THREE.Vector3()
 
 interface Props {
   positionsRef: React.MutableRefObject<Map<CelestialBodyName, THREE.Vector3>>
@@ -104,13 +105,9 @@ function GeoMarker({
   useFrame(({ camera }) => {
     const earthPos = positionsRef.current.get('earth')
     if (!earthPos || !groupRef.current) return
-    latLngToWorld(lat, lng, MARKER_R, earthPos, _local)
-    groupRef.current.position.copy(_local)
-    const cx = camera.position.x - earthPos.x
-    const cy = camera.position.y - earthPos.y
-    const cz = camera.position.z - earthPos.z
-    const dot = _local.x * cx + _local.y * cy + _local.z * cz
-    const visible = dot >= EARTH_RADIUS * MARKER_R
+    latLngToWorld(lat, lng, MARKER_R, earthPos, _world)
+    groupRef.current.position.copy(_world)
+    const visible = isAboveHorizon(_world, earthPos, camera.position, EARTH_RADIUS)
     if (domRef.current) {
       const d = visible ? 'flex' : 'none'
       if (domRef.current.style.display !== d) domRef.current.style.display = d
@@ -173,13 +170,9 @@ function ClusterMarker({
   useFrame(({ camera }) => {
     const earthPos = positionsRef.current.get('earth')
     if (!earthPos || !groupRef.current) return
-    latLngToWorld(cluster.lat, cluster.lng, MARKER_R, earthPos, _local)
-    groupRef.current.position.copy(_local)
-    const cx = camera.position.x - earthPos.x
-    const cy = camera.position.y - earthPos.y
-    const cz = camera.position.z - earthPos.z
-    const dot = _local.x * cx + _local.y * cy + _local.z * cz
-    const visible = dot >= EARTH_RADIUS * MARKER_R
+    latLngToWorld(cluster.lat, cluster.lng, MARKER_R, earthPos, _world)
+    groupRef.current.position.copy(_world)
+    const visible = isAboveHorizon(_world, earthPos, camera.position, EARTH_RADIUS)
     if (domRef.current) {
       const d = visible ? 'flex' : 'none'
       if (domRef.current.style.display !== d) domRef.current.style.display = d

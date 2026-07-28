@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useAppStore } from '../../store'
-import { latLngToWorld, latLngToLocal, AXIAL_TILT_RAD } from '../../lib/coordinates'
+import { latLngToWorld, latLngToLocal, isAboveHorizon, AXIAL_TILT_RAD } from '../../lib/coordinates'
 import { getGAST, gastToRotY } from '../../hooks/useGAST'
 import type { AnnotationPin, AnnotationLink, CelestialBodyName } from '../../types'
 
@@ -52,13 +52,7 @@ function PinMarker({
 
     // Horizon cull (Earth only)
     if (pin.bodyId === 'earth' && domRef.current) {
-      const earthPos = bodyPos
-      const dot = (
-        _local.x * (camera.position.x - earthPos.x) +
-        _local.y * (camera.position.y - earthPos.y) +
-        _local.z * (camera.position.z - earthPos.z)
-      )
-      const d = dot >= EARTH_R * MARKER_R ? 'block' : 'none'
+      const d = isAboveHorizon(_local, bodyPos, camera.position, EARTH_R) ? 'block' : 'none'
       if (domRef.current.style.display !== d) domRef.current.style.display = d
     }
   })
@@ -210,13 +204,7 @@ function SurfaceArc({
         labelGroupRef.current.position.copy(vt)
 
         if (fromPin.bodyId === 'earth' && labelDomRef.current) {
-          const earthPos = bodyPos
-          const dot = (
-            vt.x * (camera.position.x - earthPos.x) +
-            vt.y * (camera.position.y - earthPos.y) +
-            vt.z * (camera.position.z - earthPos.z)
-          )
-          const d = dot >= EARTH_R * MARKER_R ? 'block' : 'none'
+          const d = isAboveHorizon(vt, bodyPos, camera.position, EARTH_R) ? 'block' : 'none'
           if (labelDomRef.current.style.display !== d) labelDomRef.current.style.display = d
         }
       }
