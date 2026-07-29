@@ -348,5 +348,9 @@
     "return": "回到即時",
     "returnHint": "跳回現在（End）",
     "aria": "場景時間"
+  },
+  "toast": {
+    "openHint": "開啟此事件",
+    "dismiss": "關閉"
   }
 }

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
-import { eventSymbol } from '../../data/symbology'
+import { eventSymbol, severityRank } from '../../data/symbology'
+import { tick } from '../../lib/sound'
 import type { ArgusEvent } from '../../types'
 
 const TOAST_DURATION_MS = 3000
@@ -13,7 +14,15 @@ interface Toast {
   exiting: boolean
 }
 
-function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
+interface ToastItemProps {
+  toast: Toast
+  onDismiss: (id: string) => void
+  onOpen: (toast: Toast) => void
+  onHoldStart: (id: string) => void
+  onHoldEnd: (id: string) => void
+}
+
+function ToastItem({ toast, onDismiss, onOpen, onHoldStart, onHoldEnd }: ToastItemProps) {
   const { t } = useTranslation()
   const sym   = eventSymbol(toast.event)
   const color = sym.color
@@ -22,6 +31,22 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`${intensityLabel} — ${toast.event.title}`}
+      title={t('toast.openHint', 'Open this event')}
+      onClick={() => onOpen(toast)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(toast) }
+        if (e.key === 'Escape') onDismiss(toast.id)
+      }}
+      // Hovering holds the toast open. Three seconds is not long enough to
+      // notice an alert, decide it matters and reach it — without this, the
+      // thing would vanish from under the cursor on the way to clicking it.
+      onMouseEnter={() => onHoldStart(toast.id)}
+      onMouseLeave={() => onHoldEnd(toast.id)}
+      onFocus={() => onHoldStart(toast.id)}
+      onBlur={() => onHoldEnd(toast.id)}
       style={{
         display: 'flex',
         alignItems: 'flex-start',
@@ -39,8 +64,9 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
           ? 'toastExit 0.25s ease-in forwards'
           : 'toastEnter 0.3s cubic-bezier(0.34,1.56,0.64,1) both',
         position: 'relative',
-        cursor: 'default',
+        cursor: 'pointer',
         pointerEvents: 'all',
+        textAlign: 'left',
       }}
     >
       {/* Category icon */}
@@ -80,9 +106,10 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         </div>
       </div>
 
-      {/* Dismiss */}
+      {/* Dismiss — must not also open, so it stops the bubble to the card */}
       <button
-        onClick={() => onDismiss(toast.id)}
+        onClick={(e) => { e.stopPropagation(); onDismiss(toast.id) }}
+        aria-label={t('toast.dismiss', 'Dismiss')}
         style={{
           flexShrink: 0,
           color: '#2a4060',
@@ -103,14 +130,18 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 }
 
 export function ToastContainer() {
-  const events         = useAppStore((s) => s.events)
+  const events           = useAppStore((s) => s.events)
+  const setActivePanelId = useAppStore((s) => s.setActivePanelId)
   const [toasts, setToasts] = useState<Toast[]>([])
   const prevIdsRef    = useRef<Set<string>>(new Set())
   // true once we have seen the first non-empty event array (REST hydration complete)
   const isHydratedRef = useRef(false)
   const timersRef     = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  /** Toasts the pointer or focus is currently resting on — their clock is paused. */
+  const heldRef       = useRef<Set<string>>(new Set())
 
   const scheduleExit = useCallback((id: string) => {
+    if (heldRef.current.has(id)) return          // paused under the cursor
     // Always reset timer (allows deduplication to extend dismiss window)
     const existing = timersRef.current.get(id)
     if (existing) clearTimeout(existing)
@@ -127,9 +158,33 @@ export function ToastContainer() {
   const dismiss = useCallback((id: string) => {
     const existing = timersRef.current.get(id)
     if (existing) { clearTimeout(existing); timersRef.current.delete(id) }
+    heldRef.current.delete(id)
     setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t))
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 280)
   }, [])
+
+  // ── Hold on hover / focus ──────────────────────────────────────────────────
+  const holdStart = useCallback((id: string) => {
+    heldRef.current.add(id)
+    const existing = timersRef.current.get(id)
+    if (existing) { clearTimeout(existing); timersRef.current.delete(id) }
+  }, [])
+
+  const holdEnd = useCallback((id: string) => {
+    heldRef.current.delete(id)
+    // Only restart the clock if the toast is still on screen.
+    setToasts((prev) => {
+      if (prev.some((t) => t.id === id && !t.exiting)) scheduleExit(id)
+      return prev
+    })
+  }, [scheduleExit])
+
+  /** Acting on an alert both opens it and clears it — it has been dealt with. */
+  const open = useCallback((toast: Toast) => {
+    tick()
+    setActivePanelId(toast.event.id)
+    dismiss(toast.id)
+  }, [setActivePanelId, dismiss])
 
   useEffect(() => {
     const currentIds = new Set(events.map((e) => e.id))
@@ -159,8 +214,17 @@ export function ToastContainer() {
           (t) => t.event.category === e.category && !t.exiting
         )
         if (existingIdx !== -1) {
+          // A merged toast represents the worst thing in its group, not the
+          // latest. It is both what the card shows and what clicking it opens,
+          // and an alert must take you to the most severe item it stands for.
           updated = updated.map((t, i) =>
-            i === existingIdx ? { ...t, event: e, count: t.count + 1 } : t
+            i === existingIdx
+              ? {
+                  ...t,
+                  event: severityRank(e.intensity) > severityRank(t.event.intensity) ? e : t.event,
+                  count: t.count + 1,
+                }
+              : t,
           )
           scheduleExit(updated[existingIdx].id)
         } else {
@@ -206,7 +270,14 @@ export function ToastContainer() {
         }}
       >
         {toasts.map((t) => (
-          <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
+          <ToastItem
+            key={t.id}
+            toast={t}
+            onDismiss={dismiss}
+            onOpen={open}
+            onHoldStart={holdStart}
+            onHoldEnd={holdEnd}
+          />
         ))}
       </div>
     </>

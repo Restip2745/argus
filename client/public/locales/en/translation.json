@@ -348,5 +348,9 @@
     "return": "LIVE",
     "returnHint": "Jump back to the present (End)",
     "aria": "Scene time"
+  },
+  "toast": {
+    "openHint": "Open this event",
+    "dismiss": "Dismiss"
   }
 }
