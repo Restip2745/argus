@@ -324,7 +324,10 @@ export const useAppStore = create<AppState>((set) => ({
     const saved = localStorage.getItem('argus-map-mode')
     return saved === 'none' || saved === 'political' || saved === 'posture' || saved === 'activity'
       ? saved
-      : 'political'
+      // Posture by default. The home view sits outside the marker threshold, so
+      // the choropleth is the only thing telling the operator where the trouble
+      // is; neutral political fills would land them on a globe with no intel.
+      : 'posture'
   })(),
   setMapMode: (mapMode) => {
     localStorage.setItem('argus-map-mode', mapMode)

@@ -578,8 +578,30 @@ export function bodyViewDistance(id: CelestialBodyName): number {
 // zoom level the operator is at. Ordering is asserted in
 // `data/__tests__/cameraThresholds.test.ts`.
 
-/** Earth detail-layer threshold in scene units — political layer + markers on. */
+/**
+ * Borders and map-mode fills. These are map-scale: they shrink with the globe,
+ * so they stay readable from a long way out.
+ */
 export const EARTH_DETAIL_THRESHOLD = 20.0
+
+/**
+ * Event markers, which need to be much closer than the borders do.
+ *
+ * Markers are drawn as screen-space DOM overlays, so they do NOT shrink as the
+ * camera pulls back — the globe gets smaller and they do not. At the home
+ * distance a 26px marker covers about a fifth of a 134px Earth, and a few dozen
+ * of them bury the planet completely. Working it out for a 55° fov on a 900px
+ * viewport:
+ *
+ *     distance 14 → Earth ~134px → marker is 19% of the globe   unusable
+ *     distance  9 → Earth ~208px → marker is 12%                workable
+ *     distance  4 → Earth ~460px → marker is  6%                comfortable
+ *
+ * Splitting this from EARTH_DETAIL_THRESHOLD is the point: the far view keeps
+ * the borders and the choropleth, which carry where-things-are at map scale,
+ * and individual markers appear only once there is room for them.
+ */
+export const EARTH_MARKER_THRESHOLD = 9.0
 
 /** Event-marker clustering tiers: farther → tier 0 (solar), nearer → tier 2. */
 export const TIER_TO_ORBITAL = 80
@@ -588,9 +610,9 @@ export const TIER_TO_SURFACE = 12
 /**
  * Camera distance for the Earth home view.
  *
- * Sits inside EARTH_DETAIL_THRESHOLD so the political layer and event markers
- * are live on arrival, but outside TIER_TO_SURFACE so markers still cluster —
- * landing on 250 uncollapsed pins is a worse first impression than landing on a
- * readable dozen.
+ * Deliberately between the two thresholds above: you arrive to a globe with
+ * borders and severity fills — a readable country-level picture — and push in
+ * to resolve individual events. Landing inside the marker threshold buried the
+ * planet under its own annotations.
  */
 export const EARTH_HOME_DISTANCE = 14.0

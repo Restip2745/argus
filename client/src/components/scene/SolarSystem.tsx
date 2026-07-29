@@ -10,7 +10,7 @@ import { useWASD } from '../../hooks/useWASD'
 import { getGAST, gastToRotY } from '../../hooks/useGAST'
 import {
   BODIES, bodyMinDistance, bodyViewDistance,
-  EARTH_DETAIL_THRESHOLD, EARTH_HOME_DISTANCE,
+  EARTH_DETAIL_THRESHOLD, EARTH_MARKER_THRESHOLD, EARTH_HOME_DISTANCE,
 } from '../../data/celestialBodies'
 import { determineNavLevel } from '../../config/navLevels'
 import { CelestialBody } from './CelestialBody'
@@ -115,12 +115,13 @@ export function SolarSystem() {
       const store = useAppStore.getState()
       const currentFocused = store.focusedBody
 
-      // Earth detail layers — show whenever camera is close to Earth, regardless of focusedBody
+      // Earth detail layers — shown by proximity to Earth, regardless of focusedBody.
+      // Borders and fills come in early because they scale with the globe;
+      // markers wait until much closer because they do not.
       const earthPos = positionsRef.current.get('earth') ?? new THREE.Vector3()
       const distToEarth = camera.position.distanceTo(earthPos)
-      const detail = distToEarth < EARTH_DETAIL_THRESHOLD
-      store.setShowGeoJsonLayer(detail)
-      store.setShowEventMarkers(detail)
+      store.setShowGeoJsonLayer(distToEarth < EARTH_DETAIL_THRESHOLD)
+      store.setShowEventMarkers(distToEarth < EARTH_MARKER_THRESHOLD)
 
       // Celestial nav level — only recalculate on level or focus change
       const camDist = camera.position.distanceTo(controls.target)

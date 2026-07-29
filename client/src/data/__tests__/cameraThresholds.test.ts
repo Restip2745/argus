@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
-  EARTH_DETAIL_THRESHOLD, EARTH_HOME_DISTANCE,
+  EARTH_DETAIL_THRESHOLD, EARTH_MARKER_THRESHOLD, EARTH_HOME_DISTANCE,
   TIER_TO_ORBITAL, TIER_TO_SURFACE,
-  bodyMinDistance,
+  bodyMinDistance, bodyViewDistance,
 } from '../celestialBodies'
 import { determineNavLevel } from '../../config/navLevels'
 
@@ -14,13 +14,29 @@ import { determineNavLevel } from '../../config/navLevels'
  * level. These assertions are the reasoning behind the number.
  */
 describe('Earth home view distance', () => {
-  it('is inside the detail threshold, so layers and markers are live on arrival', () => {
+  it('is inside the detail threshold, so borders and fills are live on arrival', () => {
     expect(EARTH_HOME_DISTANCE).toBeLessThan(EARTH_DETAIL_THRESHOLD)
   })
 
-  it('is outside the surface tier, so markers still cluster on arrival', () => {
-    // Landing at tier 2 would render every event as its own uncollapsed pin.
+  it('is outside the marker threshold, so markers do not bury the globe', () => {
+    // Markers are screen-space sized and do not shrink with the camera. At the
+    // home distance a marker covers roughly a fifth of the globe, and a few
+    // dozen of them hide the planet entirely. The far view is carried by the
+    // choropleth instead; markers resolve once the operator pushes in.
+    expect(EARTH_HOME_DISTANCE).toBeGreaterThan(EARTH_MARKER_THRESHOLD)
+  })
+
+  it('is outside the surface tier, so markers would still cluster if shown', () => {
     expect(EARTH_HOME_DISTANCE).toBeGreaterThan(TIER_TO_SURFACE)
+  })
+
+  it('shows markers when the operator explicitly focuses Earth', () => {
+    // Clicking Earth tweens to bodyViewDistance with a small elevation. That
+    // has to land inside the marker threshold, or focusing Earth would still
+    // show no events and the layer would be unreachable by normal navigation.
+    const view = bodyViewDistance('earth')
+    const focusDistance = Math.hypot(view * 0.25, view)
+    expect(focusDistance).toBeLessThan(EARTH_MARKER_THRESHOLD)
   })
 
   it('is inside the orbital tier, not the solar tier', () => {
@@ -38,6 +54,7 @@ describe('Earth home view distance', () => {
 
 describe('camera threshold ladder', () => {
   it('is strictly ordered', () => {
+    expect(EARTH_MARKER_THRESHOLD).toBeLessThan(TIER_TO_SURFACE)
     expect(TIER_TO_SURFACE).toBeLessThan(EARTH_DETAIL_THRESHOLD)
     expect(EARTH_DETAIL_THRESHOLD).toBeLessThan(TIER_TO_ORBITAL)
   })
