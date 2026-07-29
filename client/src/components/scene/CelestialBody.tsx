@@ -170,6 +170,23 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
 
   const segs = sphereSegments(def.renderedRadius)
 
+  /**
+   * Shadow-map participation.
+   *
+   * Moons are excluded. Their orbital distance is overridden to a visual value
+   * (the Moon sits at 4 scene units from Earth rather than the true ~60 radii),
+   * so the shadow geometry around them is not physically meaningful: Earth's
+   * umbra is still roughly one Earth-radius wide at 4 units, nearly four times
+   * the Moon's radius, and the Moon's real 5-degree inclination only carries it
+   * ~0.35 units off the anti-sun axis. The result is a permanent artificial
+   * eclipse — the Moon renders black even on its sun-facing side.
+   *
+   * At a compressed scale a correctly lit moon beats a physically-derived but
+   * wrong shadow. Sunlight itself is unaffected; this only disables occlusion
+   * by other geometry.
+   */
+  const shadows = !def.isStar && !def.orbitParent
+
   // Distance from camera to body (for label visibility — snapshot at render time is fine)
   const distToCamera = camera.position.distanceTo(
     positionsRef.current.get(def.id) ?? new THREE.Vector3()
@@ -225,14 +242,15 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
             segs={segs}
             color={def.color}
             isStar={!!def.isStar}
+            shadows={shadows}
             onClick={handleClick}
           />
         ) : (
           <mesh
             ref={meshRef as React.Ref<THREE.Mesh>}
             onClick={handleClick}
-            castShadow={!def.isStar}
-            receiveShadow={!def.isStar}
+            castShadow={shadows}
+            receiveShadow={shadows}
           >
             <sphereGeometry args={[def.renderedRadius, segs, segs]} />
             {def.isStar ? (
@@ -314,11 +332,12 @@ interface TexturedMeshProps {
   segs: number
   color: string
   isStar: boolean
+  shadows: boolean
   onClick: (e: ThreeEvent<MouseEvent>) => void
 }
 
 const TexturedMesh = forwardRef<THREE.Object3D, TexturedMeshProps>(
-  ({ texturePath, radius, segs, color, isStar, onClick }, ref) => {
+  ({ texturePath, radius, segs, color, isStar, shadows, onClick }, ref) => {
     const texture = useLoader(THREE.TextureLoader, texturePath)
 
     const processedTexture = useMemo(() => {
@@ -332,8 +351,8 @@ const TexturedMesh = forwardRef<THREE.Object3D, TexturedMeshProps>(
       <mesh
         ref={ref as React.Ref<THREE.Mesh>}
         onClick={onClick}
-        castShadow={!isStar}
-        receiveShadow={!isStar}
+        castShadow={shadows && !isStar}
+        receiveShadow={shadows && !isStar}
       >
         <sphereGeometry args={[radius, segs, segs]} />
         {isStar ? (
