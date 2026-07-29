@@ -77,10 +77,10 @@ export interface ArgusEvent {
 }
 
 // ────────────────────────────────────────────────────────────
-// Person entity (for PersonPanel / entity linking)
+// Person entity (for WikiPanel / entity linking)
 // ────────────────────────────────────────────────────────────
 
-export interface PersonEntity {
+export interface WikiEntity {
   name:        string
   description: string | null   // Wikidata short description
   extract:     string | null   // Wikipedia first paragraph
@@ -92,7 +92,7 @@ export interface PersonEntity {
 // Context entity (unified type for MultiEntityContextPanel)
 // ────────────────────────────────────────────────────────────
 
-export type ContextEntityType = 'event' | 'person' | 'region' | 'celestial'
+export type ContextEntityType = 'event' | 'wiki' | 'region' | 'celestial'
 
 export interface ContextEntity {
   id:      string

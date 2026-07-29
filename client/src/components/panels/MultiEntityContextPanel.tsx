@@ -19,14 +19,14 @@ const CARD_W    = SINGLE_W - H_PAD
 
 const TYPE_ICON: Record<ContextEntityType, string> = {
   event:     '◉',
-  person:    '👤',
+  wiki:      '👤',
   region:    '⊙',
   celestial: '✦',
 }
 
 const TYPE_COLOR: Record<ContextEntityType, string> = {
   event:     '#ff9c2a',
-  person:    '#c084fc',
+  wiki:      '#c084fc',
   region:    '#00d4ff',
   celestial: '#ffd700',
 }

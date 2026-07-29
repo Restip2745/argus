@@ -15,14 +15,14 @@ import { useAppStore }        from './store'
 import { usePopoutSync }      from './hooks/usePopoutSync'
 import { getCountryInfo, getDynamicTags } from './data/countryData'
 import { severityColor } from './data/symbology'
-import { categoryQueries, personQueries, contextQueries } from './lib/suggestedQueries'
+import { categoryQueries, entityQueries, contextQueries } from './lib/suggestedQueries'
 import { PopoutAIPanel }      from './components/panels/PopoutAIPanel'
 import './i18n'
 
 // Lazy imports for panel content components (avoids loading 3-D scene code)
 import { EventPanelBody }      from './components/panels/EventPanelBody'
 import { RegionPanelOverview } from './components/panels/RegionPanelOverview'
-import { PersonPanelBody }     from './components/panels/PersonPanelBody'
+import { WikiPanelBody }     from './components/panels/WikiPanelBody'
 import { EntityCard }          from './components/panels/MultiEntityContextPanel'
 import { useWikiSummary }      from './hooks/useWikiSummary'
 import type { ArgusEvent }     from './types'
@@ -137,9 +137,9 @@ function RegionPopoutContent() {
 // ── Person popout ──────────────────────────────────────────────────────────────
 
 function PersonPopoutContent() {
-  const selectedPersons = useAppStore((s) => s.selectedPersons)
+  const selectedEntities = useAppStore((s) => s.selectedEntities)
 
-  if (selectedPersons.length === 0) {
+  if (selectedEntities.length === 0) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>
         NO PERSON SELECTED
@@ -151,8 +151,8 @@ function PersonPopoutContent() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
-      {selectedPersons.map(p => (
-        <PersonPanelBody key={p.name} person={p} accentColor={ACCENT} />
+      {selectedEntities.map(p => (
+        <WikiPanelBody key={p.name} entity={p} accentColor={ACCENT} />
       ))}
     </div>
   )
@@ -201,7 +201,7 @@ export default function PopoutPage() {
   const activePanelId    = useAppStore((s) => s.activePanelId)
   const events           = useAppStore((s) => s.events)
   const selectedCountry  = useAppStore((s) => s.selectedCountry)
-  const selectedPersons  = useAppStore((s) => s.selectedPersons)
+  const selectedEntities  = useAppStore((s) => s.selectedEntities)
   const contextEntities  = useAppStore((s) => s.contextEntities)
 
   useEffect(() => {
@@ -259,15 +259,15 @@ export default function PopoutPage() {
   }, [selectedCountry])
 
   const personAgentContext = useMemo(() => {
-    if (selectedPersons.length === 0) return ''
-    return selectedPersons.map(p =>
+    if (selectedEntities.length === 0) return ''
+    return selectedEntities.map(p =>
       `Person: ${p.name}${p.wikiTitle && p.wikiTitle !== p.name ? ` (Wikipedia: ${p.wikiTitle})` : ''}`
     ).join('\n')
-  }, [selectedPersons])
+  }, [selectedEntities])
 
-  const personQueriesList = useMemo(
-    () => personQueries(t, selectedPersons.map((p) => p.name)),
-    [selectedPersons, t],
+  const entityQueriesList = useMemo(
+    () => entityQueries(t, selectedEntities.map((p) => p.name)),
+    [selectedEntities, t],
   )
 
   const contextAgentContext = useMemo(() => {
@@ -282,9 +282,9 @@ export default function PopoutPage() {
     [contextEntities, t],
   )
 
-  const agentContext     = popoutType === 'context' ? contextAgentContext : popoutType === 'region' ? regionAgentContext  : popoutType === 'person' ? personAgentContext : eventAgentContext
-  const suggestedQueries = popoutType === 'context' ? contextQueriesList  : popoutType === 'region' ? regionQueries       : popoutType === 'person' ? personQueriesList : eventQueries
-  const agentLabel       = popoutType === 'context' ? 'CONTEXT AGENT'    : popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'person' ? 'PERSON AGENT'    : 'EVENT AGENT'
+  const agentContext     = popoutType === 'context' ? contextAgentContext : popoutType === 'region' ? regionAgentContext  : popoutType === 'wiki' ? personAgentContext : eventAgentContext
+  const suggestedQueries = popoutType === 'context' ? contextQueriesList  : popoutType === 'region' ? regionQueries       : popoutType === 'wiki' ? entityQueriesList : eventQueries
+  const agentLabel       = popoutType === 'context' ? 'CONTEXT AGENT'    : popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'wiki' ? 'ENTITY AGENT'    : 'EVENT AGENT'
 
   return (
     <div style={{
@@ -299,10 +299,10 @@ export default function PopoutPage() {
         {/* Column header */}
         <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(0,180,255,0.1)', background: 'linear-gradient(90deg, rgba(0,212,255,0.04) 0%, transparent 100%)', flexShrink: 0 }}>
           <span style={{ color: popoutType === 'context' ? '#00ffcc' : '#00d4ff', fontSize: '11px', letterSpacing: '0.15em' }}>
-            {popoutType === 'context' ? '◈ CONTEXT INTEL' : popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'person' ? '◈ PERSON INTEL' : '◈ EVENT INTEL'}
+            {popoutType === 'context' ? '◈ CONTEXT INTEL' : popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'wiki' ? '◈ PERSON INTEL' : '◈ EVENT INTEL'}
           </span>
         </div>
-        {popoutType === 'context' ? <ContextPopoutContent /> : popoutType === 'region' ? <RegionPopoutContent /> : popoutType === 'person' ? <PersonPopoutContent /> : <EventPopoutContent />}
+        {popoutType === 'context' ? <ContextPopoutContent /> : popoutType === 'region' ? <RegionPopoutContent /> : popoutType === 'wiki' ? <PersonPopoutContent /> : <EventPopoutContent />}
       </div>
 
       {/* ── Right column: AI agent (40%) ── */}

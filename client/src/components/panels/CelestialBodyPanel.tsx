@@ -115,7 +115,7 @@ const CELESTIAL_PERSONS: string[] = [
 // ── Wikipedia section ─────────────────────────────────────────────────────────
 function WikiSection({ wikiTitle }: { wikiTitle: string }) {
   const { data, loading, error } = useWikiSummary(wikiTitle)
-  const addSelectedPerson = useAppStore(s => s.addSelectedPerson)
+  const addSelectedEntity = useAppStore(s => s.addSelectedEntity)
 
   if (loading) return (
     <div style={{ color: '#2a4060', fontSize: '10px', padding: '6px 0', letterSpacing: '0.08em', textAlign: 'center' }}>
@@ -161,8 +161,8 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
       <p style={{ color: '#7a9ab0', fontSize: '11px', lineHeight: 1.55, margin: 0 }}>
         <LinkedText
           text={extract}
-          knownPersons={CELESTIAL_PERSONS}
-          onPersonClick={addSelectedPerson}
+          knownEntities={CELESTIAL_PERSONS}
+          onEntityClick={addSelectedEntity}
         />
       </p>
     </div>

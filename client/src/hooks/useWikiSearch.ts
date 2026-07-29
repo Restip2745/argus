@@ -15,7 +15,7 @@ interface WikiSearchResponse {
  * Returns up to 6 results matching `query`.
  * Fires 280 ms after the last keystroke; cancels in-flight requests on change.
  */
-export function usePersonSearch(query: string): {
+export function useWikiSearch(query: string): {
   results: PersonSearchResult[]
   loading: boolean
 } {

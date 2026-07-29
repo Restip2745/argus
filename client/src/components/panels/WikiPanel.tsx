@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { personQueries } from '../../lib/suggestedQueries'
+import { entityQueries } from '../../lib/suggestedQueries'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { Panel } from './Panel'
-import { PersonPanelBody } from './PersonPanelBody'
+import { WikiPanelBody } from './WikiPanelBody'
 import type { ContextEntity } from '../../types'
 
 const ACCENT = '#c084fc'
@@ -56,25 +56,25 @@ function useWikiSearch(query: string) {
   return { results, loading }
 }
 
-export function PersonPanel() {
+export function WikiPanel() {
   const { t } = useTranslation()
-  const selectedPersons = useAppStore(s => s.selectedPersons)
-  const addSelectedPerson = useAppStore(s => s.addSelectedPerson)
-  const removeSelectedPerson = useAppStore(s => s.removeSelectedPerson)
-  const clearSelectedPersons = useAppStore(s => s.clearSelectedPersons)
+  const selectedEntities = useAppStore(s => s.selectedEntities)
+  const addSelectedEntity = useAppStore(s => s.addSelectedEntity)
+  const removeSelectedEntity = useAppStore(s => s.removeSelectedEntity)
+  const clearSelectedEntities = useAppStore(s => s.clearSelectedEntities)
 
   const addContextEntity    = useAppStore(s => s.addContextEntity)
   const contextEntities     = useAppStore(s => s.contextEntities)
 
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
-    usePanelDrag({ panelKey: 'person', defaultPos: { x: 60, y: 120 } })
+    usePanelDrag({ panelKey: 'wiki', defaultPos: { x: 60, y: 120 } })
 
   const [searchInput, setSearchInput] = useState('')
   const [showSearch, setShowSearch] = useState(true)
   const { results: searchResults, loading: searchLoading } = useWikiSearch(searchInput)
 
   const { history, loading: agentLoading, error: agentError, ask } = useAgentQuery()
-  const { open: popoutOpen, isPopped } = usePopoutWindow('person')
+  const { open: popoutOpen, isPopped } = usePopoutWindow('wiki')
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)
 
@@ -94,18 +94,18 @@ export function PersonPanel() {
   }, [uiScale, setPos])
 
   const agentContext = useMemo(() => {
-    if (selectedPersons.length === 0) return ''
-    return selectedPersons.map(p =>
-      `Person: ${p.name}${p.wikiTitle && p.wikiTitle !== p.name ? ` (Wikipedia: ${p.wikiTitle})` : ''}`
+    if (selectedEntities.length === 0) return ''
+    return selectedEntities.map(p =>
+      `Entity: ${p.name}${p.wikiTitle && p.wikiTitle !== p.name ? ` (Wikipedia: ${p.wikiTitle})` : ''}`
     ).join('\n')
-  }, [selectedPersons])
+  }, [selectedEntities])
 
   const suggestedQueries = useMemo(
-    () => personQueries(t, selectedPersons.map((p) => p.name)),
-    [selectedPersons, t],
+    () => entityQueries(t, selectedEntities.map((p) => p.name)),
+    [selectedEntities, t],
   )
 
-  if (selectedPersons.length === 0) return null
+  if (selectedEntities.length === 0) return null
 
   const handleSend = () => {
     if (agentInput.trim()) { ask(agentInput, agentContext); setAgentInput('') }
@@ -120,23 +120,23 @@ export function PersonPanel() {
       onHeaderMouseDown={onHeaderMouseDown}
       title={
         <span style={{ color: ACCENT }}>
-          {selectedPersons.length > 1
-            ? `◈ ${t('person.title', 'PERSONS')} (${selectedPersons.length})`
-            : `◈ ${t('person.title', 'PERSON')}`}
+          {selectedEntities.length > 1
+            ? `◈ ${t('wiki.titlePlural', 'ENTITIES')} (${selectedEntities.length})`
+            : `◈ ${t('wiki.title', 'ENTITY')}`}
         </span>
       }
       headerControls={
         <>
-          {/* Add persons to context */}
+          {/* Add entities to context */}
           {(() => {
-            const allInContext = selectedPersons.every(p => contextEntities.some(e => e.id === `person-${p.name}`))
+            const allInContext = selectedEntities.every(p => contextEntities.some(e => e.id === `wiki-${p.name}`))
             return (
               <button
                 onClick={() => {
-                  for (const p of selectedPersons) {
+                  for (const p of selectedEntities) {
                     const ce: ContextEntity = {
-                      id: `person-${p.name}`,
-                      type: 'person',
+                      id: `wiki-${p.name}`,
+                      type: 'wiki',
                       name: p.name,
                       summary: p.wikiTitle ? `Wikipedia: ${p.wikiTitle}` : p.name,
                     }
@@ -162,8 +162,8 @@ export function PersonPanel() {
           })()}
           <button
             onClick={() => setShowSearch(v => !v)}
-            aria-label={t('person.search', 'Search person')}
-            title={t('person.search', 'Search person')}
+            aria-label={t('wiki.search', 'Search Wikipedia')}
+            title={t('wiki.search', 'Search Wikipedia')}
             style={{
               background: showSearch ? `${ACCENT}18` : 'none',
               border: `1px solid ${showSearch ? ACCENT + '40' : 'transparent'}`,
@@ -186,7 +186,7 @@ export function PersonPanel() {
           >⊡</button>
         </>
       }
-      onClose={clearSelectedPersons}
+      onClose={clearSelectedEntities}
       style={{
         position: 'fixed',
         left: pos.x,
@@ -202,7 +202,7 @@ export function PersonPanel() {
           <input
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            placeholder={t('person.searchPlaceholder', 'Search people…')}
+            placeholder={t('wiki.searchPlaceholder', 'Search Wikipedia…')}
             style={{
               width: '100%', background: 'rgba(0,180,255,0.05)', border: `1px solid ${ACCENT}25`,
               borderRadius: '3px', color: '#a8c4d8', fontSize: '11px', padding: '5px 8px',
@@ -210,17 +210,17 @@ export function PersonPanel() {
             }}
           />
           {searchLoading && (
-            <div style={{ color: '#2a4060', fontSize: '10px', padding: '4px 0', letterSpacing: '0.1em' }}>{t('person.loading', '↻ Loading…')}</div>
+            <div style={{ color: '#2a4060', fontSize: '10px', padding: '4px 0', letterSpacing: '0.1em' }}>{t('wiki.loading', '↻ Loading…')}</div>
           )}
           {searchResults.length > 0 && (
             <div style={{ marginTop: '4px', maxHeight: '140px', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
               {searchResults.map(r => {
-                const isSelected = selectedPersons.some(p => p.name === r.title)
+                const isSelected = selectedEntities.some(p => p.name === r.title)
                 return (
                   <button
                     key={r.title}
                     onClick={() => {
-                      if (!isSelected) addSelectedPerson({ name: r.title, wikiTitle: r.title })
+                      if (!isSelected) addSelectedEntity({ name: r.title, wikiTitle: r.title })
                       setSearchInput('')
                     }}
                     disabled={isSelected}
@@ -249,12 +249,12 @@ export function PersonPanel() {
 
       {/* Scrollable person cards */}
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
-        {selectedPersons.map(p => (
-          <PersonPanelBody
+        {selectedEntities.map(p => (
+          <WikiPanelBody
             key={p.name}
-            person={p}
+            entity={p}
             accentColor={ACCENT}
-            onRemove={selectedPersons.length > 1 ? () => removeSelectedPerson(p.name) : undefined}
+            onRemove={selectedEntities.length > 1 ? () => removeSelectedEntity(p.name) : undefined}
           />
         ))}
       </div>
@@ -291,7 +291,7 @@ export function PersonPanel() {
         {/* Chat */}
         <div style={{ padding: '7px 12px 10px' }}>
           <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>
-            {t('person.agent', '◈ PERSON INTELLIGENCE')}
+            {t('wiki.agent', '◈ ENTITY INTELLIGENCE')}
           </div>
 
           {history.length > 0 && (
@@ -340,7 +340,7 @@ export function PersonPanel() {
               value={agentInput}
               onChange={e => setAgentInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-              placeholder={t('person.askAgent', '詢問人物情報…')}
+              placeholder={t('wiki.askAgent', 'Ask about this entity…')}
               disabled={agentLoading}
               style={{
                 flex: 1, background: 'rgba(0,180,255,0.05)', border: `1px solid ${ACCENT}25`,

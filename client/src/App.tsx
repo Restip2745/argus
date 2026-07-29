@@ -17,7 +17,7 @@ import { FloatDock } from './components/ui/FloatDock'
 import { TimeScrubber } from './components/ui/TimeScrubber'
 import { CanvasAnalysisPanel } from './components/ui/CanvasAnalysisPanel'
 import { CelestialBodyPanel } from './components/panels/CelestialBodyPanel'
-import { PersonPanel } from './components/panels/PersonPanel'
+import { WikiPanel } from './components/panels/WikiPanel'
 import { MultiEntityContextPanel } from './components/panels/MultiEntityContextPanel'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
@@ -53,7 +53,7 @@ export default function App() {
   const activePanelId       = useAppStore((s) => s.activePanelId)
   const setActivePanelId    = useAppStore((s) => s.setActivePanelId)
   const setSelectedCountry  = useAppStore((s) => s.setSelectedCountry)
-  const clearSelectedPersons = useAppStore((s) => s.clearSelectedPersons)
+  const clearSelectedEntities = useAppStore((s) => s.clearSelectedEntities)
   const toggleBookmark      = useAppStore((s) => s.toggleBookmark)
   const filteredEvents      = useFilteredEvents()
 
@@ -85,7 +85,7 @@ export default function App() {
           // Close panels in reverse open order
           if (activePanelId) { setActivePanelId(null); break }
           setSelectedCountry(null)
-          clearSelectedPersons()
+          clearSelectedEntities()
           break
 
         case 'i':
@@ -118,7 +118,7 @@ export default function App() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [immersiveMode, setImmersiveMode, setLiteMode,
-      activePanelId, setActivePanelId, setSelectedCountry, clearSelectedPersons,
+      activePanelId, setActivePanelId, setSelectedCountry, clearSelectedEntities,
       toggleBookmark, filteredEvents, showShortcuts])
 
   const hudVisible = !immersiveMode
@@ -185,7 +185,7 @@ export default function App() {
             <ErrorBoundary label="Event Panel"><EventPanel /></ErrorBoundary>
             <ErrorBoundary label="Region Panel"><RegionPanel /></ErrorBoundary>
             <ErrorBoundary label="Celestial Panel"><CelestialBodyPanel /></ErrorBoundary>
-            <ErrorBoundary label="Person Panel"><PersonPanel /></ErrorBoundary>
+            <ErrorBoundary label="Person Panel"><WikiPanel /></ErrorBoundary>
             <ErrorBoundary label="Context Panel"><MultiEntityContextPanel /></ErrorBoundary>
             <CelestialNavList />
 
@@ -204,7 +204,7 @@ export default function App() {
             <EventPanel />
             <RegionPanel />
             <CelestialBodyPanel />
-            <PersonPanel />
+            <WikiPanel />
             <MultiEntityContextPanel />
             {showConfig && <ConfigModal />}
             {showCanvasAnalysis && <CanvasAnalysisPanel onClose={() => setShowCanvasAnalysis(false)} />}

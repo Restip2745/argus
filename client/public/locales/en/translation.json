@@ -97,17 +97,6 @@
     "collapse": "Collapse",
     "expand": "Celestial Navigation"
   },
-  "person": {
-    "title": "PERSON",
-    "search": "Search person",
-    "searchPlaceholder": "Search people…",
-    "agent": "◈ PERSON INTELLIGENCE",
-    "askAgent": "Ask about this person…",
-    "keyFigures": "KEY FIGURES",
-    "biography": "BIOGRAPHY",
-    "wikiLink": "Wikipedia",
-    "loading": "↻ Loading…"
-  },
   "context": {
     "title": "MULTI-ENTITY CONTEXT",
     "agent": "◈ CROSS-ENTITY INTELLIGENCE",
@@ -187,21 +176,21 @@
         "3": "International Treaty Framework"
       }
     },
-    "personQ": {
-      "s0": "{{name}} political stance analysis",
-      "s1": "{{name}} key achievements",
-      "s2": "{{name}} international influence",
-      "s3": "{{name}}'s connection to current events",
-      "m0": "{{n0}} & {{n1}} relationship analysis",
-      "m1": "Political stance comparison: {{n0}} vs {{n1}}",
-      "m2": "Their roles in international affairs"
-    },
     "contextQ": {
       "0": "Analyze connection between {{n0}} and {{n1}}",
       "1": "What roles do these people play in these events?",
       "2": "Impact assessment of these events on the region",
       "3": "Cross-entity intelligence summary",
       "4": "Compare their political positions"
+    },
+    "entityQ": {
+      "s0": "What is {{name}}, and what is the background?",
+      "s1": "How does {{name}} connect to current events?",
+      "s2": "Recent developments involving {{name}}",
+      "s3": "Other entities related to {{name}}",
+      "m0": "Analyse the connection between {{n0}} and {{n1}}",
+      "m1": "Compare the positions of {{n0}} and {{n1}}",
+      "m2": "Their roles in the current situation"
     }
   },
   "config": {
@@ -352,5 +341,23 @@
   "toast": {
     "openHint": "Open this event",
     "dismiss": "Dismiss"
+  },
+  "wiki": {
+    "title": "ENTITY",
+    "titlePlural": "ENTITIES",
+    "search": "Search Wikipedia",
+    "searchPlaceholder": "Search Wikipedia…",
+    "loading": "↻ Loading…",
+    "summary": "SUMMARY",
+    "link": "Wikipedia",
+    "agent": "◈ ENTITY INTELLIGENCE",
+    "askAgent": "Ask about this entity…",
+    "kind": {
+      "person": "PERSON",
+      "org": "ORGANISATION",
+      "place": "PLACE",
+      "work": "EVENT / DOCUMENT",
+      "unknown": "ENTITY"
+    }
   }
 }

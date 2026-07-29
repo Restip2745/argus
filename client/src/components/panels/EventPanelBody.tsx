@@ -92,7 +92,7 @@ export function EventPanelBody({
     setEventNote(event.id, noteDraft)
     setNoteOpen(false)
   }
-  const addSelectedPerson = useAppStore((s) => s.addSelectedPerson)
+  const addSelectedEntity = useAppStore((s) => s.addSelectedEntity)
   const personNames = extractPersonNames(event.actors ?? [])
 
   const title = event.title
@@ -232,8 +232,8 @@ export function EventPanelBody({
           <p className="text-[#8aabbf] text-[11px] leading-relaxed">
             <LinkedText
               text={summary}
-              knownPersons={personNames}
-              onPersonClick={addSelectedPerson}
+              knownEntities={personNames}
+              onEntityClick={addSelectedEntity}
             />
           </p>
         )}
@@ -264,7 +264,7 @@ export function EventPanelBody({
                   </button>
                   {isPerson && (
                     <button
-                      onClick={() => addSelectedPerson({ name: a, wikiTitle: a })}
+                      onClick={() => addSelectedEntity({ name: a, wikiTitle: a })}
                       title={`View person: ${a}`}
                       className="py-0.5 text-[10px] transition-all"
                       style={{

@@ -68,11 +68,11 @@ function IndustryBar({ label, pct, color }: { label: string; pct: number; color:
 
 // ── Key Figures section ───────────────────────────────────────────────────────
 
-function RegionKeyFigures({ recentEvents, addSelectedPerson }: {
+function RegionKeyFigures({ recentEvents, addSelectedEntity }: {
   recentEvents: ArgusEvent[]
-  addSelectedPerson: (p: import('../../store').SelectedPerson) => void
+  addSelectedEntity: (p: import('../../store').SelectedEntity) => void
 }) {
-  const persons = useMemo(() => {
+  const entities = useMemo(() => {
     const counts = new Map<string, number>()
     for (const ev of recentEvents) {
       for (const name of extractPersonNames(ev.actors ?? [])) {
@@ -84,16 +84,16 @@ function RegionKeyFigures({ recentEvents, addSelectedPerson }: {
       .slice(0, 6)
   }, [recentEvents])
 
-  if (persons.length === 0) return null
+  if (entities.length === 0) return null
 
   return (
     <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 6px' }}>
       <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>KEY FIGURES</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-        {persons.map(([name, count]) => (
+        {entities.map(([name, count]) => (
           <button
             key={name}
-            onClick={() => addSelectedPerson({ name, wikiTitle: name })}
+            onClick={() => addSelectedEntity({ name, wikiTitle: name })}
             title={`View person: ${name}`}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '3px',
@@ -139,7 +139,7 @@ export function RegionPanelOverview({
   wikiData, wikiLoading,
 }: Props) {
   const { t } = useTranslation()
-  const addSelectedPerson = useAppStore(s => s.addSelectedPerson)
+  const addSelectedEntity = useAppStore(s => s.addSelectedEntity)
 
   const stabilityColor = !info ? '#4a6070'
     : info.stability >= 70 ? '#39ff8a'
@@ -279,7 +279,7 @@ export function RegionPanelOverview({
       </div>
 
       {/* ── Key Figures ──────────────────────────────────────────────────────── */}
-      <RegionKeyFigures recentEvents={recentEvents} addSelectedPerson={addSelectedPerson} />
+      <RegionKeyFigures recentEvents={recentEvents} addSelectedEntity={addSelectedEntity} />
 
       {/* ── Focus button ────────────────────────────────────────────────────── */}
       {focusOnEarthSurface && (

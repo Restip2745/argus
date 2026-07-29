@@ -1,4 +1,4 @@
-import type { SelectedPerson } from '../store'
+import type { SelectedEntity } from '../store'
 import { resolveCountryName } from '../data/countryData'
 
 const PERSON_LINK_STYLE: React.CSSProperties = {
@@ -15,22 +15,22 @@ const PERSON_LINK_STYLE: React.CSSProperties = {
 
 interface EntityLinkProps {
   text: string
-  knownPersons: string[]
-  onPersonClick: (person: SelectedPerson) => void
+  knownEntities: string[]
+  onEntityClick: (person: SelectedEntity) => void
   style?: React.CSSProperties
 }
 
 /**
  * Renders text with detected person names as clickable links.
- * `knownPersons` is the list of names to detect (e.g. event actors).
+ * `knownEntities` is the list of names to detect (e.g. event actors).
  * Names are matched case-insensitively as whole words.
  */
-export function LinkedText({ text, knownPersons, onPersonClick, style }: EntityLinkProps) {
-  if (!text || knownPersons.length === 0) {
+export function LinkedText({ text, knownEntities, onEntityClick, style }: EntityLinkProps) {
+  if (!text || knownEntities.length === 0) {
     return <span style={style}>{text}</span>
   }
 
-  const escaped = knownPersons
+  const escaped = knownEntities
     .filter(n => n.length >= 2)
     .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   if (escaped.length === 0) return <span style={style}>{text}</span>
@@ -41,12 +41,12 @@ export function LinkedText({ text, knownPersons, onPersonClick, style }: EntityL
   return (
     <span style={style}>
       {parts.map((part, i) => {
-        const matched = knownPersons.find(n => n.toLowerCase() === part.toLowerCase())
+        const matched = knownEntities.find(n => n.toLowerCase() === part.toLowerCase())
         if (matched) {
           return (
             <button
               key={i}
-              onClick={(e) => { e.stopPropagation(); onPersonClick({ name: matched, wikiTitle: matched }) }}
+              onClick={(e) => { e.stopPropagation(); onEntityClick({ name: matched, wikiTitle: matched }) }}
               style={PERSON_LINK_STYLE}
               title={`View person: ${matched}`}
               onMouseEnter={e => { e.currentTarget.style.color = '#d8b4fe' }}

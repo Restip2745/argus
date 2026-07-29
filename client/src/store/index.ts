@@ -26,7 +26,7 @@ export interface FilterPreset {
   searchQuery: string
 }
 
-export interface SelectedPerson {
+export interface SelectedEntity {
   name: string
   wikiTitle?: string
 }
@@ -236,10 +236,10 @@ interface AppState {
   intelBriefHistory: Array<{ id: string; summary: string; generatedAt: string; topEventIds: string[] }>
 
   // ── Person panel ──────────────────────────────────────────
-  selectedPersons: SelectedPerson[]
-  addSelectedPerson: (p: SelectedPerson) => void
-  removeSelectedPerson: (name: string) => void
-  clearSelectedPersons: () => void
+  selectedEntities: SelectedEntity[]
+  addSelectedEntity: (p: SelectedEntity) => void
+  removeSelectedEntity: (name: string) => void
+  clearSelectedEntities: () => void
 
   // ── Multi-entity context panel ─────────────────────────────
   contextEntities: ContextEntity[]
@@ -545,16 +545,16 @@ export const useAppStore = create<AppState>((set) => ({
   intelBriefHistory: [],
 
   // Person panel
-  selectedPersons: [],
-  addSelectedPerson: (p) => set((s) => {
-    if (s.selectedPersons.some(e => e.name === p.name)) return s
+  selectedEntities: [],
+  addSelectedEntity: (p) => set((s) => {
+    if (s.selectedEntities.some(e => e.name === p.name)) return s
     const panelZ = { ...s.panelZ, person: Math.max(...Object.values(s.panelZ), 29) + 1 }
-    return { selectedPersons: [...s.selectedPersons, p], panelZ }
+    return { selectedEntities: [...s.selectedEntities, p], panelZ }
   }),
-  removeSelectedPerson: (name) => set((s) => ({
-    selectedPersons: s.selectedPersons.filter(p => p.name !== name),
+  removeSelectedEntity: (name) => set((s) => ({
+    selectedEntities: s.selectedEntities.filter(p => p.name !== name),
   })),
-  clearSelectedPersons: () => set({ selectedPersons: [] }),
+  clearSelectedEntities: () => set({ selectedEntities: [] }),
 
   // Multi-entity context panel
   contextEntities: [],

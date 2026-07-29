@@ -1,16 +1,17 @@
 import { useTranslation } from 'react-i18next'
 import { useWikiSummary } from '../../hooks/useWikiSummary'
-import type { SelectedPerson } from '../../store'
+import { classifyEntity, ENTITY_GLYPH, ENTITY_KIND_LABEL } from '../../data/entityKind'
+import type { SelectedEntity } from '../../store'
 
 interface Props {
-  person: SelectedPerson
+  entity: SelectedEntity
   accentColor: string
   onRemove?: () => void
 }
 
-export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
+export function WikiPanelBody({ entity, accentColor, onRemove }: Props) {
   const { t } = useTranslation()
-  const wikiTitle = person.wikiTitle ?? person.name
+  const wikiTitle = entity.wikiTitle ?? entity.name
   const { data, loading, error } = useWikiSummary(wikiTitle)
 
   const extract = data?.extract
@@ -19,6 +20,11 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
 
   const wikiUrl = data?.content_urls?.desktop?.page
 
+  // What kind of thing this is, derived from Wikidata's short description.
+  // The panel used to assert PERSON regardless; entities pulled out of news
+  // copy are just as often organisations, places or events.
+  const kind = classifyEntity(data?.description)
+
   return (
     <div style={{ padding: '10px 12px 14px', borderBottom: '1px solid rgba(0,180,255,0.07)' }}>
       {/* Header row */}
@@ -26,7 +32,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
         {data?.thumbnail && (
           <img
             src={data.thumbnail.source}
-            alt={person.name}
+            alt={entity.name}
             style={{
               width: '52px', height: '52px', objectFit: 'cover',
               borderRadius: '4px', flexShrink: 0,
@@ -37,7 +43,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ color: '#c8dde8', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em' }}>
-              {data?.title ?? person.name}
+              {data?.title ?? entity.name}
             </div>
             {onRemove && (
               <button
@@ -50,8 +56,23 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
             )}
           </div>
           {data && (
-            <div style={{ color: accentColor, fontSize: '10px', letterSpacing: '0.08em', marginTop: '2px', opacity: 0.8 }}>
-              {t('person.title')}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginTop: '2px', minWidth: 0 }}>
+              <span style={{ fontSize: '10px' }}>{ENTITY_GLYPH[kind]}</span>
+              <span style={{
+                color: accentColor, fontSize: '10px', letterSpacing: '0.08em',
+                opacity: 0.8, flexShrink: 0,
+              }}>
+                {t(`wiki.kind.${kind}`, ENTITY_KIND_LABEL[kind])}
+              </span>
+              {/* Wikipedia's own one-liner says more than any label we invent */}
+              {data.description && (
+                <span style={{
+                  color: '#5d7c92', fontSize: '10px', minWidth: 0,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  · {data.description}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -59,7 +80,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
 
       {loading && (
         <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', textAlign: 'center', padding: '12px 0' }}>
-          {t('person.loading')}
+          {t('wiki.loading', '↻ Loading…')}
         </div>
       )}
 
@@ -69,7 +90,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
 
       {extract && (
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' }}>{t('person.biography')}</div>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' }}>{t('wiki.summary', 'SUMMARY')}</div>
           <p style={{ color: '#7a9ab0', fontSize: '11px', lineHeight: 1.55, margin: 0 }}>
             {extract}
           </p>
@@ -92,7 +113,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
           onMouseLeave={e => { e.currentTarget.style.color = '#4a6fa5'; e.currentTarget.style.background = `${accentColor}06` }}
         >
           <span style={{ fontSize: '10px', opacity: 0.7 }}>↗</span>
-          <span>{t('person.wikiLink')}</span>
+          <span>{t('wiki.link', 'Wikipedia')}</span>
         </a>
       )}
     </div>

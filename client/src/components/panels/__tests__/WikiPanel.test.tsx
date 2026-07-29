@@ -36,7 +36,7 @@ describe('extractPersonNames', () => {
 describe('LinkedText', () => {
   it('renders plain text when no persons match', () => {
     const { container } = render(
-      <LinkedText text="Hello world" knownPersons={[]} onPersonClick={() => {}} />
+      <LinkedText text="Hello world" knownEntities={[]} onEntityClick={() => {}} />
     )
     expect(container.textContent).toBe('Hello world')
   })
@@ -45,21 +45,21 @@ describe('LinkedText', () => {
     render(
       <LinkedText
         text="Meeting with Joe Biden in Washington"
-        knownPersons={['Joe Biden']}
-        onPersonClick={() => {}}
+        knownEntities={['Joe Biden']}
+        onEntityClick={() => {}}
       />
     )
     const btn = screen.getByRole('button', { name: /Joe Biden/i })
     expect(btn).toBeInTheDocument()
   })
 
-  it('calls onPersonClick with correct data when clicked', () => {
+  it('calls onEntityClick with correct data when clicked', () => {
     const onClick = vi.fn()
     render(
       <LinkedText
         text="Report by Angela Merkel"
-        knownPersons={['Angela Merkel']}
-        onPersonClick={onClick}
+        knownEntities={['Angela Merkel']}
+        onEntityClick={onClick}
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /Angela Merkel/i }))
@@ -70,8 +70,8 @@ describe('LinkedText', () => {
     render(
       <LinkedText
         text="Biden met with Xi Jinping"
-        knownPersons={['Biden', 'Xi Jinping']}
-        onPersonClick={() => {}}
+        knownEntities={['Biden', 'Xi Jinping']}
+        onEntityClick={() => {}}
       />
     )
     expect(screen.getByRole('button', { name: /Biden/i })).toBeInTheDocument()
@@ -82,8 +82,8 @@ describe('LinkedText', () => {
     render(
       <LinkedText
         text="Statement from joe biden"
-        knownPersons={['Joe Biden']}
-        onPersonClick={() => {}}
+        knownEntities={['Joe Biden']}
+        onEntityClick={() => {}}
       />
     )
     expect(screen.getByRole('button', { name: /joe biden/i })).toBeInTheDocument()

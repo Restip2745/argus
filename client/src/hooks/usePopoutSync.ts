@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '../store'
 import type { ArgusEvent, ContextEntity } from '../types'
-import type { SelectedCountry, SelectedPerson } from '../store'
+import type { SelectedCountry, SelectedEntity } from '../store'
 
 const CHANNEL = 'argus-popout'
 
@@ -9,7 +9,7 @@ type SyncMsg =
   | { type: 'events';           data: ArgusEvent[] }
   | { type: 'selectedCountry';  data: SelectedCountry | null }
   | { type: 'activePanelId';    data: string | null }
-  | { type: 'selectedPersons';  data: SelectedPerson[] }
+  | { type: 'selectedEntities';  data: SelectedEntity[] }
   | { type: 'contextEntities'; data: ContextEntity[] }
 
 /**
@@ -24,14 +24,14 @@ export function usePopoutSync(role: 'host' | 'guest') {
   const events             = useAppStore((s) => s.events)
   const selectedCountry    = useAppStore((s) => s.selectedCountry)
   const activePanelId      = useAppStore((s) => s.activePanelId)
-  const selectedPersons    = useAppStore((s) => s.selectedPersons)
+  const selectedEntities    = useAppStore((s) => s.selectedEntities)
   const contextEntities    = useAppStore((s) => s.contextEntities)
 
   const setEvents            = useAppStore((s) => s.setEvents)
   const setSelectedCountry   = useAppStore((s) => s.setSelectedCountry)
   const setActivePanelId     = useAppStore((s) => s.setActivePanelId)
-  const clearSelectedPersons = useAppStore((s) => s.clearSelectedPersons)
-  const addSelectedPerson    = useAppStore((s) => s.addSelectedPerson)
+  const clearSelectedEntities = useAppStore((s) => s.clearSelectedEntities)
+  const addSelectedEntity    = useAppStore((s) => s.addSelectedEntity)
 
   useEffect(() => {
     const ch = new BroadcastChannel(CHANNEL)
@@ -44,9 +44,9 @@ export function usePopoutSync(role: 'host' | 'guest') {
         if (msg.type === 'events')            setEvents(msg.data)
         if (msg.type === 'selectedCountry')   setSelectedCountry(msg.data)
         if (msg.type === 'activePanelId')     setActivePanelId(msg.data)
-        if (msg.type === 'selectedPersons') {
-          clearSelectedPersons()
-          msg.data.forEach(p => addSelectedPerson(p))
+        if (msg.type === 'selectedEntities') {
+          clearSelectedEntities()
+          msg.data.forEach(p => addSelectedEntity(p))
         }
         if (msg.type === 'contextEntities') {
           const store = useAppStore.getState()
@@ -80,8 +80,8 @@ export function usePopoutSync(role: 'host' | 'guest') {
 
   useEffect(() => {
     if (role !== 'host' || !channelRef.current) return
-    channelRef.current.postMessage({ type: 'selectedPersons', data: selectedPersons } satisfies SyncMsg)
-  }, [role, selectedPersons])
+    channelRef.current.postMessage({ type: 'selectedEntities', data: selectedEntities } satisfies SyncMsg)
+  }, [role, selectedEntities])
 
   useEffect(() => {
     if (role !== 'host' || !channelRef.current) return
@@ -98,7 +98,7 @@ export function usePopoutSync(role: 'host' | 'guest') {
         ch.postMessage({ type: 'events',            data: s.events })
         ch.postMessage({ type: 'selectedCountry',   data: s.selectedCountry })
         ch.postMessage({ type: 'activePanelId',     data: s.activePanelId })
-        ch.postMessage({ type: 'selectedPersons',   data: s.selectedPersons })
+        ch.postMessage({ type: 'selectedEntities',   data: s.selectedEntities })
         ch.postMessage({ type: 'contextEntities',  data: s.contextEntities })
       }
     }

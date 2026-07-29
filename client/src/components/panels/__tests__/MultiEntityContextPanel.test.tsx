@@ -35,7 +35,7 @@ vi.mock('../../../hooks/usePanelDrag', () => ({
 }))
 
 const mockEvent: ContextEntity = { id: 'evt-1', type: 'event', name: 'Test Event', summary: 'An important event' }
-const mockPerson: ContextEntity = { id: 'person-Alice', type: 'person', name: 'Alice', summary: 'A political leader' }
+const mockPerson: ContextEntity = { id: 'wiki-Alice', type: 'wiki', name: 'Alice', summary: 'A political leader' }
 const mockRegion: ContextEntity = { id: 'region-Japan', type: 'region', name: 'Japan', summary: 'Tokyo · Pop 125M' }
 const mockCelestial: ContextEntity = { id: 'celestial-mars', type: 'celestial', name: 'Mars', summary: 'Terrestrial Planet' }
 
@@ -74,7 +74,7 @@ describe('Context entity store logic', () => {
     addContextEntity(mockCelestial)
     const entities = useAppStore.getState().contextEntities
     expect(entities).toHaveLength(4)
-    expect(new Set(entities.map(e => e.type))).toEqual(new Set(['event', 'person', 'region', 'celestial']))
+    expect(new Set(entities.map(e => e.type))).toEqual(new Set(['event', 'wiki', 'region', 'celestial']))
   })
 
   it('enforces the entity limit', () => {
@@ -92,7 +92,7 @@ describe('Context entity store logic', () => {
     useAppStore.getState().removeContextEntity('evt-1')
     const entities = useAppStore.getState().contextEntities
     expect(entities).toHaveLength(1)
-    expect(entities[0].id).toBe('person-Alice')
+    expect(entities[0].id).toBe('wiki-Alice')
   })
 
   it('clears all entities and hides panel', () => {

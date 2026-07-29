@@ -2,7 +2,7 @@
  * Suggested agent queries — one source, driven by the locale files.
  *
  * These lists existed in four places: a hardcoded Traditional Chinese table in
- * EventPanel, another in PersonPanel, another in MultiEntityContextPanel, and
+ * EventPanel, another in WikiPanel, another in MultiEntityContextPanel, and
  * the `popout.*` keys in the locale files that only PopoutPage read. The main
  * window therefore ignored the language setting for its own suggestions while
  * the popout window honoured it.
@@ -37,20 +37,20 @@ export function categoryQueries(t: Translate, category: string): string[] {
 }
 
 /** Queries for one or more selected people. */
-export function personQueries(t: Translate, names: string[]): string[] {
+export function entityQueries(t: Translate, names: string[]): string[] {
   if (names.length === 0) return []
 
   if (names.length === 1) {
     const name = names[0]
-    return ['s0', 's1', 's2', 's3'].map((k) => t(`popout.personQ.${k}`, { name }))
+    return ['s0', 's1', 's2', 's3'].map((k) => t(`popout.entityQ.${k}`, { name }))
   }
 
   const [n0, n1] = names
-  return ['m0', 'm1', 'm2'].map((k) => t(`popout.personQ.${k}`, { n0, n1 }))
+  return ['m0', 'm1', 'm2'].map((k) => t(`popout.entityQ.${k}`, { n0, n1 }))
 }
 
 export interface ContextEntityLike {
-  type: 'event' | 'person' | 'region' | 'celestial'
+  type: 'event' | 'wiki' | 'region' | 'celestial'
   name: string
 }
 
@@ -63,13 +63,13 @@ export function contextQueries(t: Translate, entities: ContextEntityLike[]): str
 
   const types   = new Set(entities.map((e) => e.type))
   const names   = entities.map((e) => e.name)
-  const persons = entities.filter((e) => e.type === 'person')
+  const persons = entities.filter((e) => e.type === 'wiki')
   const out: string[] = []
 
   if (entities.length >= 2) {
     out.push(t('popout.contextQ.0', { n0: names[0], n1: names[1] }))
   }
-  if (types.has('event') && types.has('person')) out.push(t('popout.contextQ.1'))
+  if (types.has('event') && types.has('wiki')) out.push(t('popout.contextQ.1'))
   if (types.has('event') && types.has('region')) out.push(t('popout.contextQ.2'))
   if (persons.length >= 2) out.push(t('popout.contextQ.4'))
 
