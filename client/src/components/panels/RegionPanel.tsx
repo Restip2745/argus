@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppStore } from '../../store'
 import type { ContextEntity } from '../../types'
 import { useTranslation } from 'react-i18next'
+import { useSceneTime } from '../../hooks/useSceneTime'
 import { getCountryInfo, getDynamicTags } from '../../data/countryData'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
@@ -23,6 +24,7 @@ function formatPop(m: number): string {
 
 export function RegionPanel() {
   const { t } = useTranslation()
+  const { now: sceneNow } = useSceneTime()
   const selectedCountry       = useAppStore((s) => s.selectedCountry)
   const setSelectedCountry    = useAppStore((s) => s.setSelectedCountry)
   const focusOnEarthSurface   = useAppStore((s) => s.focusOnEarthSurface)
@@ -110,7 +112,7 @@ export function RegionPanel() {
 
   const recentEvents = useMemo(() => {
     if (!displayedCountry) return []
-    const cutoff = Date.now() - 24 * 3600 * 1000
+    const cutoff = sceneNow - 24 * 3600 * 1000
     return events.filter(e => {
       const ts = e.published_at ? new Date(e.published_at).getTime() : 0
       if (ts < cutoff) return false

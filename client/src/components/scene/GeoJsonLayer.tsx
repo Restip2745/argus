@@ -9,6 +9,7 @@ import {
   assignRegionColors, geometryBBoxes, NEUTRAL_FILLS, type ColorableRegion,
 } from '../../data/mapColoring'
 import { severityColor, severityRank } from '../../data/symbology'
+import { useSceneTime } from '../../hooks/useSceneTime'
 import type { CelestialBodyName } from '../../types'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -281,6 +282,7 @@ export function GeoJsonLayer({ positionsRef }: Props) {
   const setOnEarthSurfaceClick = useAppStore((s) => s.setOnEarthSurfaceClick)
   const mapMode                = useAppStore((s) => s.mapMode)
   const events                 = useAppStore((s) => s.events)
+  const { now: sceneNow }      = useSceneTime()
 
   const outerRef = useRef<THREE.Group>(null)   // Earth position + axial tilt
   const gastRef  = useRef<THREE.Group>(null)   // GAST rotation
@@ -427,7 +429,7 @@ export function GeoJsonLayer({ positionsRef }: Props) {
     }
 
     // Data modes aggregate the last 24 h of events per country.
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000
+    const cutoff = sceneNow - 24 * 60 * 60 * 1000
     const byLabel = new Map<string, { heat: number; count: number; peak: string }>()
     for (const e of events) {
       const label = e.location_label

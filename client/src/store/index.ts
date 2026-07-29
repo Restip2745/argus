@@ -156,6 +156,19 @@ interface AppState {
   uiScale: number
   setUiScale: (v: number) => void
 
+  // ── Scene time ────────────────────────────────────────────
+  /**
+   * The instant the whole app is looking at.
+   *
+   * `null` means LIVE: everything follows the wall clock. A number freezes the
+   * view at that timestamp — event filtering, the status bar's windows, the
+   * map-mode aggregations and the astronomy all read it, so the intel and the
+   * sky can never disagree about what "now" is.
+   */
+  sceneTime: number | null
+  setSceneTime: (t: number | null) => void
+  returnToLive: () => void
+
   // ── Presentation ──────────────────────────────────────────
   /** Where the camera lands on load. 'earth' puts the operator at the working
    *  altitude immediately; 'solar' keeps the old system-wide establishing shot. */
@@ -386,6 +399,13 @@ export const useAppStore = create<AppState>((set) => ({
   // Display
   uiScale:    1.0,
   setUiScale: (uiScale) => set({ uiScale }),
+
+  // Scene time — deliberately NOT persisted. A reload should always land you
+  // in the present; waking up scrubbed into the past with no memory of having
+  // done it is the worst possible state for a monitoring tool.
+  sceneTime: null,
+  setSceneTime: (sceneTime) => set({ sceneTime }),
+  returnToLive: () => set({ sceneTime: null }),
 
   // Presentation — persisted in localStorage
   homeView: localStorage.getItem('argus-home-view') === 'solar' ? 'solar' : 'earth',

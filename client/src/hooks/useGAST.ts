@@ -1,4 +1,5 @@
 import { SiderealTime } from 'astronomy-engine'
+import { readSceneTime } from './useSceneTime'
 
 /**
  * Module-level GAST cache — shared across ALL components.
@@ -9,15 +10,22 @@ let _cache: number = SiderealTime(new Date())
 let _lastMs: number = 0
 
 /**
- * Returns the current Greenwich Apparent Sidereal Time (hours, 0–24).
- * Recalculated at most once per second; subsequent calls within the same
- * second return the cached value instantly.
+ * Greenwich Apparent Sidereal Time (hours, 0–24) at the current scene time.
+ *
+ * Reads scene time internally rather than taking it as an argument: there are
+ * nine call sites, several of them in pure helper modules with no access to
+ * React state, and Earth's rotation must never disagree with its orbital
+ * position about which instant is being drawn.
+ *
+ * The cache is keyed on distance from the last computed instant, so scrubbing
+ * recomputes immediately instead of showing a stale rotation — a jump backwards
+ * is just as much a cache miss as a second passing.
  */
 export function getGAST(): number {
-  const now = Date.now()
-  if (now - _lastMs >= 1000) {
-    _cache  = SiderealTime(new Date())
-    _lastMs = now
+  const target = readSceneTime()
+  if (Math.abs(target - _lastMs) >= 1000) {
+    _cache  = SiderealTime(new Date(target))
+    _lastMs = target
   }
   return _cache
 }

@@ -8,6 +8,7 @@ import {
 import type { MapMode } from '../../store'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useSceneTime } from '../../hooks/useSceneTime'
 
 const MAP_MODES: { id: MapMode; icon: string; label: string }[] = [
   { id: 'none',      icon: '○', label: 'NONE'      },
@@ -128,10 +129,11 @@ export function FloatDock() {
 
   const serviceHealth      = useServiceHealth()
   const socketConnected    = useAppStore((s) => s.socketConnected)
+  const { now: sceneNow }  = useSceneTime()
 
   // 12-bar hourly sparkline for event arrival rate
   const sparklineBars = useMemo(() => {
-    const now   = Date.now()
+    const now   = sceneNow
     const bars  = new Array(12).fill(0)
     for (const e of events) {
       const ts = e.published_at ? new Date(e.published_at).getTime() : 0

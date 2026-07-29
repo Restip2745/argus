@@ -341,5 +341,12 @@
       "erase": "Click a marker to delete",
       "erase2": "(its links go too)"
     }
+  },
+  "scrubber": {
+    "live": "LIVE",
+    "review": "REVIEW",
+    "return": "LIVE",
+    "returnHint": "Jump back to the present (End)",
+    "aria": "Scene time"
   }
 }

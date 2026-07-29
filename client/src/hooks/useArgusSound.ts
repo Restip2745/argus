@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '../store'
 import { useEventArrivals } from './useEventArrivals'
+import { useSceneTime } from './useSceneTime'
 import { severityRank } from '../data/symbology'
 import { configureSound, installUnlockHandlers, alert as playAlert } from '../lib/sound'
 
@@ -15,6 +16,7 @@ export function useArgusSound(): void {
   const soundEnabled = useAppStore((s) => s.soundEnabled)
   const soundVolume  = useAppStore((s) => s.soundVolume)
   const arrival      = useEventArrivals()
+  const { isLive }   = useSceneTime()
   const lastGenRef   = useRef(0)
 
   // Keep the engine's copy of the settings current.
@@ -28,6 +30,9 @@ export function useArgusSound(): void {
   useEffect(() => {
     if (arrival.gen === 0 || arrival.gen === lastGenRef.current) return
     lastGenRef.current = arrival.gen
+    // Silent while rewound — a cue about the present, played into a view of
+    // the past, is worse than no cue at all.
+    if (!isLive) return
     if (severityRank(arrival.peak) >= severityRank('HIGH')) playAlert()
-  }, [arrival])
+  }, [arrival, isLive])
 }

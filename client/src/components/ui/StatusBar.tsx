@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { useEventArrivals } from '../../hooks/useEventArrivals'
+import { useSceneTime } from '../../hooks/useSceneTime'
 import { tick } from '../../lib/sound'
 import {
   ALL_CATEGORIES, CATEGORY_GLYPH, CATEGORY_LABEL, CATEGORY_TINT,
@@ -161,6 +162,12 @@ export function StatusBar({
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
   const health           = useServiceHealth()
 
+  // Scene time, not the wall clock — scrubbing back must move the whole
+  // readout, or the census would describe a different instant to the feed.
+  const { now: sceneNow, isLive } = useSceneTime()
+  const now = new Date(sceneNow)
+  const minuteTick = Math.floor(sceneNow / 60_000)
+
   // ── Arrival sweep ──────────────────────────────────────────────────────────
   // The one place the HUD is allowed a whole-bar gesture, and only for the
   // severities that justify interrupting.
@@ -168,29 +175,27 @@ export function StatusBar({
   const [sweep, setSweep] = useState<string | null>(null)
   useEffect(() => {
     if (arrival.gen === 0) return
+    // Reviewing the past: an arrival cue would be announcing the present into
+    // a view of an instant the operator is not looking at.
+    if (!isLive) return
     if (severityRank(arrival.peak) < severityRank('HIGH')) return
     setSweep(severityColor(arrival.peak))
     const id = setTimeout(() => setSweep(null), 1100)
     return () => clearTimeout(id)
-  }, [arrival])
-
-  // ── UTC clock ──────────────────────────────────────────────────────────────
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  // Minute-resolution tick drives the time-window maths (trend / tempo / ingest
-  // age) so they refresh without recomputing once a second.
-  const minuteTick = Math.floor(now.getTime() / 60_000)
+  }, [arrival, isLive])
 
   // ── POSTURE ────────────────────────────────────────────────────────────────
   const posture = useMemo(() => {
     const counts: Record<string, number> = { CRITICAL: 0, HIGH: 0, MODERATE: 0, LOW: 0 }
-    for (const e of events) counts[e.intensity] = (counts[e.intensity] ?? 0) + 1
+    for (const e of events) {
+      // Unfiltered by category on purpose — but never unfiltered by time. An
+      // event that had not happened yet at the viewed instant cannot be part
+      // of that instant's posture.
+      if (!isLive && ts(e.published_at) > sceneNow) continue
+      counts[e.intensity] = (counts[e.intensity] ?? 0) + 1
+    }
     return counts
-  }, [events])
+  }, [events, isLive, sceneNow])
 
   // ── TREND — 6h vs the preceding 6h, ranked by absolute movement ────────────
   const trend = useMemo(() => {
@@ -203,6 +208,7 @@ export function StatusBar({
     for (const e of events) {
       const p = ts(e.published_at)
       if (p <= 0) continue
+      if (p > t1) continue                    // still in the future here
       if (p >= curFrom)                       cur[e.category]  = (cur[e.category]  ?? 0) + 1
       else if (p >= prevFrom && p < curFrom)   prev[e.category] = (prev[e.category] ?? 0) + 1
     }
@@ -254,8 +260,9 @@ export function StatusBar({
     const sources = new Set<string>()
     let newestFetch = 0
     for (const e of events) {
-      if (e.source) sources.add(e.source)
       const f = ts(e.fetched_at)
+      if (f > t1) continue                    // not ingested yet at this instant
+      if (e.source) sources.add(e.source)
       if (f > newestFetch) newestFetch = f
     }
     return {

@@ -10,6 +10,7 @@
  */
 import { useEffect, useMemo } from 'react'
 import { useTranslation }     from 'react-i18next'
+import { useSceneTime }       from './hooks/useSceneTime'
 import { useAppStore }        from './store'
 import { usePopoutSync }      from './hooks/usePopoutSync'
 import { getCountryInfo, getDynamicTags } from './data/countryData'
@@ -88,6 +89,7 @@ function EventPopoutContent() {
 // ── Region popout ──────────────────────────────────────────────────────────────
 
 function RegionPopoutContent() {
+  const { now: sceneNow } = useSceneTime()
   const selectedCountry  = useAppStore((s) => s.selectedCountry)
   const focusOnEarthSurface = useAppStore((s) => s.focusOnEarthSurface)
   const events           = useAppStore((s) => s.events)
@@ -99,7 +101,7 @@ function RegionPopoutContent() {
 
   const recentEvents = useMemo<ArgusEvent[]>(() => {
     if (!selectedCountry) return []
-    const cutoff = Date.now() - 24 * 3600 * 1000
+    const cutoff = sceneNow - 24 * 3600 * 1000
     return events.filter((e) => {
       const ts = e.published_at ? new Date(e.published_at).getTime() : 0
       if (ts < cutoff) return false

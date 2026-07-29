@@ -19,10 +19,11 @@ import { EventRelationGraph } from './EventRelationGraph'
 import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
 import { highlightText } from '../../utils/highlightText'
+import { useSceneTime } from '../../hooks/useSceneTime'
 
-function expiryLabel(expiresAt: string | null, heatScore: number): string {
+function expiryLabel(expiresAt: string | null, heatScore: number, sceneNow: number): string {
   if (expiresAt) {
-    const msLeft = new Date(expiresAt).getTime() - Date.now()
+    const msLeft = new Date(expiresAt).getTime() - sceneNow
     if (msLeft <= 0) return 'EXPIRED'
     const h = Math.floor(msLeft / 3_600_000)
     if (h < 1) return `<1h`
@@ -71,6 +72,7 @@ export function EventPanelBody({
   hideAgent = false,
 }: Props) {
   const { t } = useTranslation()
+  const { now: sceneNow } = useSceneTime()
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const searchQuery    = useAppStore((s) => s.searchQuery)
   const eventNotes     = useAppStore((s) => s.eventNotes)
@@ -371,7 +373,7 @@ export function EventPanelBody({
                 background: `${heatColor(event.heat_score)}0a`,
               }}
             >
-              {expiryLabel(event.expires_at, event.heat_score)}
+              {expiryLabel(event.expires_at, event.heat_score, sceneNow)}
             </span>
           </div>
         )}

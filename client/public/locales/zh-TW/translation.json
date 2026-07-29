@@ -341,5 +341,12 @@
       "erase": "點擊標記點刪除",
       "erase2": "（連線一併移除）"
     }
+  },
+  "scrubber": {
+    "live": "即時",
+    "review": "回顧",
+    "return": "回到即時",
+    "returnHint": "跳回現在（End）",
+    "aria": "場景時間"
   }
 }

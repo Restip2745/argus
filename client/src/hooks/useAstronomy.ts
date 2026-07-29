@@ -32,6 +32,7 @@ const FALLBACK_HELIO = BODIES.filter(
 export function useAstronomy(simTimeRef: React.MutableRefObject<Date>) {
   const positionsRef = useRef<Map<CelestialBodyName, THREE.Vector3>>(new Map())
   const lastUpdateRef = useRef<number>(0)
+  const lastSimMsRef  = useRef<number>(0)
 
   // Initialise all positions at zero
   if (positionsRef.current.size === 0) {
@@ -42,9 +43,13 @@ export function useAstronomy(simTimeRef: React.MutableRefObject<Date>) {
 
   useFrame(() => {
     const now = Date.now()
-    // Throttle: update orbital positions at most once per second
-    if (now - lastUpdateRef.current < 1000) return
+    const simMs = simTimeRef.current.getTime()
+    // Throttle to once per second of wall clock, but never make a scrub wait:
+    // if the simulated instant jumped, recompute on this frame.
+    const jumped = Math.abs(simMs - lastSimMsRef.current) >= 1000
+    if (!jumped && now - lastUpdateRef.current < 1000) return
     lastUpdateRef.current = now
+    lastSimMsRef.current  = simMs
 
     const date = simTimeRef.current
     const map = positionsRef.current

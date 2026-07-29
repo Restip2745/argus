@@ -14,6 +14,7 @@ import { ConfigModal } from './components/ui/ConfigModal'
 import { EventStack } from './components/ui/EventStack'
 import { CategoryFilterBar } from './components/ui/CategoryFilterBar'
 import { FloatDock } from './components/ui/FloatDock'
+import { TimeScrubber } from './components/ui/TimeScrubber'
 import { CanvasAnalysisPanel } from './components/ui/CanvasAnalysisPanel'
 import { CelestialBodyPanel } from './components/panels/CelestialBodyPanel'
 import { PersonPanel } from './components/panels/PersonPanel'
@@ -179,6 +180,7 @@ export default function App() {
             )}
 
             <CategoryFilterBar />
+            <ErrorBoundary label="Time Scrubber"><TimeScrubber /></ErrorBoundary>
             <FloatDock />
             <ErrorBoundary label="Event Panel"><EventPanel /></ErrorBoundary>
             <ErrorBoundary label="Region Panel"><RegionPanel /></ErrorBoundary>

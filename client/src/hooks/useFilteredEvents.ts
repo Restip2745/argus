@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useAppStore } from '../store'
 import { severityRank } from '../data/symbology'
+import { useSceneTime } from './useSceneTime'
 import type { ArgusEvent } from '../types'
 
 const TIME_RANGE_MS: Record<string, number> = {
@@ -24,10 +25,11 @@ export function useFilteredEvents(): ArgusEvent[] {
   const bookmarkedIds     = useAppStore((s) => s.bookmarkedIds)
   const showWatchlistOnly = useAppStore((s) => s.showWatchlistOnly)
   const eventSortOrder    = useAppStore((s) => s.eventSortOrder)
+  const { now, isLive }   = useSceneTime()
 
   return useMemo(() => {
     const cutoff = timeRangeFilter !== 'all'
-      ? Date.now() - TIME_RANGE_MS[timeRangeFilter]
+      ? now - TIME_RANGE_MS[timeRangeFilter]
       : null
     const q = searchQuery.trim().toLowerCase()
     const bookmarkSet = new Set(bookmarkedIds)
@@ -46,6 +48,9 @@ export function useFilteredEvents(): ArgusEvent[] {
         if (showWatchlistOnly && !bookmarkSet.has(e.id)) return false
         if (hiddenCategories.includes(e.category)) return false
         const ts = safeTs(e.published_at)
+        // Rewound: an event that had not happened yet at the scrubbed instant
+        // must not be visible, or "the past" would still contain the future.
+        if (!isLive && ts > now) return false
         if (cutoff && ts > 0 && ts < cutoff) return false
         if (q) {
           const inTitle   = e.title.toLowerCase().includes(q)
@@ -56,5 +61,5 @@ export function useFilteredEvents(): ArgusEvent[] {
         }
         return true
       })
-  }, [events, hiddenCategories, timeRangeFilter, searchQuery, bookmarkedIds, showWatchlistOnly, eventSortOrder])
+  }, [events, hiddenCategories, timeRangeFilter, searchQuery, bookmarkedIds, showWatchlistOnly, eventSortOrder, now, isLive])
 }

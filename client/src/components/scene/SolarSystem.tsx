@@ -21,6 +21,7 @@ import { TrackingLayer } from './TrackingLayer'
 import { ConflictLayer } from './ConflictLayer'
 import { AnnotationLayer } from './AnnotationLayer'
 import { useAppStore } from '../../store'
+import { readSceneTime } from '../../hooks/useSceneTime'
 import type { CelestialBodyName } from '../../types'
 
 // ── Globe projection updater (feeds DOM panels with camera + Earth pos) ─────────
@@ -91,7 +92,9 @@ export function SolarSystem() {
 
   // ── Simulation clock ────────────────────────────────────────────────────────
   useFrame(() => {
-    simTimeRef.current = new Date()  // Real-time sync
+    // The sky reads the same clock as the intel — scrubbing back rewinds the
+    // orbits and the terminator, not just the event list.
+    simTimeRef.current = new Date(readSceneTime())
 
     // Tick TWEEN animations
     TWEEN.update()
