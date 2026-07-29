@@ -1,19 +1,16 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCanvasAnalysis } from '../../hooks/useCanvasAnalysis'
 import { useAppStore } from '../../store'
 
-const SUGGESTED = [
-  '目前哪些地區衝突最激烈？',
-  'Identify orbital objects near conflict zones',
-  '分析全球政治穩定性趨勢',
-  'What anomalies or patterns do you see?',
-]
 
 interface Props {
   onClose: () => void
 }
 
 export function CanvasAnalysisPanel({ onClose }: Props) {
+  const { t } = useTranslation()
+  const SUGGESTED = [0, 1, 2, 3].map((i) => t(`canvas.suggested.${i}`))
   const { html, loading, error, analyze, clear } = useCanvasAnalysis()
   const events          = useAppStore((s) => s.events)
   const selectedCountry = useAppStore((s) => s.selectedCountry)

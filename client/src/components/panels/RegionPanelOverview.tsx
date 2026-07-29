@@ -257,7 +257,7 @@ export function RegionPanelOverview({
           )}
         </div>
         {recentEvents.length === 0 ? (
-          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', padding: '4px 0' }}>— 無近期事件 —</div>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', padding: '4px 0' }}>— {t('region.noEvents', 'No recent events')} —</div>
         ) : (
           recentEvents.map(e => (
             <div key={e.id} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', marginBottom: '5px' }}>

@@ -3,6 +3,7 @@
  * Fixed to the bottom of RegionPanel, outside the scrollable area.
  */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { AgentEntry } from '../../hooks/useAgentQuery'
 
 interface Props {
@@ -20,6 +21,7 @@ export function RegionPanelAgent({
   suggestedQueries, agentContext, ask,
   agentScrollRef,
 }: Props) {
+  const { t } = useTranslation()
   const [input, setInput] = useState('')
 
   const handleSend = () => {
@@ -102,7 +104,7 @@ export function RegionPanelAgent({
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder="詢問情報分析..."
+            placeholder={t('event.labels.askAgent', 'Ask intelligence analysis…')}
             disabled={loading}
             style={{
               flex: 1, background: 'rgba(0,180,255,0.05)', border: '1px solid rgba(0,180,255,0.2)',

@@ -74,10 +74,21 @@
     "overview": "概覽",
     "events": "近期事件",
     "agent": "◈ 地區情報分析",
-    "noEvents": "目前無近期事件"
+    "noEvents": "目前無近期事件",
+    "extraQ": {
+      "conflict": "目前衝突態勢分析",
+      "economic": "經濟風險評估",
+      "political": "政治穩定性分析"
+    }
   },
   "canvas": {
-    "toggle": "標記畫布"
+    "toggle": "標記畫布",
+    "suggested": {
+      "0": "目前哪些地區衝突最激烈？",
+      "1": "辨識衝突區域附近的軌道物體",
+      "2": "分析全球政治穩定性趨勢",
+      "3": "畫面上有哪些異常或模式？"
+    }
   },
   "conflictLayer": {
     "toggle": "衝突前線"
@@ -189,7 +200,8 @@
       "0": "分析 {{n0}} 與 {{n1}} 之間的關聯",
       "1": "這些人物在這些事件中扮演什麼角色？",
       "2": "這些事件對該地區的影響評估",
-      "3": "綜合情報摘要"
+      "3": "綜合情報摘要",
+      "4": "比較這些人物的政治立場"
     }
   },
   "config": {
@@ -285,5 +297,49 @@
     "activity": "活動量",
     "less": "少",
     "more": "多"
+  },
+  "annotation": {
+    "title": "標記工具",
+    "counts": "{{pins}} 點 · {{links}} 線",
+    "confirmClear": "清除所有標記與連線？",
+    "tool": {
+      "pin": "標記",
+      "link": "連線",
+      "erase": "刪除"
+    },
+    "field": {
+      "icon": "圖示",
+      "color": "顏色",
+      "label": "標籤",
+      "labelOptional": "標籤（可空白）",
+      "customColor": "自訂顏色"
+    },
+    "pinForm": {
+      "title": "新增標記點",
+      "placeholder": "標記說明（可空白）"
+    },
+    "linkForm": {
+      "title": "設定連線",
+      "placeholder": "連線說明"
+    },
+    "action": {
+      "cancel": "取消",
+      "placePin": "放置標記",
+      "createLink": "建立連線",
+      "deselect": "取消選取",
+      "clearAll": "清除全部"
+    },
+    "hint": {
+      "pinIdle": "點擊天體表面",
+      "pinIdle2": "放置標記點",
+      "pinPending": "設定標記屬性",
+      "linkIdle": "點擊第一個標記點",
+      "linkIdle2": "選擇起點",
+      "linkFrom": "已選起點",
+      "linkFrom2": "點擊目標標記點",
+      "linkPending": "設定連線屬性",
+      "erase": "點擊標記點刪除",
+      "erase2": "（連線一併移除）"
+    }
   }
 }

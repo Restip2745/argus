@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { personQueries } from '../../lib/suggestedQueries'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
@@ -99,24 +100,10 @@ export function PersonPanel() {
     ).join('\n')
   }, [selectedPersons])
 
-  const suggestedQueries = useMemo(() => {
-    if (selectedPersons.length === 0) return []
-    if (selectedPersons.length === 1) {
-      const name = selectedPersons[0].name
-      return [
-        `${name} 的政治立場分析`,
-        `${name} 的重要事蹟`,
-        `${name} 的國際影響力`,
-        `${name} 與當前事件的關聯`,
-      ]
-    }
-    const names = selectedPersons.slice(0, 2).map(p => p.name)
-    return [
-      `${names.join(' 與 ')} 的關係分析`,
-      `${names.join(' 和 ')} 的政治立場比較`,
-      `二者在國際事務上的角色`,
-    ]
-  }, [selectedPersons])
+  const suggestedQueries = useMemo(
+    () => personQueries(t, selectedPersons.map((p) => p.name)),
+    [selectedPersons, t],
+  )
 
   if (selectedPersons.length === 0) return null
 
@@ -223,7 +210,7 @@ export function PersonPanel() {
             }}
           />
           {searchLoading && (
-            <div style={{ color: '#2a4060', fontSize: '10px', padding: '4px 0', letterSpacing: '0.1em' }}>Searching…</div>
+            <div style={{ color: '#2a4060', fontSize: '10px', padding: '4px 0', letterSpacing: '0.1em' }}>{t('person.loading', '↻ Loading…')}</div>
           )}
           {searchResults.length > 0 && (
             <div style={{ marginTop: '4px', maxHeight: '140px', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>

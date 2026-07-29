@@ -145,9 +145,9 @@ export function RegionPanel() {
     const base = info?.queries ?? []
     const catSet = new Set(recentEvents.map(e => e.category))
     const extra: string[] = []
-    if (catSet.has('ARMED_CONFLICT') && !base.some(q => q.includes('衝突') || q.includes('戰')))  extra.push('目前衝突態勢分析')
-    if (catSet.has('ECONOMIC')       && !base.some(q => q.includes('經濟')))                        extra.push('經濟風險評估')
-    if (catSet.has('POLITICAL')      && !base.some(q => q.includes('政治') || q.includes('政局'))) extra.push('政治穩定性分析')
+    if (catSet.has('ARMED_CONFLICT')) extra.push(t('region.extraQ.conflict', 'Current conflict posture'))
+    if (catSet.has('ECONOMIC'))       extra.push(t('region.extraQ.economic', 'Economic risk assessment'))
+    if (catSet.has('POLITICAL'))      extra.push(t('region.extraQ.political', 'Political stability analysis'))
     return [...base, ...extra].slice(0, 6)
   }, [info, recentEvents])
 

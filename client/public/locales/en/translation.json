@@ -29,7 +29,7 @@
   "panel": {
     "close": "Close",
     "back": "Back",
-    "loading": "Loading...",
+    "loading": "Loading…",
     "noData": "No intelligence data available",
     "focus": "FOCUS",
     "focus_region": "FOCUS REGION",
@@ -58,7 +58,7 @@
       "agent": "◈ INTELLIGENCE AGENT",
       "analyzing": "ANALYZING",
       "viewSource": "VIEW SOURCE",
-      "askAgent": "Ask intelligence analysis..."
+      "askAgent": "Ask intelligence analysis…"
     },
     "timeRange": {
       "6h": "6h",
@@ -74,10 +74,21 @@
     "overview": "OVERVIEW",
     "events": "RECENT EVENTS",
     "agent": "◈ REGION INTELLIGENCE",
-    "noEvents": "No recent events"
+    "noEvents": "No recent events",
+    "extraQ": {
+      "conflict": "Current conflict posture",
+      "economic": "Economic risk assessment",
+      "political": "Political stability analysis"
+    }
   },
   "canvas": {
-    "toggle": "ANNOTATION CANVAS"
+    "toggle": "ANNOTATION CANVAS",
+    "suggested": {
+      "0": "Which regions have the most intense conflict right now?",
+      "1": "Identify orbital objects near conflict zones",
+      "2": "Analyse global political stability trends",
+      "3": "What anomalies or patterns do you see?"
+    }
   },
   "conflictLayer": {
     "toggle": "CONFLICT FRONTS"
@@ -189,7 +200,8 @@
       "0": "Analyze connection between {{n0}} and {{n1}}",
       "1": "What roles do these people play in these events?",
       "2": "Impact assessment of these events on the region",
-      "3": "Cross-entity intelligence summary"
+      "3": "Cross-entity intelligence summary",
+      "4": "Compare their political positions"
     }
   },
   "config": {
@@ -285,5 +297,49 @@
     "activity": "ACTIVITY",
     "less": "LESS",
     "more": "MORE"
+  },
+  "annotation": {
+    "title": "MARKING TOOLS",
+    "counts": "{{pins}} PINS · {{links}} LINKS",
+    "confirmClear": "Clear all markers and links?",
+    "tool": {
+      "pin": "PIN",
+      "link": "LINK",
+      "erase": "ERASE"
+    },
+    "field": {
+      "icon": "ICON",
+      "color": "COLOUR",
+      "label": "LABEL",
+      "labelOptional": "LABEL (OPTIONAL)",
+      "customColor": "Custom colour"
+    },
+    "pinForm": {
+      "title": "NEW MARKER",
+      "placeholder": "Marker note (optional)"
+    },
+    "linkForm": {
+      "title": "NEW LINK",
+      "placeholder": "Link note"
+    },
+    "action": {
+      "cancel": "CANCEL",
+      "placePin": "PLACE MARKER",
+      "createLink": "CREATE LINK",
+      "deselect": "DESELECT",
+      "clearAll": "CLEAR ALL"
+    },
+    "hint": {
+      "pinIdle": "Click a body surface",
+      "pinIdle2": "to place a marker",
+      "pinPending": "Set marker properties",
+      "linkIdle": "Click the first marker",
+      "linkIdle2": "to choose the origin",
+      "linkFrom": "Origin selected",
+      "linkFrom2": "Click the target marker",
+      "linkPending": "Set link properties",
+      "erase": "Click a marker to delete",
+      "erase2": "(its links go too)"
+    }
   }
 }

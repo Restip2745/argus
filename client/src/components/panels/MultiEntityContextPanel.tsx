@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { contextQueries } from '../../lib/suggestedQueries'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
@@ -123,27 +124,10 @@ export function MultiEntityContextPanel() {
     ).join('\n\n')
   }, [contextEntities])
 
-  const suggestedQueries = useMemo(() => {
-    if (contextEntities.length === 0) return []
-    const types = new Set(contextEntities.map(e => e.type))
-    const names = contextEntities.slice(0, 3).map(e => e.name)
-    const queries: string[] = []
-
-    if (contextEntities.length >= 2) {
-      queries.push(`分析 ${names.slice(0, 2).join(' 與 ')} 之間的關聯`)
-    }
-    if (types.has('event') && types.has('person')) {
-      queries.push('這些人物在這些事件中扮演什麼角色？')
-    }
-    if (types.has('event') && types.has('region')) {
-      queries.push('這些事件對該地區的影響評估')
-    }
-    if (types.has('person') && contextEntities.filter(e => e.type === 'person').length >= 2) {
-      queries.push('比較這些人物的政治立場')
-    }
-    queries.push('綜合情報摘要')
-    return queries.slice(0, 4)
-  }, [contextEntities])
+  const suggestedQueries = useMemo(
+    () => contextQueries(t, contextEntities),
+    [contextEntities, t],
+  )
 
   if (!showContextPanel || contextEntities.length === 0) return null
 

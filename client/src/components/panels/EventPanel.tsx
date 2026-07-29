@@ -9,8 +9,10 @@
  *  • Delegates rendering to EventTimeline + EventPanelBody
  */
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
+import { useTranslation }     from 'react-i18next'
 
 import { useAppStore }        from '../../store'
+import { categoryQueries }    from '../../lib/suggestedQueries'
 import type { ContextEntity } from '../../types'
 import { useAgentQuery }      from '../../hooks/useAgentQuery'
 import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
@@ -25,17 +27,6 @@ import { Panel }              from './Panel'
 import { PanelTail }          from './PanelTail'
 import type { ArgusEvent }    from '../../types'
 
-const CATEGORY_QUERIES: Record<string, string[]> = {
-  ARMED_CONFLICT: ['升級風險評估', '停火可能性分析', '國際介入機率', '平民傷亡趨勢'],
-  POLITICAL:      ['政局穩定度評估', '選舉影響分析', '盟友反應預測', '外交制裁可能性'],
-  ECONOMIC:       ['市場衝擊評估', '供應鏈風險', '貨幣匯率影響', '貿易夥伴反應'],
-  SOCIAL:         ['社會穩定指數', '人口遷移趨勢', '媒體輿論走向', '國際關注度'],
-  SCIENCE_TECH:   ['技術擴散風險', '軍事應用潛力', '出口管制衝擊', '競爭優勢變化'],
-  ENVIRONMENT:    ['人道影響評估', '資源競爭加劇', '區域穩定影響', '氣候安全連結'],
-  HEALTH:         ['跨境傳播風險', '醫療系統壓力', '供應鏈中斷', '國際協調機制'],
-  CRIME_SECURITY: ['情報網路滲透', '跨境執法合作', '金融制裁效力', '恐攻升級風險'],
-  SPACE:          ['戰略軌道影響', '太空軍事化風險', '衛星通訊中斷', '國際條約框架'],
-}
 
 function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null {
   if (ev.lat !== null && ev.lng !== null) return { lat: ev.lat, lng: ev.lng }
@@ -51,6 +42,7 @@ function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function EventPanel() {
+  const { t }               = useTranslation()
   const activePanelId       = useAppStore((s) => s.activePanelId)
   const events              = useAppStore((s) => s.events)
   const setActivePanelId    = useAppStore((s) => s.setActivePanelId)
@@ -147,10 +139,10 @@ export function EventPanel() {
     ].filter(Boolean).join('\n')
   }, [displayedEvent])
 
-  const suggestedQueries = useMemo(() => {
-    if (!displayedEvent) return []
-    return (CATEGORY_QUERIES[displayedEvent.category] ?? []).slice(0, 4)
-  }, [displayedEvent])
+  const suggestedQueries = useMemo(
+    () => displayedEvent ? categoryQueries(t, displayedEvent.category) : [],
+    [displayedEvent, t],
+  )
 
   // ── Export ─────────────────────────────────────────────────────────────────
   const exportEvent = useCallback(() => {

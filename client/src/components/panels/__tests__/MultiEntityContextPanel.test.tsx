@@ -3,8 +3,15 @@ import { render, screen } from '@testing-library/react'
 import { useAppStore } from '../../../store'
 import type { ContextEntity } from '../../../types'
 
+// Mirrors i18next's contract closely enough for rendering: a string second
+// argument is a default value, an object is interpolation options (in which
+// case the key is echoed back). Returning the options object as-is would put a
+// raw object into the tree, which React refuses to render.
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (_k: string, d: string) => d, i18n: { language: 'en' } }),
+  useTranslation: () => ({
+    t: (k: string, d?: unknown) => (typeof d === 'string' ? d : k),
+    i18n: { language: 'en' },
+  }),
 }))
 
 vi.mock('../../../hooks/useAgentQuery', () => ({

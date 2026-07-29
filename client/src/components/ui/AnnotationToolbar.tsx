@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import type { AnnotationPin, AnnotationLink } from '../../types'
 
@@ -57,15 +58,16 @@ function PinForm({ onConfirm, onCancel }: {
   onConfirm: (icon: string, color: string, label: string) => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   const [icon,  setIcon]  = useState('📍')
   const [color, setColor] = useState('#00c8ff')
   const [label, setLabel] = useState('')
 
   return (
     <div style={formStyle}>
-      <div style={formTitle}>新增標記點</div>
+      <div style={formTitle}>{t('annotation.pinForm.title', 'NEW MARKER')}</div>
 
-      <div style={fieldLabel}>圖示</div>
+      <div style={fieldLabel}>{t('annotation.field.icon', 'ICON')}</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
         {PRESET_ICONS.map((ic) => (
           <button
@@ -85,7 +87,7 @@ function PinForm({ onConfirm, onCancel }: {
         ))}
       </div>
 
-      <div style={fieldLabel}>顏色</div>
+      <div style={fieldLabel}>{t('annotation.field.color', 'COLOUR')}</div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
         {PRESET_COLORS.map((c) => (
           <button
@@ -112,16 +114,16 @@ function PinForm({ onConfirm, onCancel }: {
             padding: 0,
             background: 'none',
           }}
-          title="自訂顏色"
+          title={t('annotation.field.customColor', 'Custom colour')}
         />
       </div>
 
-      <div style={fieldLabel}>標籤</div>
+      <div style={fieldLabel}>{t('annotation.field.label', 'LABEL')}</div>
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') onConfirm(icon, color, label) }}
-        placeholder="標記說明（可空白）"
+        placeholder={t('annotation.pinForm.placeholder', 'Marker note (optional)')}
         style={inputStyle}
         autoFocus
       />
@@ -140,9 +142,9 @@ function PinForm({ onConfirm, onCancel }: {
       </div>
 
       <div style={{ display: 'flex', gap: 6 }}>
-        <button onClick={onCancel} style={btnSecondary}>取消</button>
+        <button onClick={onCancel} style={btnSecondary}>{t('annotation.action.cancel', 'CANCEL')}</button>
         <button onClick={() => onConfirm(icon, color, label)} style={{ ...btnPrimary, flex: 1 }}>
-          放置標記
+          {t('annotation.action.placePin', 'PLACE MARKER')}
         </button>
       </div>
     </div>
@@ -154,14 +156,15 @@ function LinkForm({ onConfirm, onCancel }: {
   onConfirm: (label: string, color: string) => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   const [color, setColor] = useState('#ff9c2a')
   const [label, setLabel] = useState('')
 
   return (
     <div style={formStyle}>
-      <div style={formTitle}>設定連線</div>
+      <div style={formTitle}>{t('annotation.linkForm.title', 'NEW LINK')}</div>
 
-      <div style={fieldLabel}>顏色</div>
+      <div style={fieldLabel}>{t('annotation.field.color', 'COLOUR')}</div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
         {PRESET_COLORS.map((c) => (
           <button
@@ -188,24 +191,24 @@ function LinkForm({ onConfirm, onCancel }: {
             padding: 0,
             background: 'none',
           }}
-          title="自訂顏色"
+          title={t('annotation.field.customColor', 'Custom colour')}
         />
       </div>
 
-      <div style={fieldLabel}>標籤（可空白）</div>
+      <div style={fieldLabel}>{t('annotation.field.labelOptional', 'LABEL (OPTIONAL)')}</div>
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') onConfirm(label, color) }}
-        placeholder="連線說明"
+        placeholder={t('annotation.linkForm.placeholder', 'Link note')}
         style={inputStyle}
         autoFocus
       />
 
       <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-        <button onClick={onCancel} style={btnSecondary}>取消</button>
+        <button onClick={onCancel} style={btnSecondary}>{t('annotation.action.cancel', 'CANCEL')}</button>
         <button onClick={() => onConfirm(label, color)} style={{ ...btnPrimary, flex: 1 }}>
-          建立連線
+          {t('annotation.action.createLink', 'CREATE LINK')}
         </button>
       </div>
     </div>
@@ -214,6 +217,7 @@ function LinkForm({ onConfirm, onCancel }: {
 
 // ── Main toolbar ──────────────────────────────────────────────────────────────
 export function AnnotationToolbar() {
+  const { t } = useTranslation()
   const showAnnotationCanvas = useAppStore((s) => s.showAnnotationCanvas)
   const annotationTool       = useAppStore((s) => s.annotationTool)
   const setAnnotationTool    = useAppStore((s) => s.setAnnotationTool)
@@ -317,10 +321,10 @@ export function AnnotationToolbar() {
           gap: 6,
         }}>
           <span>✏</span>
-          <span>標記工具</span>
+          <span>{t('annotation.title', 'MARKING TOOLS')}</span>
           {hasItems && (
             <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
-              {annotationPins.length} 點 · {annotationLinks.length} 線
+              {t('annotation.counts', { pins: annotationPins.length, links: annotationLinks.length, defaultValue: '{{pins}} PINS · {{links}} LINKS' })}
             </span>
           )}
         </div>
@@ -329,19 +333,19 @@ export function AnnotationToolbar() {
         <div style={{ display: 'flex', gap: 6 }}>
           <ToolBtn
             icon="📍"
-            label="標記"
+            label={t('annotation.tool.pin', 'PIN')}
             active={annotationTool === 'pin'}
             onClick={() => setAnnotationTool('pin')}
           />
           <ToolBtn
             icon="→"
-            label="連線"
+            label={t('annotation.tool.link', 'LINK')}
             active={annotationTool === 'link'}
             onClick={() => setAnnotationTool('link')}
           />
           <ToolBtn
             icon="🗑"
-            label="刪除"
+            label={t('annotation.tool.erase', 'ERASE')}
             active={annotationTool === 'erase'}
             onClick={() => setAnnotationTool('erase')}
             danger
@@ -357,24 +361,24 @@ export function AnnotationToolbar() {
           minHeight: 32,
         }}>
           {annotationTool === 'pin' && !pendingPin && (
-            <>點擊天體表面<br/>放置標記點</>
+            <>{t('annotation.hint.pinIdle', 'Click a body surface')}<br/>{t('annotation.hint.pinIdle2', 'to place a marker')}</>
           )}
           {annotationTool === 'pin' && pendingPin && (
-            <span style={{ color: '#9b6dff' }}>設定標記屬性 ▲</span>
+            <span style={{ color: '#9b6dff' }}>{t('annotation.hint.pinPending', 'Set marker properties')} ▲</span>
           )}
           {annotationTool === 'link' && !pendingLinkFrom && (
-            <>點擊第一個標記點<br/>選擇起點</>
+            <>{t('annotation.hint.linkIdle', 'Click the first marker')}<br/>{t('annotation.hint.linkIdle2', 'to choose the origin')}</>
           )}
           {annotationTool === 'link' && pendingLinkFrom && !pendingLink && (
             <span style={{ color: '#ff9c2a' }}>
-              已選起點<br/>點擊目標標記點
+              {t('annotation.hint.linkFrom', 'Origin selected')}<br/>{t('annotation.hint.linkFrom2', 'Click the target marker')}
             </span>
           )}
           {annotationTool === 'link' && pendingLink && (
-            <span style={{ color: '#9b6dff' }}>設定連線屬性 ▲</span>
+            <span style={{ color: '#9b6dff' }}>{t('annotation.hint.linkPending', 'Set link properties')} ▲</span>
           )}
           {annotationTool === 'erase' && (
-            <>點擊標記點刪除<br/>（連線一併移除）</>
+            <>{t('annotation.hint.erase', 'Click a marker to delete')}<br/>{t('annotation.hint.erase2', '(its links go too)')}</>
           )}
         </div>
 
@@ -384,14 +388,14 @@ export function AnnotationToolbar() {
             onClick={() => setPendingLinkFrom(null)}
             style={{ ...btnSecondary, fontSize: 10 }}
           >
-            取消選取
+            {t('annotation.action.deselect', 'DESELECT')}
           </button>
         )}
 
         {/* Clear all */}
         {hasItems && (
           <button
-            onClick={() => { if (confirm('清除所有標記與連線？')) clearAnnotations() }}
+            onClick={() => { if (confirm(t('annotation.confirmClear', 'Clear all markers and links?'))) clearAnnotations() }}
             style={{
               ...btnSecondary,
               fontSize: 11,
@@ -400,7 +404,7 @@ export function AnnotationToolbar() {
               marginTop: 2,
             }}
           >
-            清除全部
+            {t('annotation.action.clearAll', 'CLEAR ALL')}
           </button>
         )}
       </div>

@@ -14,6 +14,7 @@ import { useAppStore }        from './store'
 import { usePopoutSync }      from './hooks/usePopoutSync'
 import { getCountryInfo, getDynamicTags } from './data/countryData'
 import { severityColor } from './data/symbology'
+import { categoryQueries, personQueries, contextQueries } from './lib/suggestedQueries'
 import { PopoutAIPanel }      from './components/panels/PopoutAIPanel'
 import './i18n'
 
@@ -229,16 +230,10 @@ export default function PopoutPage() {
     ].filter(Boolean).join('\n')
   }, [event])
 
-  const eventQueries = useMemo(() => {
-    if (!event) return []
-    const cat = event.category
-    return [
-      t(`popout.catQ.${cat}.0`, ''),
-      t(`popout.catQ.${cat}.1`, ''),
-      t(`popout.catQ.${cat}.2`, ''),
-      t(`popout.catQ.${cat}.3`, ''),
-    ].filter(Boolean)
-  }, [event, t])
+  const eventQueries = useMemo(
+    () => event ? categoryQueries(t, event.category) : [],
+    [event, t],
+  )
 
   const regionAgentContext = useMemo(() => {
     if (!selectedCountry) return ''
@@ -268,25 +263,10 @@ export default function PopoutPage() {
     ).join('\n')
   }, [selectedPersons])
 
-  const personQueries = useMemo(() => {
-    if (selectedPersons.length === 0) return []
-    if (selectedPersons.length === 1) {
-      const name = selectedPersons[0].name
-      return [
-        t('popout.personQ.s0', { name }),
-        t('popout.personQ.s1', { name }),
-        t('popout.personQ.s2', { name }),
-        t('popout.personQ.s3', { name }),
-      ]
-    }
-    const n0 = selectedPersons[0].name
-    const n1 = selectedPersons[1].name
-    return [
-      t('popout.personQ.m0', { n0, n1 }),
-      t('popout.personQ.m1', { n0, n1 }),
-      t('popout.personQ.m2'),
-    ]
-  }, [selectedPersons, t])
+  const personQueriesList = useMemo(
+    () => personQueries(t, selectedPersons.map((p) => p.name)),
+    [selectedPersons, t],
+  )
 
   const contextAgentContext = useMemo(() => {
     if (contextEntities.length === 0) return ''
@@ -295,20 +275,13 @@ export default function PopoutPage() {
     ).join('\n\n')
   }, [contextEntities])
 
-  const contextQueries = useMemo(() => {
-    if (contextEntities.length === 0) return []
-    const types = new Set(contextEntities.map(e => e.type))
-    const names = contextEntities.slice(0, 3).map(e => e.name)
-    const queries: string[] = []
-    if (contextEntities.length >= 2) queries.push(t('popout.contextQ.0', { n0: names[0], n1: names[1] }))
-    if (types.has('event') && types.has('person')) queries.push(t('popout.contextQ.1'))
-    if (types.has('event') && types.has('region')) queries.push(t('popout.contextQ.2'))
-    queries.push(t('popout.contextQ.3'))
-    return queries.slice(0, 4)
-  }, [contextEntities, t])
+  const contextQueriesList = useMemo(
+    () => contextQueries(t, contextEntities),
+    [contextEntities, t],
+  )
 
   const agentContext     = popoutType === 'context' ? contextAgentContext : popoutType === 'region' ? regionAgentContext  : popoutType === 'person' ? personAgentContext : eventAgentContext
-  const suggestedQueries = popoutType === 'context' ? contextQueries     : popoutType === 'region' ? regionQueries       : popoutType === 'person' ? personQueries     : eventQueries
+  const suggestedQueries = popoutType === 'context' ? contextQueriesList  : popoutType === 'region' ? regionQueries       : popoutType === 'person' ? personQueriesList : eventQueries
   const agentLabel       = popoutType === 'context' ? 'CONTEXT AGENT'    : popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'person' ? 'PERSON AGENT'    : 'EVENT AGENT'
 
   return (
