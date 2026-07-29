@@ -24,6 +24,7 @@ export function CelestialNavList() {
   const setSelectedBody = useAppStore((s) => s.setSelectedBody)
   const resetToSolarView = useAppStore((s) => s.resetToSolarView)
   const events          = useAppStore((s) => s.events)
+  const decorativeFx    = useAppStore((s) => s.decorativeFx)
 
   // Which nav groups are expanded (only used at solar level)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
@@ -155,18 +156,21 @@ export function CelestialNavList() {
   }
 
   function bodyItemAnimation(visualIdx: number): string {
+    // With decorative motion off the list still expands and collapses, it just
+    // does so instantly instead of cascading.
+    if (!decorativeFx) return 'none'
     if (isExpanding)  return `navExpandIn 0.3s ease ${bodyItemDelay(visualIdx)}ms both`
     if (isCollapsing) return `navCollapseOut 0.25s ease ${bodyItemDelay(visualIdx)}ms both`
     return 'none'
   }
 
   const upperDelay  = isExpanding ? 1 * ITEM_STAGGER : isCollapsing ? totalItems * ITEM_STAGGER : 0
-  const upperAnim   = isExpanding
+  const upperAnim   = !decorativeFx ? 'none' : isExpanding
     ? `navExpandIn 0.3s ease ${upperDelay}ms both`
     : isCollapsing ? `navCollapseOut 0.25s ease ${upperDelay}ms both` : 'none'
 
   const footerDelay = isExpanding ? 0 : isCollapsing ? (totalItems + 1) * ITEM_STAGGER : 0
-  const footerAnim  = isExpanding
+  const footerAnim  = !decorativeFx ? 'none' : isExpanding
     ? `navExpandIn 0.3s ease ${footerDelay}ms both`
     : isCollapsing ? `navCollapseOut 0.25s ease ${footerDelay}ms both` : 'none'
 
@@ -190,11 +194,11 @@ export function CelestialNavList() {
                 style={{
                   animation: (isExpanding || isCollapsing)
                     ? bodyItemAnimation(item.visualIdx)
-                    : levelSwitchAnim ? `navItemIn 0.25s ease ${item.visualIdx * 30}ms both` : 'none',
+                    : (levelSwitchAnim && decorativeFx) ? `navItemIn 0.25s ease ${item.visualIdx * 30}ms both` : 'none',
                 }}
               >
                 {evtCount > 0 && (
-                  <span className="text-[9px] font-mono text-[#ff9c2a] flex-shrink-0">{evtCount}</span>
+                  <span className="text-[11px] font-mono text-[#ff9c2a] flex-shrink-0">{evtCount}</span>
                 )}
                 <span className="text-[10px] font-mono text-argus-dim group-hover:text-white transition-colors whitespace-nowrap tracking-wide">
                   {isOpen ? '▾' : '▸'} {meta.label}
@@ -223,16 +227,16 @@ export function CelestialNavList() {
                 paddingRight: isGrouped ? '0' : undefined,
                 animation: (isExpanding || isCollapsing)
                   ? bodyItemAnimation(item.visualIdx)
-                  : levelSwitchAnim ? `navItemIn 0.25s ease ${item.visualIdx * 30}ms both` : 'none',
+                  : (levelSwitchAnim && decorativeFx) ? `navItemIn 0.25s ease ${item.visualIdx * 30}ms both` : 'none',
               }}
             >
               {evtCount > 0 && (
-                <span className="text-[9px] font-mono text-[#ff9c2a] flex-shrink-0">{evtCount}</span>
+                <span className="text-[11px] font-mono text-[#ff9c2a] flex-shrink-0">{evtCount}</span>
               )}
 
               {/* Indent grouped children */}
               {isGrouped && (
-                <span className="text-[9px] text-argus-dim opacity-40 flex-shrink-0">└</span>
+                <span className="text-[11px] text-argus-dim opacity-40 flex-shrink-0">└</span>
               )}
 
               <span
@@ -275,7 +279,7 @@ export function CelestialNavList() {
         className="flex items-center gap-2 mt-1 border-t border-[rgba(0,180,255,0.08)] pt-1.5"
         style={{ animation: footerAnim }}
       >
-        <span className="text-[9px] font-mono tracking-[0.15em] text-argus-dim uppercase">
+        <span className="text-[11px] font-mono tracking-[0.15em] text-argus-dim uppercase">
           {LEVEL_LABEL[navLevel] ?? navLevel}
         </span>
         <button

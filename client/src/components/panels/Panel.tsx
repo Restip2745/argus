@@ -135,7 +135,7 @@ export function Panel({
         {/* Left: badge slot + title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
           {headerLeft}
-          <span id={titleId} style={{ color: accentColor, fontSize: '8px', letterSpacing: '0.15em' }}>
+          <span id={titleId} style={{ color: accentColor, fontSize: '10px', letterSpacing: '0.15em' }}>
             {title}
           </span>
         </div>

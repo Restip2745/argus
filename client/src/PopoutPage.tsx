@@ -13,6 +13,7 @@ import { useTranslation }     from 'react-i18next'
 import { useAppStore }        from './store'
 import { usePopoutSync }      from './hooks/usePopoutSync'
 import { getCountryInfo, getDynamicTags } from './data/countryData'
+import { severityColor } from './data/symbology'
 import { PopoutAIPanel }      from './components/panels/PopoutAIPanel'
 import './i18n'
 
@@ -54,12 +55,7 @@ function EventPopoutContent() {
     )
   }
 
-  const CATEGORY_COLOR: Record<string, string> = {
-    ARMED_CONFLICT: '#ff4d4d', POLITICAL: '#ff9c2a', ECONOMIC: '#ffd700',
-    SOCIAL: '#c8cdd2', SCIENCE_TECH: '#9b6dff', ENVIRONMENT: '#39ff8a',
-    HEALTH: '#a0c4ff', CRIME_SECURITY: '#6a8090', SPACE: '#00d4ff',
-  }
-  const accentColor = CATEGORY_COLOR[event.category] ?? '#00d4ff'
+  const accentColor = severityColor(event.intensity)
 
   // Minimal stubs for agent props that are handled by the right column
   const noop = () => {}
@@ -327,7 +323,7 @@ export default function PopoutPage() {
       <div style={{ ...COL_STYLE, flex: '0 0 60%', background: 'rgba(4,9,22,0.97)', borderRight: '1px solid rgba(0,180,255,0.12)' }}>
         {/* Column header */}
         <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(0,180,255,0.1)', background: 'linear-gradient(90deg, rgba(0,212,255,0.04) 0%, transparent 100%)', flexShrink: 0 }}>
-          <span style={{ color: popoutType === 'context' ? '#00ffcc' : '#00d4ff', fontSize: '9px', letterSpacing: '0.15em' }}>
+          <span style={{ color: popoutType === 'context' ? '#00ffcc' : '#00d4ff', fontSize: '11px', letterSpacing: '0.15em' }}>
             {popoutType === 'context' ? '◈ CONTEXT INTEL' : popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'person' ? '◈ PERSON INTEL' : '◈ EVENT INTEL'}
           </span>
         </div>

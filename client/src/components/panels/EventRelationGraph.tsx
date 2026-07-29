@@ -1,6 +1,6 @@
 import { useRelatedEvents } from '../../hooks/useRelatedEvents'
 import { useAppStore } from '../../store'
-import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
+import { eventSymbol } from '../../data/symbology'
 
 const W = 280
 const H = 110
@@ -21,7 +21,7 @@ export function EventRelationGraph({ eventId, accentColor }: Props) {
   const onNavigate = setActivePanelId
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', color: '#2a4060', fontSize: '7px', letterSpacing: '0.1em' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>
       <span style={{ animation: 'markerPulse 1.2s ease-in-out infinite', display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', background: accentColor }} />
       LOADING GRAPH…
     </div>
@@ -34,7 +34,7 @@ export function EventRelationGraph({ eventId, accentColor }: Props) {
 
   return (
     <div style={{ marginTop: '6px', borderTop: '1px solid rgba(0,180,255,0.07)', paddingTop: '6px' }}>
-      <div style={{ color: '#2a4060', fontSize: '6px', letterSpacing: '0.12em', marginBottom: '5px' }}>
+      <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.12em', marginBottom: '5px' }}>
         ◈ RELATED EVENTS ({nodes.length})
       </div>
 
@@ -57,8 +57,9 @@ export function EventRelationGraph({ eventId, accentColor }: Props) {
           const angle = i * angleStep - Math.PI / 2
           const nx = CX + Math.cos(angle) * R_ORBIT
           const ny = CY + Math.sin(angle) * R_ORBIT
-          const color = CATEGORY_COLOR[ev.category] ?? '#4a6070'
-          const icon  = CATEGORY_ICON[ev.category]  ?? '◉'
+          const sym   = eventSymbol(ev)
+          const color = sym.color
+          const icon  = sym.glyph
 
           return (
             <g key={ev.id}>
@@ -85,7 +86,7 @@ export function EventRelationGraph({ eventId, accentColor }: Props) {
                 x={nx} y={ny}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize="8"
+                fontSize="10"
                 fill={color}
                 style={{ cursor: 'pointer', pointerEvents: 'none', userSelect: 'none', fontFamily: 'monospace' }}
               >
@@ -100,7 +101,7 @@ export function EventRelationGraph({ eventId, accentColor }: Props) {
               >
                 <div
                   style={{
-                    fontSize: '6px', color: '#4a5060', textAlign: 'center',
+                    fontSize: '10px', color: '#4a5060', textAlign: 'center',
                     lineHeight: 1.2, overflow: 'hidden',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,

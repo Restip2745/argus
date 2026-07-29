@@ -44,13 +44,13 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
                 onClick={onRemove}
                 style={{
                   background: 'none', border: 'none', color: '#4a6070',
-                  cursor: 'pointer', fontSize: '9px', padding: '1px 3px',
+                  cursor: 'pointer', fontSize: '11px', padding: '1px 3px',
                 }}
               >✕</button>
             )}
           </div>
           {data && (
-            <div style={{ color: accentColor, fontSize: '8px', letterSpacing: '0.08em', marginTop: '2px', opacity: 0.8 }}>
+            <div style={{ color: accentColor, fontSize: '10px', letterSpacing: '0.08em', marginTop: '2px', opacity: 0.8 }}>
               {t('person.title')}
             </div>
           )}
@@ -58,19 +58,19 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
       </div>
 
       {loading && (
-        <div style={{ color: '#2a4060', fontSize: '8px', letterSpacing: '0.08em', textAlign: 'center', padding: '12px 0' }}>
+        <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', textAlign: 'center', padding: '12px 0' }}>
           {t('person.loading')}
         </div>
       )}
 
       {error && (
-        <div style={{ color: '#ff4d4d', fontSize: '8px', letterSpacing: '0.06em' }}>⚠ {error}</div>
+        <div style={{ color: '#ff4d4d', fontSize: '10px', letterSpacing: '0.06em' }}>⚠ {error}</div>
       )}
 
       {extract && (
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '4px' }}>{t('person.biography')}</div>
-          <p style={{ color: '#7a9ab0', fontSize: '9px', lineHeight: 1.55, margin: 0 }}>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' }}>{t('person.biography')}</div>
+          <p style={{ color: '#7a9ab0', fontSize: '11px', lineHeight: 1.55, margin: 0 }}>
             {extract}
           </p>
         </div>
@@ -83,7 +83,7 @@ export function PersonPanelBody({ person, accentColor, onRemove }: Props) {
           rel="noreferrer"
           style={{
             display: 'flex', alignItems: 'center', gap: '4px',
-            color: '#4a6fa5', fontSize: '8px', letterSpacing: '0.08em', textDecoration: 'none',
+            color: '#4a6fa5', fontSize: '10px', letterSpacing: '0.08em', textDecoration: 'none',
             padding: '4px 8px', borderRadius: '2px',
             background: `${accentColor}06`, border: `1px solid ${accentColor}18`,
             transition: 'all 0.15s',

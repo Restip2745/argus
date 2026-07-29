@@ -47,7 +47,7 @@ function ToolBtn({
       }}
     >
       <span>{icon}</span>
-      <span style={{ fontSize: 9, fontFamily: 'monospace', letterSpacing: '0.05em' }}>{label}</span>
+      <span style={{ fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.05em' }}>{label}</span>
     </button>
   )
 }
@@ -319,7 +319,7 @@ export function AnnotationToolbar() {
           <span>✏</span>
           <span>標記工具</span>
           {hasItems && (
-            <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>
+            <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
               {annotationPins.length} 點 · {annotationLinks.length} 線
             </span>
           )}
@@ -394,7 +394,7 @@ export function AnnotationToolbar() {
             onClick={() => { if (confirm('清除所有標記與連線？')) clearAnnotations() }}
             style={{
               ...btnSecondary,
-              fontSize: 9,
+              fontSize: 11,
               color: 'rgba(255,100,100,0.6)',
               borderColor: 'rgba(255,100,100,0.2)',
               marginTop: 2,

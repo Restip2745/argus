@@ -2,9 +2,8 @@ import { useRef, useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import type { FilterPreset } from '../../store'
-import { CATEGORY_ICON, CATEGORY_COLOR, CATEGORY_LABEL } from '../../data/categoryConfig'
-
-const ALL_CATEGORIES = Object.keys(CATEGORY_COLOR)
+import { CATEGORY_GLYPH, CATEGORY_TINT, CATEGORY_LABEL, ALL_CATEGORIES } from '../../data/symbology'
+import { STATUS_BAR_H } from './StatusBar'
 
 type TimeRange = '6h' | '12h' | '24h' | 'all'
 const TIME_RANGES: { value: TimeRange; label: string }[] = [
@@ -23,10 +22,11 @@ interface FilterButtonProps {
   color: string
   icon: string
   label: string
+  fx: boolean
   onToggle: () => void
 }
 
-function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: FilterButtonProps) {
+function FilterButton({ cat, count, hidden, color, icon, label, fx, onToggle }: FilterButtonProps) {
   const btnRef  = useRef<HTMLButtonElement>(null)
   const [hovered, setHovered] = useState(false)
   const [mouse, setMouse]     = useState({ nx: 0, ny: 0 })       // normalised -1…1
@@ -43,10 +43,12 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
     setSheenPos({ x: sx, y: sy })
   }, [])
 
+  // Tilt and sheen are ornament — the chip still reads its state from colour
+  // and opacity when they are switched off.
   const MAX_TILT = 12
-  const rotX = hovered ? -mouse.ny * MAX_TILT : 0
-  const rotY = hovered ?  mouse.nx * MAX_TILT : 0
-  const scale = hovered ? 1.08 : 1
+  const rotX  = hovered && fx ? -mouse.ny * MAX_TILT : 0
+  const rotY  = hovered && fx ?  mouse.nx * MAX_TILT : 0
+  const scale = hovered ? (fx ? 1.08 : 1.03) : 1
 
   return (
     <button
@@ -63,7 +65,7 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
       className="relative flex items-center gap-1 border rounded overflow-hidden"
       style={{
         padding:      '3px 7px',
-        fontSize:     '8px',
+        fontSize:     '10px',
         color:        hidden ? '#2a4060' : color,
         borderColor:  hidden ? 'rgba(0,180,255,0.1)' : color + '44',
         background:   hidden ? 'rgba(4,9,22,0.7)'    : color + '14',
@@ -79,7 +81,7 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
       }}
     >
       {/* Mouse-tracking sheen overlay */}
-      {hovered && !hidden && (
+      {fx && hovered && !hidden && (
         <div
           aria-hidden
           style={{
@@ -93,8 +95,8 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
         />
       )}
 
-      {/* Icon */}
-      <span style={{ position: 'relative', fontSize: '9px' }}>{icon}</span>
+      {/* Glyph — the category's identity channel, so it must be legible */}
+      <span style={{ position: 'relative', fontSize: '12px', lineHeight: 1 }}>{icon}</span>
 
       {/* Label */}
       <span
@@ -113,7 +115,7 @@ function FilterButton({ cat, count, hidden, color, icon, label, onToggle }: Filt
         <span
           style={{
             position:      'relative',
-            fontSize:      '7px',
+            fontSize:      '11px',
             padding:       '0 3px',
             borderRadius:  '2px',
             background:    hidden ? 'rgba(0,180,255,0.05)' : color + '22',
@@ -162,6 +164,7 @@ export function CategoryFilterBar() {
   const saveFilterPreset     = useAppStore((s) => s.saveFilterPreset)
   const applyFilterPreset    = useAppStore((s) => s.applyFilterPreset)
   const deleteFilterPreset   = useAppStore((s) => s.deleteFilterPreset)
+  const decorativeFx         = useAppStore((s) => s.decorativeFx)
   const [savingPreset, setSavingPreset] = useState(false)
   const [presetName,   setPresetName]   = useState('')
   const presetInputRef = useRef<HTMLInputElement>(null)
@@ -190,8 +193,8 @@ export function CategoryFilterBar() {
 
   return (
     <div
-      className="absolute top-2 z-20 flex flex-col items-center gap-1 font-mono"
-      style={{ left: '50%', transform: 'translateX(-50%)', alignItems: 'center' }}
+      className="absolute z-20 flex flex-col items-center gap-1 font-mono"
+      style={{ top: `${STATUS_BAR_H + 8}px`, left: '50%', transform: 'translateX(-50%)', alignItems: 'center' }}
     >
     <div className="flex items-center gap-1">
       {/* Watchlist toggle — ★ with bookmark count */}
@@ -201,7 +204,7 @@ export function CategoryFilterBar() {
         className="flex items-center gap-1 rounded border font-mono"
         style={{
           padding: '3px 7px',
-          fontSize: '9px',
+          fontSize: '11px',
           borderColor: showWatchlistOnly ? 'rgba(255,215,0,0.45)' : 'rgba(0,180,255,0.15)',
           background:  showWatchlistOnly ? 'rgba(255,215,0,0.10)' : 'rgba(4,9,22,0.75)',
           color:       showWatchlistOnly ? '#ffd700' : '#2a5070',
@@ -213,7 +216,7 @@ export function CategoryFilterBar() {
       >
         <span>{showWatchlistOnly ? '★' : '☆'}</span>
         {bookmarkedIds.length > 0 && (
-          <span style={{ fontSize: '7px' }}>{bookmarkedIds.length}</span>
+          <span style={{ fontSize: '10px' }}>{bookmarkedIds.length}</span>
         )}
       </button>
 
@@ -236,7 +239,7 @@ export function CategoryFilterBar() {
               className="font-mono"
               style={{
                 padding: '3px 7px',
-                fontSize: '8px',
+                fontSize: '10px',
                 fontWeight: active ? 700 : 500,
                 letterSpacing: '0.08em',
                 color: active ? '#00d4ff' : '#2a5070',
@@ -259,7 +262,7 @@ export function CategoryFilterBar() {
         onChange={(e) => setEventSortOrder(e.target.value as 'newest' | 'heat' | 'intensity')}
         className="font-mono"
         style={{
-          fontSize: '8px', color: '#2a5070',
+          fontSize: '10px', color: '#2a5070',
           background: 'rgba(4,9,22,0.75)',
           border: '1px solid rgba(0,180,255,0.15)',
           borderRadius: '3px',
@@ -293,7 +296,7 @@ export function CategoryFilterBar() {
           transition: 'border-color 0.15s',
         }}
       >
-        <span style={{ fontSize: '8px', color: '#2a5070', padding: '3px 4px 3px 6px' }}>⌕</span>
+        <span style={{ fontSize: '10px', color: '#2a5070', padding: '3px 4px 3px 6px' }}>⌕</span>
         <input
           ref={searchInputRef}
           type="text"
@@ -302,7 +305,7 @@ export function CategoryFilterBar() {
           placeholder={t('ui.search', 'Search events…')}
           className="font-mono bg-transparent outline-none"
           style={{
-            fontSize: '8px',
+            fontSize: '10px',
             color: searchQuery ? '#a0c8d8' : '#2a5070',
             width: searchQuery ? '90px' : '70px',
             padding: '3px 2px',
@@ -315,7 +318,7 @@ export function CategoryFilterBar() {
             aria-label="Clear search"
             onClick={() => setSearchQuery('')}
             style={{
-              fontSize: '8px',
+              fontSize: '10px',
               color: '#00d4ff',
               padding: '3px 5px',
               cursor: 'pointer',
@@ -339,9 +342,10 @@ export function CategoryFilterBar() {
             cat={cat}
             count={categoryCounts[cat] ?? 0}
             hidden={hiddenCategories.includes(cat)}
-            color={CATEGORY_COLOR[cat]}
-            icon={CATEGORY_ICON[cat]}
+            color={CATEGORY_TINT[cat]}
+            icon={CATEGORY_GLYPH[cat]}
             label={CATEGORY_LABEL[cat]}
+            fx={decorativeFx}
             onToggle={() => toggleHiddenCategory(cat)}
           />
         ))}
@@ -360,12 +364,12 @@ export function CategoryFilterBar() {
           }}>
             <button
               onClick={() => applyFilterPreset(preset.id)}
-              style={{ fontSize: '8px', color: '#c084fc', padding: '2px 6px', letterSpacing: '0.06em', cursor: 'pointer' }}
+              style={{ fontSize: '10px', color: '#c084fc', padding: '2px 6px', letterSpacing: '0.06em', cursor: 'pointer' }}
               title={`Apply preset: ${preset.name}`}
             >⊙ {preset.name}</button>
             <button
               onClick={() => deleteFilterPreset(preset.id)}
-              style={{ fontSize: '7px', color: '#4a3060', padding: '2px 4px', cursor: 'pointer', borderLeft: '1px solid rgba(155,109,255,0.2)' }}
+              style={{ fontSize: '10px', color: '#4a3060', padding: '2px 4px', cursor: 'pointer', borderLeft: '1px solid rgba(155,109,255,0.2)' }}
               title="Delete preset"
             >✕</button>
           </div>
@@ -376,7 +380,7 @@ export function CategoryFilterBar() {
           <button
             onClick={() => { setSavingPreset(true); setTimeout(() => presetInputRef.current?.focus(), 50) }}
             style={{
-              fontSize: '7px', color: '#4a3060', padding: '2px 6px',
+              fontSize: '10px', color: '#4a3060', padding: '2px 6px',
               border: '1px solid rgba(155,109,255,0.2)', borderRadius: '3px',
               background: 'transparent', cursor: 'pointer', letterSpacing: '0.06em',
             }}
@@ -391,10 +395,10 @@ export function CategoryFilterBar() {
               onKeyDown={(e) => { if (e.key === 'Enter') handleSavePreset(); if (e.key === 'Escape') { setSavingPreset(false); setPresetName('') } }}
               placeholder="Preset name…"
               maxLength={30}
-              style={{ fontSize: '8px', color: '#c084fc', background: 'transparent', border: 'none', outline: 'none', padding: '2px 6px', width: '90px', letterSpacing: '0.04em' }}
+              style={{ fontSize: '10px', color: '#c084fc', background: 'transparent', border: 'none', outline: 'none', padding: '2px 6px', width: '90px', letterSpacing: '0.04em' }}
             />
-            <button onClick={handleSavePreset} style={{ fontSize: '7px', color: '#9b6dff', padding: '2px 5px', cursor: 'pointer', borderLeft: '1px solid rgba(155,109,255,0.2)' }}>✓</button>
-            <button onClick={() => { setSavingPreset(false); setPresetName('') }} style={{ fontSize: '7px', color: '#4a3060', padding: '2px 4px', cursor: 'pointer' }}>✕</button>
+            <button onClick={handleSavePreset} style={{ fontSize: '10px', color: '#9b6dff', padding: '2px 5px', cursor: 'pointer', borderLeft: '1px solid rgba(155,109,255,0.2)' }}>✓</button>
+            <button onClick={() => { setSavingPreset(false); setPresetName('') }} style={{ fontSize: '10px', color: '#4a3060', padding: '2px 4px', cursor: 'pointer' }}>✕</button>
           </div>
         )}
       </div>

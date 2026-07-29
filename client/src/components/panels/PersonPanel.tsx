@@ -165,7 +165,7 @@ export function PersonPanel() {
                   borderRadius: '2px',
                   color: allInContext ? '#00ffcc' : '#4a6070',
                   cursor: allInContext ? 'default' : 'pointer',
-                  fontSize: '9px', lineHeight: 1,
+                  fontSize: '11px', lineHeight: 1,
                   padding: '1px 4px', transition: 'all 0.15s',
                   fontFamily: 'JetBrains Mono, monospace',
                   opacity: allInContext ? 0.6 : 1,
@@ -181,7 +181,7 @@ export function PersonPanel() {
               background: showSearch ? `${ACCENT}18` : 'none',
               border: `1px solid ${showSearch ? ACCENT + '40' : 'transparent'}`,
               borderRadius: '2px', color: showSearch ? ACCENT : '#4a6070',
-              cursor: 'pointer', fontSize: '9px', padding: '2px 5px',
+              cursor: 'pointer', fontSize: '11px', padding: '2px 5px',
               fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
               transition: 'all 0.15s',
             }}
@@ -218,12 +218,12 @@ export function PersonPanel() {
             placeholder={t('person.searchPlaceholder', 'Search people…')}
             style={{
               width: '100%', background: 'rgba(0,180,255,0.05)', border: `1px solid ${ACCENT}25`,
-              borderRadius: '3px', color: '#a8c4d8', fontSize: '9px', padding: '5px 8px',
+              borderRadius: '3px', color: '#a8c4d8', fontSize: '11px', padding: '5px 8px',
               fontFamily: 'JetBrains Mono, monospace', outline: 'none', boxSizing: 'border-box',
             }}
           />
           {searchLoading && (
-            <div style={{ color: '#2a4060', fontSize: '7px', padding: '4px 0', letterSpacing: '0.1em' }}>Searching…</div>
+            <div style={{ color: '#2a4060', fontSize: '10px', padding: '4px 0', letterSpacing: '0.1em' }}>Searching…</div>
           )}
           {searchResults.length > 0 && (
             <div style={{ marginTop: '4px', maxHeight: '140px', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
@@ -248,9 +248,9 @@ export function PersonPanel() {
                     onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = `${ACCENT}10` }}
                     onMouseLeave={e => { e.currentTarget.style.background = isSelected ? `${ACCENT}0a` : 'transparent' }}
                   >
-                    <div style={{ color: '#c8dde8', fontSize: '9px', fontWeight: 600 }}>{r.title}</div>
+                    <div style={{ color: '#c8dde8', fontSize: '11px', fontWeight: 600 }}>{r.title}</div>
                     {r.description && (
-                      <div style={{ color: '#4a6070', fontSize: '7px', marginTop: '1px', lineHeight: 1.3 }}>{r.description}</div>
+                      <div style={{ color: '#4a6070', fontSize: '10px', marginTop: '1px', lineHeight: 1.3 }}>{r.description}</div>
                     )}
                   </button>
                 )
@@ -277,7 +277,7 @@ export function PersonPanel() {
         {/* Suggested queries */}
         {suggestedQueries.length > 0 && (
           <div style={{ padding: '7px 12px 5px', borderBottom: '1px solid rgba(0,180,255,0.07)' }}>
-            <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>
+            <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>
               {t('event.labels.suggestedQueries', 'SUGGESTED QUERIES')}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
@@ -287,7 +287,7 @@ export function PersonPanel() {
                   onClick={() => { setAgentInput(q); ask(q, agentContext) }}
                   style={{
                     background: `${ACCENT}08`, border: `1px solid ${ACCENT}20`,
-                    borderRadius: '2px', color: `${ACCENT}bb`, fontSize: '8px',
+                    borderRadius: '2px', color: `${ACCENT}bb`, fontSize: '10px',
                     padding: '3px 7px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace',
                     letterSpacing: '0.05em', transition: 'all 0.15s',
                   }}
@@ -303,7 +303,7 @@ export function PersonPanel() {
 
         {/* Chat */}
         <div style={{ padding: '7px 12px 10px' }}>
-          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>
             {t('person.agent', '◈ PERSON INTELLIGENCE')}
           </div>
 
@@ -314,11 +314,11 @@ export function PersonPanel() {
             }}>
               {history.map(entry => (
                 <div key={entry.id} style={{ marginBottom: '7px' }}>
-                  <div style={{ color: ACCENT, fontSize: '8px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
+                  <div style={{ color: ACCENT, fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
                     ▸ {entry.question}
                   </div>
                   {entry.streaming ? (
-                    <div style={{ color: '#8aabbf', fontSize: '9px', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <div style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {entry.html || <span style={{ color: '#2a4060' }}>●●●</span>}
                       {entry.html && <span className="agent-stream-cursor" />}
                     </div>
@@ -326,7 +326,7 @@ export function PersonPanel() {
                     <div
                       className="agent-response"
                       dangerouslySetInnerHTML={{ __html: entry.html }}
-                      style={{ color: '#8aabbf', fontSize: '9px', lineHeight: 1.6 }}
+                      style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.6 }}
                     />
                   )}
                 </div>
@@ -337,7 +337,7 @@ export function PersonPanel() {
 
           {agentLoading && history.length > 0 && history[history.length - 1]?.html === '' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
-              <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em' }}>
+              <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>
                 {t('event.labels.analyzing', 'ANALYZING')}
               </span>
               <span className="agent-loading-dots"><span /><span /><span /></span>
@@ -345,7 +345,7 @@ export function PersonPanel() {
           )}
 
           {agentError && (
-            <div style={{ color: '#ff4d4d', fontSize: '8px', marginBottom: '5px', letterSpacing: '0.06em' }}>⚠ {agentError}</div>
+            <div style={{ color: '#ff4d4d', fontSize: '10px', marginBottom: '5px', letterSpacing: '0.06em' }}>⚠ {agentError}</div>
           )}
 
           <div style={{ display: 'flex', gap: '5px' }}>
@@ -357,7 +357,7 @@ export function PersonPanel() {
               disabled={agentLoading}
               style={{
                 flex: 1, background: 'rgba(0,180,255,0.05)', border: `1px solid ${ACCENT}25`,
-                borderRadius: '3px', color: '#a8c4d8', fontSize: '9px', padding: '5px 8px',
+                borderRadius: '3px', color: '#a8c4d8', fontSize: '11px', padding: '5px 8px',
                 fontFamily: 'JetBrains Mono, monospace', outline: 'none',
                 opacity: agentLoading ? 0.5 : 1,
               }}
@@ -368,7 +368,7 @@ export function PersonPanel() {
               style={{
                 background: agentLoading ? `${ACCENT}06` : `${ACCENT}0a`,
                 border: `1px solid ${ACCENT}25`, borderRadius: '3px',
-                color: agentLoading ? '#2a4060' : ACCENT, fontSize: '9px',
+                color: agentLoading ? '#2a4060' : ACCENT, fontSize: '11px',
                 padding: '5px 10px', cursor: agentLoading ? 'wait' : 'pointer',
                 fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
                 transition: 'all 0.15s',

@@ -98,8 +98,8 @@ function typeColor(type: string): string {
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '3px 0', borderBottom: '1px solid rgba(0,180,255,0.05)' }}>
-      <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.1em' }}>{label}</span>
-      <span style={{ color: '#a8c4d8', fontSize: '9px', textAlign: 'right', maxWidth: '60%' }}>{value}</span>
+      <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>{label}</span>
+      <span style={{ color: '#a8c4d8', fontSize: '11px', textAlign: 'right', maxWidth: '60%' }}>{value}</span>
     </div>
   )
 }
@@ -118,7 +118,7 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
   const addSelectedPerson = useAppStore(s => s.addSelectedPerson)
 
   if (loading) return (
-    <div style={{ color: '#2a4060', fontSize: '8px', padding: '6px 0', letterSpacing: '0.08em', textAlign: 'center' }}>
+    <div style={{ color: '#2a4060', fontSize: '10px', padding: '6px 0', letterSpacing: '0.08em', textAlign: 'center' }}>
       ↻ Loading Wikipedia…
     </div>
   )
@@ -133,13 +133,13 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
   return (
     <div style={{ paddingTop: '8px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-        <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em' }}>WIKIPEDIA</span>
+        <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>WIKIPEDIA</span>
         {wikiUrl && (
           <a
             href={wikiUrl}
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#4a6fa5', fontSize: '7px', letterSpacing: '0.08em', textDecoration: 'none' }}
+            style={{ color: '#4a6fa5', fontSize: '10px', letterSpacing: '0.08em', textDecoration: 'none' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#00d4ff')}
             onMouseLeave={e => (e.currentTarget.style.color = '#4a6fa5')}
           >
@@ -158,7 +158,7 @@ function WikiSection({ wikiTitle }: { wikiTitle: string }) {
           }}
         />
       )}
-      <p style={{ color: '#7a9ab0', fontSize: '9px', lineHeight: 1.55, margin: 0 }}>
+      <p style={{ color: '#7a9ab0', fontSize: '11px', lineHeight: 1.55, margin: 0 }}>
         <LinkedText
           text={extract}
           knownPersons={CELESTIAL_PERSONS}
@@ -227,7 +227,7 @@ export function CelestialBodyPanel() {
               borderRadius: '2px',
               color: inContext ? '#00ffcc' : '#4a6070',
               cursor: inContext ? 'default' : 'pointer',
-              fontSize: '9px', lineHeight: 1,
+              fontSize: '11px', lineHeight: 1,
               padding: '1px 4px', transition: 'all 0.15s',
               fontFamily: 'JetBrains Mono, monospace',
               opacity: inContext ? 0.6 : 1,
@@ -237,7 +237,7 @@ export function CelestialBodyPanel() {
       })()}
       headerLeft={stats && (
         <span style={{
-          fontSize: '6px', letterSpacing: '0.08em', padding: '1px 5px',
+          fontSize: '10px', letterSpacing: '0.08em', padding: '1px 5px',
           border: `1px solid ${accentColor}35`,
           background: `${accentColor}10`,
           color: accentColor, borderRadius: '2px',
@@ -263,7 +263,7 @@ export function CelestialBodyPanel() {
               {def?.label.toUpperCase() ?? selectedBody.toUpperCase()}
             </div>
             {stats && (
-              <div style={{ color: accentColor, fontSize: '8px', letterSpacing: '0.1em', marginTop: '2px', opacity: 0.8 }}>
+              <div style={{ color: accentColor, fontSize: '10px', letterSpacing: '0.1em', marginTop: '2px', opacity: 0.8 }}>
                 {stats.type}
               </div>
             )}
@@ -272,7 +272,7 @@ export function CelestialBodyPanel() {
           {/* Physical stats */}
           {stats && (
             <div style={{ background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '3px', padding: '6px 8px', marginBottom: '10px' }}>
-              <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '4px' }}>PHYSICAL DATA</div>
+              <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' }}>PHYSICAL DATA</div>
               <StatRow label="DIAMETER"    value={stats.diameter} />
               <StatRow label="MASS"        value={stats.mass} />
               {stats.gravity   && <StatRow label="SURFACE GRAVITY"   value={stats.gravity} />}
@@ -286,7 +286,7 @@ export function CelestialBodyPanel() {
           {/* Axial tilt + rotation (bodies without physical stats) */}
           {def && !stats && (
             <div style={{ background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '3px', padding: '6px 8px', marginBottom: '10px' }}>
-              <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '4px' }}>ORBITAL DATA</div>
+              <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' }}>ORBITAL DATA</div>
               <StatRow label="AXIAL TILT"      value={`${def.axialTiltDeg}°`} />
               <StatRow label="ROTATION PERIOD" value={
                 def.rotationPeriodHours === 0

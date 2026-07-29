@@ -242,7 +242,7 @@ export function RegionPanel() {
                     borderRadius: '2px',
                     color: inContext ? '#00ffcc' : '#4a6070',
                     cursor: inContext ? 'default' : 'pointer',
-                    fontSize: '9px', lineHeight: 1,
+                    fontSize: '11px', lineHeight: 1,
                     padding: '1px 4px', transition: 'all 0.15s',
                     fontFamily: 'JetBrains Mono, monospace',
                     opacity: inContext ? 0.6 : 1,

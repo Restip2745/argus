@@ -262,7 +262,7 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
           <span
             style={{
               color: isFocused ? '#00d4ff' : '#4a6fa5',
-              fontSize: '9px',
+              fontSize: '11px',
               fontFamily: 'JetBrains Mono, monospace',
               letterSpacing: '0.12em',
               textTransform: 'uppercase',

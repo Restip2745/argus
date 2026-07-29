@@ -8,7 +8,10 @@ import * as TWEEN from '@tweenjs/tween.js'
 import { useAstronomy } from '../../hooks/useAstronomy'
 import { useWASD } from '../../hooks/useWASD'
 import { getGAST, gastToRotY } from '../../hooks/useGAST'
-import { BODIES, bodyMinDistance, bodyViewDistance, EARTH_DETAIL_THRESHOLD } from '../../data/celestialBodies'
+import {
+  BODIES, bodyMinDistance, bodyViewDistance,
+  EARTH_DETAIL_THRESHOLD, EARTH_HOME_DISTANCE,
+} from '../../data/celestialBodies'
 import { determineNavLevel } from '../../config/navLevels'
 import { CelestialBody } from './CelestialBody'
 import { OrbitLines } from './OrbitLines'
@@ -54,6 +57,37 @@ export function SolarSystem() {
   const focusedBody         = useAppStore((s) => s.focusedBody)
   const setShowGeoJsonLayer = useAppStore((s) => s.setShowGeoJsonLayer)
   const setShowEventMarkers = useAppStore((s) => s.setShowEventMarkers)
+
+  // ── Home view ───────────────────────────────────────────────────────────────
+  // The solar system is the view you retreat to, not the corridor you walk down
+  // every time. Unless the operator has asked for the system-wide shot, the
+  // camera lands at Earth's working altitude on the first frame the astronomy
+  // solver has produced a position — a snap, not a tween, because there is no
+  // "from" the operator has seen yet.
+  const homedRef = useRef(false)
+  useFrame(() => {
+    if (homedRef.current) return
+    const controls = controlsRef.current
+    const earthPos = positionsRef.current.get('earth')
+    if (!controls || !earthPos) return
+    homedRef.current = true
+
+    if (useAppStore.getState().homeView === 'solar') return
+
+    controls.minDistance = bodyMinDistance('earth')
+    controls.target.copy(earthPos)
+    camera.position.copy(earthPos).add(
+      new THREE.Vector3(0, EARTH_HOME_DISTANCE * 0.28, EARTH_HOME_DISTANCE * 0.96),
+    )
+    controls.update()   // fires the 'change' handler → detail layers switch on
+
+    setFocusedBody('earth')
+    const level = determineNavLevel(camera.position.distanceTo(controls.target))
+    useAppStore.getState().setNavLevel(level.id)
+    useAppStore.getState().setNavCandidates(level.candidates('earth'))
+    // Deliberately not setSelectedBody() — arriving somewhere should not also
+    // throw a panel over the view.
+  })
 
   // ── Simulation clock ────────────────────────────────────────────────────────
   useFrame(() => {

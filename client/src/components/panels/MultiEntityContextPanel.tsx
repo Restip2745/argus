@@ -42,12 +42,12 @@ export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemo
         {TYPE_ICON[entity.type]}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: '#c8dde8', fontSize: '9px', fontWeight: 600, lineHeight: 1.3 }}>
+        <div style={{ color: '#c8dde8', fontSize: '11px', fontWeight: 600, lineHeight: 1.3 }}>
           {entity.name}
         </div>
         {entity.summary && (
           <div style={{
-            color: '#4a6070', fontSize: '8px', lineHeight: 1.4, marginTop: '2px',
+            color: '#4a6070', fontSize: '10px', lineHeight: 1.4, marginTop: '2px',
             overflow: 'hidden', display: '-webkit-box',
             WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           }}>
@@ -55,7 +55,7 @@ export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemo
           </div>
         )}
         <div style={{
-          color: `${color}99`, fontSize: '7px', letterSpacing: '0.1em',
+          color: `${color}99`, fontSize: '10px', letterSpacing: '0.1em',
           marginTop: '2px', textTransform: 'uppercase',
         }}>
           {entity.type}
@@ -65,7 +65,7 @@ export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemo
         onClick={onRemove}
         style={{
           background: 'none', border: 'none', color: '#4a6070',
-          cursor: 'pointer', fontSize: '9px', lineHeight: 1,
+          cursor: 'pointer', fontSize: '11px', lineHeight: 1,
           padding: '1px 3px', flexShrink: 0, transition: 'color 0.15s',
         }}
         onMouseEnter={e => { e.currentTarget.style.color = '#ff4d4d' }}
@@ -174,7 +174,7 @@ export function MultiEntityContextPanel() {
             style={{
               background: 'none', border: '1px solid rgba(255,77,77,0.25)',
               borderRadius: '2px', color: '#4a6070',
-              cursor: 'pointer', fontSize: '8px', padding: '2px 5px',
+              cursor: 'pointer', fontSize: '10px', padding: '2px 5px',
               fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
               transition: 'all 0.15s',
             }}
@@ -217,7 +217,7 @@ export function MultiEntityContextPanel() {
 
         {atLimit && (
           <div style={{
-            color: '#ff9c2a', fontSize: '7px', letterSpacing: '0.1em',
+            color: '#ff9c2a', fontSize: '10px', letterSpacing: '0.1em',
             textAlign: 'center', padding: '4px 0',
             ...(useGrid && { gridColumn: '1 / -1' }),
           }}>
@@ -231,7 +231,7 @@ export function MultiEntityContextPanel() {
         {/* Suggested queries */}
         {suggestedQueries.length > 0 && (
           <div style={{ padding: '7px 12px 5px', borderBottom: '1px solid rgba(0,255,204,0.07)' }}>
-            <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>
+            <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>
               {t('event.labels.suggestedQueries', 'SUGGESTED QUERIES')}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
@@ -241,7 +241,7 @@ export function MultiEntityContextPanel() {
                   onClick={() => { setAgentInput(q); ask(q, agentContext) }}
                   style={{
                     background: `${ACCENT}08`, border: `1px solid ${ACCENT}20`,
-                    borderRadius: '2px', color: `${ACCENT}bb`, fontSize: '8px',
+                    borderRadius: '2px', color: `${ACCENT}bb`, fontSize: '10px',
                     padding: '3px 7px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace',
                     letterSpacing: '0.05em', transition: 'all 0.15s',
                   }}
@@ -257,7 +257,7 @@ export function MultiEntityContextPanel() {
 
         {/* Chat */}
         <div style={{ padding: '7px 12px 10px' }}>
-          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>
             {t('context.agent', '◈ CROSS-ENTITY INTELLIGENCE')}
           </div>
 
@@ -268,11 +268,11 @@ export function MultiEntityContextPanel() {
             }}>
               {history.map(entry => (
                 <div key={entry.id} style={{ marginBottom: '7px' }}>
-                  <div style={{ color: ACCENT, fontSize: '8px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
+                  <div style={{ color: ACCENT, fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
                     ▸ {entry.question}
                   </div>
                   {entry.streaming ? (
-                    <div style={{ color: '#8aabbf', fontSize: '9px', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <div style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {entry.html || <span style={{ color: '#2a4060' }}>●●●</span>}
                       {entry.html && <span className="agent-stream-cursor" />}
                     </div>
@@ -280,7 +280,7 @@ export function MultiEntityContextPanel() {
                     <div
                       className="agent-response"
                       dangerouslySetInnerHTML={{ __html: entry.html }}
-                      style={{ color: '#8aabbf', fontSize: '9px', lineHeight: 1.6 }}
+                      style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.6 }}
                     />
                   )}
                 </div>
@@ -291,7 +291,7 @@ export function MultiEntityContextPanel() {
 
           {agentLoading && history.length > 0 && history[history.length - 1]?.html === '' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
-              <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em' }}>
+              <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>
                 {t('event.labels.analyzing', 'ANALYZING')}
               </span>
               <span className="agent-loading-dots"><span /><span /><span /></span>
@@ -299,7 +299,7 @@ export function MultiEntityContextPanel() {
           )}
 
           {agentError && (
-            <div style={{ color: '#ff4d4d', fontSize: '8px', marginBottom: '5px', letterSpacing: '0.06em' }}>⚠ {agentError}</div>
+            <div style={{ color: '#ff4d4d', fontSize: '10px', marginBottom: '5px', letterSpacing: '0.06em' }}>⚠ {agentError}</div>
           )}
 
           <div style={{ display: 'flex', gap: '5px' }}>
@@ -311,7 +311,7 @@ export function MultiEntityContextPanel() {
               disabled={agentLoading}
               style={{
                 flex: 1, background: 'rgba(0,255,204,0.05)', border: `1px solid ${ACCENT}25`,
-                borderRadius: '3px', color: '#a8c4d8', fontSize: '9px', padding: '5px 8px',
+                borderRadius: '3px', color: '#a8c4d8', fontSize: '11px', padding: '5px 8px',
                 fontFamily: 'JetBrains Mono, monospace', outline: 'none',
                 opacity: agentLoading ? 0.5 : 1,
               }}
@@ -322,7 +322,7 @@ export function MultiEntityContextPanel() {
               style={{
                 background: agentLoading ? `${ACCENT}06` : `${ACCENT}0a`,
                 border: `1px solid ${ACCENT}25`, borderRadius: '3px',
-                color: agentLoading ? '#2a4060' : ACCENT, fontSize: '9px',
+                color: agentLoading ? '#2a4060' : ACCENT, fontSize: '11px',
                 padding: '5px 10px', cursor: agentLoading ? 'wait' : 'pointer',
                 fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em',
                 transition: 'all 0.15s',

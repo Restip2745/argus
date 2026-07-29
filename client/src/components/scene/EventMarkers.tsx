@@ -3,9 +3,10 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useAppStore } from '../../store'
-import { BODY_MAP } from '../../data/celestialBodies'
+import { BODY_MAP, TIER_TO_ORBITAL, TIER_TO_SURFACE } from '../../data/celestialBodies'
 import { getCountryCentroid, resolveCountryName } from '../../data/countryData'
-import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
+import { eventSymbol, peakSeverity, severityColor, severityRank, withAlpha } from '../../data/symbology'
+import type { EventSymbol } from '../../data/symbology'
 import { latLngToWorld, isAboveHorizon } from '../../lib/coordinates'
 import type { ArgusEvent, CelestialBodyName } from '../../types'
 
@@ -22,23 +23,11 @@ function resolveLatLng(e: { lat: number | null; lng: number | null; location_lab
   return null
 }
 
-// Icon size (px) per intensity
-const INTENSITY_SIZE: Record<string, number> = {
-  LOW:      16,
-  MODERATE: 19,
-  HIGH:     22,
-  CRITICAL: 26,
-}
-
 const MARKER_R     = 1.025
 const EARTH_RADIUS = 1.0
 
 // Cluster radius in km per zoom tier (0=solar, 1=orbital, 2=surface)
 const CLUSTER_KM = [1500, 600, 0]
-
-// Camera-to-earth distance thresholds for tier transitions
-const TIER_TO_ORBITAL = 80   // farther  → tier 0 (solar)
-const TIER_TO_SURFACE = 12   // closer   → tier 2 (surface)
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371
@@ -88,17 +77,16 @@ interface Props {
 
 // ── Single geo marker ─────────────────────────────────────────────────────────
 function GeoMarker({
-  lat, lng, positionsRef, color, icon, size, intensity, onClick,
+  lat, lng, positionsRef, sym, intensity, onClick,
 }: {
   lat: number
   lng: number
   positionsRef: Props['positionsRef']
-  color: string
-  icon: string
-  size: number
+  sym: EventSymbol
   intensity: string
   onClick: () => void
 }) {
+  const { color, glyph, size, borderStyle, borderColor, background } = sym
   const groupRef = useRef<THREE.Group>(null)
   const domRef   = useRef<HTMLDivElement>(null)
 
@@ -129,19 +117,23 @@ function GeoMarker({
             position: 'relative', width: size + 10, height: size + 10,
           }}
         >
+          {/* Pulse ring — only CRITICAL/HIGH animate, so movement itself reads
+              as urgency instead of every marker breathing at once. */}
           <div style={{
             position: 'absolute', inset: 0, borderRadius: '50%',
-            border: `1.5px solid ${color}`, opacity: 0.6,
-            animation: `markerPulse ${isCritical ? '1s' : isHigh ? '1.4s' : '2s'} ease-in-out infinite`,
+            border: `1.5px solid ${color}`, opacity: isCritical || isHigh ? 0.6 : 0,
+            animation: isCritical ? 'markerPulse 1s ease-in-out infinite'
+              : isHigh ? 'markerPulse 1.6s ease-in-out infinite' : 'none',
           }} />
+          {/* Frame — border style carries source reliability */}
           <div style={{
             position: 'absolute', inset: 3, borderRadius: '50%',
-            background: color + '22', border: `1px solid ${color}66`, backdropFilter: 'blur(2px)',
+            background, border: `1.5px ${borderStyle} ${borderColor}`, backdropFilter: 'blur(2px)',
           }} />
           <span style={{
-            position: 'relative', fontSize: size * 0.7, lineHeight: 1,
+            position: 'relative', fontSize: size * 0.62, lineHeight: 1,
             color, textShadow: `0 0 6px ${color}aa`, userSelect: 'none', fontFamily: 'monospace',
-          }}>{icon}</span>
+          }}>{glyph}</span>
         </div>
       </Html>
     </group>
@@ -159,13 +151,13 @@ function ClusterMarker({
   const groupRef = useRef<THREE.Group>(null)
   const domRef   = useRef<HTMLDivElement>(null)
 
-  const rank = { CRITICAL: 4, HIGH: 3, MODERATE: 2, LOW: 1 } as Record<string, number>
-  const topEvent = cluster.events.reduce((best, e) =>
-    (rank[e.intensity] ?? 0) > (rank[best.intensity] ?? 0) ? e : best
-  )
-  const color = CATEGORY_COLOR[topEvent.category] ?? '#4a6070'
+  // A cluster reports the worst thing inside it — colour is severity, and the
+  // severity of a group is its peak, never an average or an arbitrary member.
+  const top   = peakSeverity(cluster.events)
+  const color = severityColor(top)
   const count = cluster.events.length
   const size  = Math.min(28 + count * 2, 42)
+  const urgent = top === 'CRITICAL' || top === 'HIGH'
 
   useFrame(({ camera }) => {
     const earthPos = positionsRef.current.get('earth')
@@ -193,17 +185,17 @@ function ClusterMarker({
         >
           <div style={{
             position: 'absolute', inset: 0, borderRadius: '50%',
-            border: `1.5px solid ${color}`, opacity: 0.5,
-            animation: 'markerPulse 2.2s ease-in-out infinite',
+            border: `1.5px solid ${color}`, opacity: urgent ? 0.5 : 0,
+            animation: urgent ? 'markerPulse 1.6s ease-in-out infinite' : 'none',
           }} />
           <div style={{
             position: 'absolute', inset: 3, borderRadius: '50%',
-            background: color + '2a', border: `1.5px solid ${color}88`,
+            background: withAlpha(color, 0.16), border: `1.5px solid ${withAlpha(color, 0.55)}`,
             backdropFilter: 'blur(3px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <span style={{
-              fontSize: '9px', fontWeight: 700, color,
+              fontSize: '11px', fontWeight: 700, color,
               fontFamily: 'monospace', letterSpacing: '-0.02em',
               textShadow: `0 0 8px ${color}cc`,
             }}>{count}</span>
@@ -216,15 +208,14 @@ function ClusterMarker({
 
 // ── Orbital billboard ─────────────────────────────────────────────────────────
 function OrbitalMarker({
-  bodyId, positionsRef, color, icon, size, onClick,
+  bodyId, positionsRef, sym, onClick,
 }: {
   bodyId: CelestialBodyName
   positionsRef: Props['positionsRef']
-  color: string
-  icon: string
-  size: number
+  sym: EventSymbol
   onClick: () => void
 }) {
+  const { color, glyph, size, borderStyle, borderColor, background } = sym
   const groupRef = useRef<THREE.Group>(null)
   const bodyDef  = BODY_MAP.get(bodyId)
   const offset   = bodyDef ? bodyDef.renderedRadius * 1.8 : 1.0
@@ -254,12 +245,12 @@ function OrbitalMarker({
           }} />
           <div style={{
             position: 'absolute', inset: 3, borderRadius: '50%',
-            background: color + '22', border: `1px solid ${color}66`,
+            background, border: `1.5px ${borderStyle} ${borderColor}`,
           }} />
           <span style={{
-            position: 'relative', fontSize: size * 0.7, lineHeight: 1,
+            position: 'relative', fontSize: size * 0.62, lineHeight: 1,
             color, textShadow: `0 0 6px ${color}aa`, userSelect: 'none', fontFamily: 'monospace',
-          }}>{icon}</span>
+          }}>{glyph}</span>
         </div>
       </Html>
     </group>
@@ -290,14 +281,13 @@ export function EventMarkers({ positionsRef }: Props) {
   })
 
   const { clusters, orbitalByBody } = useMemo(() => {
-    const rank = { CRITICAL: 4, HIGH: 3, MODERATE: 2, LOW: 1 } as Record<string, number>
     const geoItems: GeoItem[] = []
     const orbital = new Map<CelestialBodyName, ArgusEvent>()
 
     for (const e of events) {
       if (e.location_type === 'orbital' && e.body && e.body !== 'earth') {
         const existing = orbital.get(e.body as CelestialBodyName)
-        if (!existing || (rank[e.intensity] ?? 0) > (rank[existing.intensity] ?? 0))
+        if (!existing || severityRank(e.intensity) > severityRank(existing.intensity))
           orbital.set(e.body as CelestialBodyName, e)
       } else if (e.body === 'earth' || e.location_type === 'geo' || !e.body) {
         const coords = resolveLatLng(e)
@@ -320,17 +310,14 @@ export function EventMarkers({ positionsRef }: Props) {
               lat={cl.lat}
               lng={cl.lng}
               positionsRef={positionsRef}
-              color={CATEGORY_COLOR[e.category] ?? '#888888'}
-              icon={CATEGORY_ICON[e.category]  ?? '◉'}
-              size={INTENSITY_SIZE[e.intensity] ?? 18}
+              sym={eventSymbol(e)}
               intensity={e.intensity}
               onClick={() => setActivePanelId(e.id)}
             />
           )
         }
-        const rank = { CRITICAL: 4, HIGH: 3, MODERATE: 2, LOW: 1 } as Record<string, number>
         const topEvent = cl.events.reduce((best, e) =>
-          (rank[e.intensity] ?? 0) > (rank[best.intensity] ?? 0) ? e : best
+          severityRank(e.intensity) > severityRank(best.intensity) ? e : best
         )
         return (
           <ClusterMarker
@@ -349,9 +336,7 @@ export function EventMarkers({ positionsRef }: Props) {
             key={`orbital-${bodyId}`}
             bodyId={bodyId}
             positionsRef={positionsRef}
-            color={CATEGORY_COLOR[event.category] ?? '#00d4ff'}
-            icon={CATEGORY_ICON[event.category]  ?? '◉'}
-            size={INTENSITY_SIZE[event.intensity] ?? 18}
+            sym={eventSymbol(event)}
             onClick={() => setActivePanelId(event.id)}
           />
         )

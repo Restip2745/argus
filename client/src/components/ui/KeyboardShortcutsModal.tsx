@@ -51,7 +51,7 @@ export function KeyboardShortcutsModal({ onClose }: Props) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <span style={{ color: '#00d4ff', fontSize: '9px', letterSpacing: '0.15em', fontWeight: 700 }}>{t('keyboard.title')}</span>
+          <span style={{ color: '#00d4ff', fontSize: '11px', letterSpacing: '0.15em', fontWeight: 700 }}>{t('keyboard.title')}</span>
           <button
             onClick={onClose}
             style={{ color: '#4a6070', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}
@@ -69,21 +69,21 @@ export function KeyboardShortcutsModal({ onClose }: Props) {
                     border: '1px solid rgba(0,180,255,0.2)',
                     borderRadius: '2px',
                     padding: '1px 5px',
-                    fontSize: '8px',
+                    fontSize: '10px',
                     color: '#00d4ff',
                     letterSpacing: '0.05em',
                   }}>
                     {key}
                   </kbd>
                 </td>
-                <td style={{ padding: '5px 0', fontSize: '9px', color: '#6a90a8', letterSpacing: '0.04em' }}>
+                <td style={{ padding: '5px 0', fontSize: '11px', color: '#6a90a8', letterSpacing: '0.04em' }}>
                   {t(descKey)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <div style={{ marginTop: '10px', fontSize: '7px', color: '#2a4060', letterSpacing: '0.08em', textAlign: 'center' }}>
+        <div style={{ marginTop: '10px', fontSize: '10px', color: '#2a4060', letterSpacing: '0.08em', textAlign: 'center' }}>
           {t('keyboard.closeHint')}
         </div>
       </div>

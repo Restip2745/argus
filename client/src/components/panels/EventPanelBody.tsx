@@ -156,7 +156,8 @@ export function EventPanelBody({
 
       {/* ── Main info ──────────────────────────────────────────────────────── */}
       <div className="relative px-3 py-3 space-y-2.5">
-        <h2 className="text-[#c8dde8] text-[11px] font-semibold leading-snug">{highlightText(title, searchQuery)}</h2>
+        {/* Lead — the one thing read first, so it gets the lead tier (13px). */}
+        <h2 className="text-[#dce9f2] text-[13px] font-semibold leading-snug">{highlightText(title, searchQuery)}</h2>
 
         {/* Personal note */}
         {!noteOpen && (
@@ -164,7 +165,7 @@ export function EventPanelBody({
             {existingNote ? (
               <button
                 onClick={openNote}
-                style={{ fontSize: '8px', color: '#4a6070', textAlign: 'left', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', maxWidth: '100%', fontFamily: 'JetBrains Mono, monospace', lineHeight: 1.4 }}
+                style={{ fontSize: '10px', color: '#4a6070', textAlign: 'left', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', maxWidth: '100%', fontFamily: 'JetBrains Mono, monospace', lineHeight: 1.4 }}
                 title={t('note.editHint')}
               >
                 ✏ {existingNote.slice(0, 80)}{existingNote.length > 80 ? '…' : ''}
@@ -172,7 +173,7 @@ export function EventPanelBody({
             ) : (
               <button
                 onClick={openNote}
-                style={{ fontSize: '7px', color: '#2a4060', letterSpacing: '0.08em', background: 'none', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}
+                style={{ fontSize: '10px', color: '#2a4060', letterSpacing: '0.08em', background: 'none', border: '1px solid rgba(0,180,255,0.08)', borderRadius: '2px', padding: '2px 6px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}
               >{t('note.add')}</button>
             )}
           </div>
@@ -186,9 +187,9 @@ export function EventPanelBody({
               onKeyDown={(e) => { if (e.key === 'Escape') { setNoteOpen(false) } if (e.key === 'Enter' && e.ctrlKey) saveNote() }}
               placeholder={t('note.placeholder')}
               rows={3}
-              style={{ fontSize: '9px', color: '#a8c4d8', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.2)', borderRadius: '3px', padding: '5px 7px', resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', outline: 'none', lineHeight: 1.5, width: '100%' }}
+              style={{ fontSize: '11px', color: '#a8c4d8', background: 'rgba(0,180,255,0.04)', border: '1px solid rgba(0,180,255,0.2)', borderRadius: '3px', padding: '5px 7px', resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', outline: 'none', lineHeight: 1.5, width: '100%' }}
             />
-            <div style={{ display: 'flex', gap: '4px', fontSize: '8px' }}>
+            <div style={{ display: 'flex', gap: '4px', fontSize: '10px' }}>
               <button onClick={saveNote} style={{ color: '#00d4ff', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{t('note.save')}</button>
               {existingNote && <button onClick={() => { setNoteDraft(''); saveNote() }} style={{ color: '#ff4d4d', background: 'none', border: '1px solid rgba(255,77,77,0.25)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{t('note.clear')}</button>}
               <button onClick={() => setNoteOpen(false)} style={{ color: '#2a4060', background: 'none', border: '1px solid rgba(0,180,255,0.1)', borderRadius: '2px', padding: '2px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{t('note.esc')}</button>
@@ -199,7 +200,7 @@ export function EventPanelBody({
 
         {/* Datetime */}
         {event.published_at && (
-          <div className="flex items-center gap-2 text-[8.5px] font-mono" style={{ color: '#2a4060' }}>
+          <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: '#2a4060' }}>
             <span style={{ color: accentColor + '99' }}>{relativeTime(event.published_at)}</span>
             <span style={{ color: '#1a3050' }}>·</span>
             <span>
@@ -223,8 +224,10 @@ export function EventPanelBody({
           </div>
         )}
 
+        {/* Substance, not chrome — must not be dimmer or smaller than the
+            labels around it. */}
         {summary && (
-          <p className="text-[#4a6070] text-[10px] leading-relaxed">
+          <p className="text-[#8aabbf] text-[11px] leading-relaxed">
             <LinkedText
               text={summary}
               knownPersons={personNames}
@@ -243,7 +246,7 @@ export function EventPanelBody({
                   <button
                     onClick={() => setSearchQuery(a)}
                     title={`Filter events by "${a}"`}
-                    className="px-1.5 py-0.5 text-[9px] rounded transition-all"
+                    className="px-1.5 py-0.5 text-[11px] rounded transition-all"
                     style={{
                       background: `${accentColor}10`,
                       border: `1px solid ${accentColor}30`,
@@ -261,7 +264,7 @@ export function EventPanelBody({
                     <button
                       onClick={() => addSelectedPerson({ name: a, wikiTitle: a })}
                       title={`View person: ${a}`}
-                      className="py-0.5 text-[8px] transition-all"
+                      className="py-0.5 text-[10px] transition-all"
                       style={{
                         background: '#c084fc10',
                         border: '1px solid #c084fc30',
@@ -292,7 +295,7 @@ export function EventPanelBody({
                 key={tag}
                 onClick={() => setSearchQuery(tag)}
                 title={`Filter events by "${tag}"`}
-                className="px-1.5 py-0.5 text-[9px] rounded transition-all"
+                className="px-1.5 py-0.5 text-[11px] rounded transition-all"
                 style={{
                   background: 'rgba(0,180,255,0.05)',
                   border: '1px solid rgba(0,180,255,0.18)',
@@ -322,9 +325,9 @@ export function EventPanelBody({
           const color = relColor[rel] ?? '#2a4060'
           return (
             <div className="flex items-center gap-2">
-              <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.source', 'SOURCE')}</span>
+              <span className="text-[10px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.source', 'SOURCE')}</span>
               <span
-                className="text-[7px] tracking-widest px-1.5 py-0.5 rounded"
+                className="text-[10px] tracking-widest px-1.5 py-0.5 rounded"
                 style={{
                   color,
                   border: `1px solid ${color}30`,
@@ -342,7 +345,7 @@ export function EventPanelBody({
         {/* Heat Score */}
         {event.heat_score != null && (
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-[7px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.heat', 'HEAT')}</span>
+            <span className="text-[10px] tracking-widest text-[#2a4060] uppercase">{t('event.labels.heat', 'HEAT')}</span>
             <div
               className="flex-1 rounded-sm overflow-hidden"
               style={{ height: '3px', background: 'rgba(0,180,255,0.08)', border: '1px solid rgba(0,180,255,0.1)' }}
@@ -357,11 +360,11 @@ export function EventPanelBody({
                 }}
               />
             </div>
-            <span className="text-[8px] font-mono" style={{ color: heatColor(event.heat_score), minWidth: '24px', textAlign: 'right' }}>
+            <span className="text-[10px] font-mono" style={{ color: heatColor(event.heat_score), minWidth: '24px', textAlign: 'right' }}>
               {event.heat_score.toFixed(2)}
             </span>
             <span
-              className="text-[7px] tracking-wider px-1 rounded"
+              className="text-[10px] tracking-wider px-1 rounded"
               style={{
                 color: heatColor(event.heat_score),
                 border: `1px solid ${heatColor(event.heat_score)}30`,
@@ -377,7 +380,7 @@ export function EventPanelBody({
         <EventRelationGraph eventId={event.id} accentColor={accentColor} />
 
         {/* Meta row: source · location */}
-        <div className="flex items-center justify-between text-[9px] text-[#2a4060] pt-2 border-t border-[rgba(0,180,255,0.07)]">
+        <div className="flex items-center justify-between text-[11px] text-[#2a4060] pt-2 border-t border-[rgba(0,180,255,0.07)]">
           <span className="truncate max-w-[130px]">{event.source}</span>
           <span className="text-[#1e3040] mx-1">·</span>
           {countryInfo ? (
@@ -387,7 +390,7 @@ export function EventPanelBody({
               style={{
                 background: 'none', border: 'none', padding: '1px 5px',
                 borderRadius: '2px', cursor: 'pointer',
-                color: accentColor + 'cc', fontSize: '9px',
+                color: accentColor + 'cc', fontSize: '11px',
                 fontFamily: 'JetBrains Mono, monospace', outline: 'none',
                 borderBottom: `1px solid ${accentColor}44`,
               }}
@@ -407,7 +410,7 @@ export function EventPanelBody({
           href={event.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-[9px] tracking-wide transition-all"
+          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-[11px] tracking-wide transition-all"
           style={{
             background: `${accentColor}08`, border: `1px solid ${accentColor}22`,
             color: '#3a6080', textDecoration: 'none',
@@ -417,12 +420,12 @@ export function EventPanelBody({
         >
           <span style={{ fontSize: '11px', opacity: 0.7 }}>↗</span>
           <span className="truncate flex-1">{hostname()}</span>
-          <span style={{ opacity: 0.5, fontSize: '8px', letterSpacing: '0.12em' }}>{t('event.labels.viewSource', 'VIEW SOURCE')}</span>
+          <span style={{ opacity: 0.5, fontSize: '10px', letterSpacing: '0.12em' }}>{t('event.labels.viewSource', 'VIEW SOURCE')}</span>
         </a>
 
         {/* Coordinates */}
         {event.lat !== null && (
-          <div className="text-[9px] text-[#1e3040]">
+          <div className="text-[11px] text-[#1e3040]">
             {event.lat.toFixed(3)}° / {event.lng?.toFixed(3)}°
           </div>
         )}
@@ -433,7 +436,7 @@ export function EventPanelBody({
         <div className="relative px-3 pb-1">
           <button
             onClick={onFocus}
-            className="w-full py-1.5 text-[9px] tracking-widest transition-colors"
+            className="w-full py-1.5 text-[11px] tracking-widest transition-colors"
             style={{
               background: `${accentColor}08`, border: `1px solid ${accentColor}28`,
               borderRadius: '3px', color: accentColor,
@@ -450,7 +453,7 @@ export function EventPanelBody({
         <div className="relative px-3 pb-2.5">
           <button
             onClick={onBack}
-            className="text-[9px] text-[#2a4060] hover:text-[#00d4ff] transition-colors"
+            className="text-[11px] text-[#2a4060] hover:text-[#00d4ff] transition-colors"
           >
             ← {t('panel.back', 'Back')}
           </button>
@@ -460,13 +463,13 @@ export function EventPanelBody({
       {/* ── Suggested Queries ──────────────────────────────────────────────── */}
       {suggestedQueries.length > 0 && (
         <div className="relative px-3 pb-2 pt-2 border-t border-[rgba(0,180,255,0.07)]">
-          <div className="text-[7px] text-[#2a4060] tracking-widest mb-1.5">{t('event.labels.suggestedQueries', 'SUGGESTED QUERIES')}</div>
+          <div className="text-[10px] text-[#2a4060] tracking-widest mb-1.5">{t('event.labels.suggestedQueries', 'SUGGESTED QUERIES')}</div>
           <div className="flex flex-wrap gap-1">
             {suggestedQueries.map(q => (
               <button
                 key={q}
                 onClick={() => { setAgentInput(q); agentAsk(q, agentContext) }}
-                className="text-[8px] px-1.5 py-0.5 rounded transition-colors"
+                className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
                 style={{
                   background: `${accentColor}06`, border: `1px solid ${accentColor}20`,
                   color: accentColor + '99', fontFamily: 'JetBrains Mono, monospace',
@@ -484,21 +487,21 @@ export function EventPanelBody({
 
       {/* ── Agent Chat (hidden in popout mode — AI is in the right column) ── */}
       {!hideAgent && <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
-        <div className="text-[7px] text-[#2a4060] tracking-widest mb-2">{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</div>
+        <div className="text-[10px] text-[#2a4060] tracking-widest mb-2">{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</div>
 
         {agentHistory.length > 0 && (
           <div className="mb-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
             {agentHistory.map((entry) => (
               <div key={entry.id} className="mb-2">
-                <div className="text-[8px] mb-1 opacity-70" style={{ color: accentColor }}>▸ {entry.question}</div>
+                <div className="text-[10px] mb-1 opacity-70" style={{ color: accentColor }}>▸ {entry.question}</div>
                 {entry.streaming ? (
-                  <div className="text-[9px] leading-relaxed" style={{ color: '#8aabbf', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  <div className="text-[11px] leading-relaxed" style={{ color: '#8aabbf', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                     {entry.html || <span className="text-[#2a4060]">●●●</span>}
                     {entry.html && <span className="agent-stream-cursor" />}
                   </div>
                 ) : (
                   <div
-                    className="agent-response text-[9px] leading-relaxed"
+                    className="agent-response text-[11px] leading-relaxed"
                     style={{ color: '#8aabbf' }}
                     dangerouslySetInnerHTML={{ __html: entry.html }}
                   />
@@ -511,13 +514,13 @@ export function EventPanelBody({
 
         {agentLoading && agentHistory.length > 0 && agentHistory[agentHistory.length - 1].html === '' && (
           <div className="mb-2 flex items-center gap-2">
-            <span className="text-[7px] text-[#2a4060] tracking-widest">{t('event.labels.analyzing', 'ANALYZING')}</span>
+            <span className="text-[10px] text-[#2a4060] tracking-widest">{t('event.labels.analyzing', 'ANALYZING')}</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>
           </div>
         )}
 
         {agentError && (
-          <div className="text-[8px] text-[#ff4d4d] mb-1.5 tracking-wide">⚠ {agentError}</div>
+          <div className="text-[10px] text-[#ff4d4d] mb-1.5 tracking-wide">⚠ {agentError}</div>
         )}
 
         <div className="flex gap-1">
@@ -532,7 +535,7 @@ export function EventPanelBody({
             }}
             placeholder={t('event.labels.askAgent', '詢問情報分析...')}
             disabled={agentLoading}
-            className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
+            className="flex-1 text-[11px] px-2 py-1 rounded outline-none"
             style={{
               background: 'rgba(0,180,255,0.05)', border: `1px solid ${accentColor}20`,
               color: '#a8c4d8', fontFamily: 'JetBrains Mono, monospace',
@@ -542,7 +545,7 @@ export function EventPanelBody({
           <button
             disabled={agentLoading || !agentInput.trim()}
             onClick={() => { if (agentInput.trim()) { agentAsk(agentInput, agentContext); setAgentInput('') } }}
-            className="text-[9px] px-2.5 py-1 rounded transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded transition-colors"
             style={{
               background: agentLoading ? 'rgba(0,212,255,0.03)' : `${accentColor}0a`,
               border: `1px solid ${accentColor}25`,

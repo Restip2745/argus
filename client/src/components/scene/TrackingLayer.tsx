@@ -99,7 +99,7 @@ function AircraftMarker({ lat, lng, callsign, heading, positionsRef, distRef, ca
           }}>✈</span>
           {callsign && (
             <span style={{
-              fontSize: 6, color: '#3a6080',
+              fontSize: 10, color: '#3a6080',
               fontFamily: 'JetBrains Mono, monospace',
               letterSpacing: '0.04em', whiteSpace: 'nowrap',
             }}>{callsign}</span>
@@ -149,7 +149,7 @@ export function ShipMarker({ lat, lng, name, positionsRef, distRef, camPosRef }:
           }}>🚢</span>
           {name && (
             <span style={{
-              fontSize: 5, color: '#1e4060',
+              fontSize: 10, color: '#1e4060',
               fontFamily: 'JetBrains Mono, monospace',
               letterSpacing: '0.03em', whiteSpace: 'nowrap',
               maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis',
@@ -215,7 +215,7 @@ function SatMarker({ name, satrec, positionsRef, distRef, camPosRef }: SatMarker
             filter: 'drop-shadow(0 0 4px #00d4ff88)',
           }}>🛰</span>
           <span style={{
-            fontSize: 5, color: '#1e4060',
+            fontSize: 10, color: '#1e4060',
             fontFamily: 'JetBrains Mono, monospace',
             letterSpacing: '0.03em', whiteSpace: 'nowrap',
             maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis',

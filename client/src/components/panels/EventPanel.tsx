@@ -18,6 +18,7 @@ import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
 import { usePanelDrag }       from '../../hooks/usePanelDrag'
 import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import { copyToClipboard } from '../../utils/clipboard'
+import { severityColor, categoryGlyph, categoryLabel } from '../../data/symbology'
 import { EventTimeline }      from './EventTimeline'
 import { EventPanelBody }     from './EventPanelBody'
 import { Panel }              from './Panel'
@@ -34,25 +35,6 @@ const CATEGORY_QUERIES: Record<string, string[]> = {
   HEALTH:         ['跨境傳播風險', '醫療系統壓力', '供應鏈中斷', '國際協調機制'],
   CRIME_SECURITY: ['情報網路滲透', '跨境執法合作', '金融制裁效力', '恐攻升級風險'],
   SPACE:          ['戰略軌道影響', '太空軍事化風險', '衛星通訊中斷', '國際條約框架'],
-}
-
-const INTENSITY_COLOR: Record<string, string> = {
-  LOW:      '#4a6fa5',
-  MODERATE: '#ff9c2a',
-  HIGH:     '#ff6b35',
-  CRITICAL: '#ff4d4d',
-}
-
-const CATEGORY_COLOR: Record<string, string> = {
-  ARMED_CONFLICT: '#ff4d4d',
-  POLITICAL:      '#ff9c2a',
-  ECONOMIC:       '#ffd700',
-  SOCIAL:         '#c8cdd2',
-  SCIENCE_TECH:   '#9b6dff',
-  ENVIRONMENT:    '#39ff8a',
-  HEALTH:         '#a0c4ff',
-  CRIME_SECURITY: '#6a8090',
-  SPACE:          '#00d4ff',
 }
 
 function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null {
@@ -215,8 +197,10 @@ export function EventPanel() {
 
   if (!event) return null
 
-  const accentColor    = CATEGORY_COLOR[displayedEvent?.category ?? event.category] ?? '#00d4ff'
-  const intensityColor = INTENSITY_COLOR[displayedEvent?.intensity ?? event.intensity] ?? '#4a6fa5'
+  // Panel chrome is coloured by severity, not category — the frame's job is to
+  // tell you how alarmed to be. Category is carried by the glyph in the header.
+  const accentColor    = severityColor(displayedEvent?.intensity ?? event.intensity)
+  const intensityColor = accentColor
   const hasTimeline    = relatedLoading || allTimelineEvents.length > 0
 
   const exitAnim  = outgoingEvent
@@ -286,7 +270,7 @@ export function EventPanel() {
           onHeaderMouseDown={onHeaderMouseDown}
           headerLeft={
             <span style={{
-              fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
               fontWeight: 600, padding: '1px 5px', borderRadius: '2px',
               color: intensityColor,
               border: `1px solid ${intensityColor}40`,
@@ -295,7 +279,12 @@ export function EventPanel() {
               {displayedEvent?.intensity ?? event.intensity}
             </span>
           }
-          title={<>{(displayedEvent?.category ?? event.category).replace(/_/g, ' ')}</>}
+          title={
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ fontSize: '12px' }}>{categoryGlyph(displayedEvent?.category ?? event.category)}</span>
+              {categoryLabel(displayedEvent?.category ?? event.category)}
+            </span>
+          }
           headerControls={
             <>
               {/* Add to context */}
@@ -320,7 +309,7 @@ export function EventPanel() {
                       borderRadius: '2px',
                       color: inContext ? '#00ffcc' : '#4a6070',
                       cursor: inContext ? 'default' : 'pointer',
-                      fontSize: '9px', lineHeight: 1,
+                      fontSize: '11px', lineHeight: 1,
                       padding: '1px 4px', transition: 'all 0.15s',
                       fontFamily: 'JetBrains Mono, monospace',
                       opacity: inContext ? 0.6 : 1,
@@ -352,7 +341,7 @@ export function EventPanel() {
                   border:       copied ? '1px solid rgba(57,255,138,0.4)' : '1px solid transparent',
                   borderRadius: '2px',
                   color:        copied ? '#39ff8a' : '#4a6070',
-                  cursor: 'pointer', fontSize: '9px', lineHeight: 1,
+                  cursor: 'pointer', fontSize: '11px', lineHeight: 1,
                   padding: '1px 5px', transition: 'all 0.15s',
                   fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.06em',
                 }}
@@ -385,7 +374,7 @@ export function EventPanel() {
               }}>
                 <EventPanelBody
                   event={outgoingEvent}
-                  accentColor={CATEGORY_COLOR[outgoingEvent.category] ?? '#00d4ff'}
+                  accentColor={severityColor(outgoingEvent.intensity)}
                   onFocus={triggerFocus}
                   canFocus={false}
                   setSelectedCountry={setSelectedCountry}

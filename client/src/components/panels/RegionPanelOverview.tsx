@@ -5,7 +5,7 @@
  */
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CATEGORY_COLOR } from '../../data/categoryConfig'
+import { eventSymbol } from '../../data/symbology'
 import type { CountryInfo } from '../../data/countryData'
 import { useAppStore } from '../../store'
 import type { SelectedCountry } from '../../store'
@@ -56,8 +56,8 @@ function IndustryBar({ label, pct, color }: { label: string; pct: number; color:
   return (
     <div style={{ marginBottom: '5px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-        <span style={{ color: '#6a8090', fontSize: '8px', letterSpacing: '0.08em' }}>{label.toUpperCase()}</span>
-        <span style={{ color: '#4a6fa5', fontSize: '8px' }}>{pct}%</span>
+        <span style={{ color: '#6a8090', fontSize: '10px', letterSpacing: '0.08em' }}>{label.toUpperCase()}</span>
+        <span style={{ color: '#4a6fa5', fontSize: '10px' }}>{pct}%</span>
       </div>
       <div style={{ height: '3px', background: 'rgba(0,180,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '2px', transition: 'width 0.6s ease' }} />
@@ -88,7 +88,7 @@ function RegionKeyFigures({ recentEvents, addSelectedPerson }: {
 
   return (
     <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 6px' }}>
-      <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>KEY FIGURES</div>
+      <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>KEY FIGURES</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
         {persons.map(([name, count]) => (
           <button
@@ -98,7 +98,7 @@ function RegionKeyFigures({ recentEvents, addSelectedPerson }: {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '3px',
               background: '#c084fc08', border: '1px solid #c084fc22',
-              borderRadius: '2px', color: '#c084fccc', fontSize: '8px',
+              borderRadius: '2px', color: '#c084fccc', fontSize: '10px',
               padding: '2px 6px', cursor: 'pointer',
               fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.04em',
               transition: 'all 0.15s',
@@ -107,7 +107,7 @@ function RegionKeyFigures({ recentEvents, addSelectedPerson }: {
             onMouseLeave={e => { e.currentTarget.style.background = '#c084fc08'; e.currentTarget.style.color = '#c084fccc' }}
           >
             👤 {name}
-            {count > 1 && <span style={{ opacity: 0.6, fontSize: '7px' }}>×{count}</span>}
+            {count > 1 && <span style={{ opacity: 0.6, fontSize: '10px' }}>×{count}</span>}
           </button>
         ))}
       </div>
@@ -168,11 +168,11 @@ export function RegionPanelOverview({
               {country.name.toUpperCase()}
             </div>
             {info && (
-              <div style={{ color: '#4a6070', fontSize: '8px', letterSpacing: '0.1em', marginTop: '2px' }}>
+              <div style={{ color: '#4a6070', fontSize: '10px', letterSpacing: '0.1em', marginTop: '2px' }}>
                 ⊙ {info.capital}
               </div>
             )}
-            <div style={{ color: '#2a4060', fontSize: '8px', letterSpacing: '0.1em', marginTop: '1px' }}>
+            <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em', marginTop: '1px' }}>
               {country.lat.toFixed(2)}° {country.lat >= 0 ? 'N' : 'S'} &nbsp;
               {Math.abs(country.lng).toFixed(2)}° {country.lng >= 0 ? 'E' : 'W'}
             </div>
@@ -184,7 +184,7 @@ export function RegionPanelOverview({
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
             {allTags.map(tag => (
               <span key={tag} style={{
-                fontSize: '7px', letterSpacing: '0.1em', padding: '2px 5px',
+                fontSize: '10px', letterSpacing: '0.1em', padding: '2px 5px',
                 border: `1px solid ${tagColor(tag)}40`,
                 background: `${tagColor(tag)}12`,
                 color: tagColor(tag), borderRadius: '2px',
@@ -208,7 +208,7 @@ export function RegionPanelOverview({
               { label: 'STABILITY',  val: `${info.stability}/100` },
             ].map(({ label, val }) => (
               <div key={label} style={{ padding: '5px 8px', background: 'rgba(4,9,22,0.6)' }}>
-                <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.1em', marginBottom: '2px' }}>{label}</div>
+                <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em', marginBottom: '2px' }}>{label}</div>
                 <div style={{ color: '#a8c4d8', fontSize: '10px', fontWeight: 600 }}>{val}</div>
               </div>
             ))}
@@ -219,8 +219,8 @@ export function RegionPanelOverview({
         {info && (
           <div style={{ marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-              <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.1em' }}>STABILITY INDEX</span>
-              <span style={{ color: '#4a6fa5', fontSize: '7px' }}>{info.stability}/100</span>
+              <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>STABILITY INDEX</span>
+              <span style={{ color: '#4a6fa5', fontSize: '10px' }}>{info.stability}/100</span>
             </div>
             <div style={{ height: '4px', background: 'rgba(0,180,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
               <div style={{
@@ -235,7 +235,7 @@ export function RegionPanelOverview({
       {/* ── Industries ──────────────────────────────────────────────────────── */}
       {info && info.industries.length > 0 && (
         <div style={{ padding: '0 12px 10px', borderTop: '1px solid rgba(0,180,255,0.07)', paddingTop: '8px' }}>
-          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '6px' }}>ECONOMIC STRUCTURE</div>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '6px' }}>ECONOMIC STRUCTURE</div>
           {info.industries.map((ind, i) => (
             <IndustryBar key={ind.label} label={ind.label} pct={ind.pct} color={BAR_COLORS[i % BAR_COLORS.length]} />
           ))}
@@ -245,10 +245,10 @@ export function RegionPanelOverview({
       {/* ── Recent Events (24h) ─────────────────────────────────────────────── */}
       <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 6px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em' }}>RECENT EVENTS (24H)</span>
+          <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>RECENT EVENTS (24H)</span>
           {recentEvents.length > 0 && (
             <span style={{
-              color: '#ff9c2a', fontSize: '8px',
+              color: '#ff9c2a', fontSize: '10px',
               background: 'rgba(255,156,42,0.12)', padding: '1px 5px',
               borderRadius: '2px', border: '1px solid rgba(255,156,42,0.3)',
             }}>
@@ -257,19 +257,20 @@ export function RegionPanelOverview({
           )}
         </div>
         {recentEvents.length === 0 ? (
-          <div style={{ color: '#2a4060', fontSize: '8px', letterSpacing: '0.08em', padding: '4px 0' }}>— 無近期事件 —</div>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', padding: '4px 0' }}>— 無近期事件 —</div>
         ) : (
           recentEvents.map(e => (
             <div key={e.id} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', marginBottom: '5px' }}>
               <span style={{
-                flexShrink: 0, fontSize: '6px', letterSpacing: '0.08em', padding: '2px 4px', marginTop: '1px',
-                border: `1px solid ${(CATEGORY_COLOR[e.category] ?? '#4a6070')}40`,
-                background: `${(CATEGORY_COLOR[e.category] ?? '#4a6070')}12`,
-                color: CATEGORY_COLOR[e.category] ?? '#4a6070', borderRadius: '2px',
+                flexShrink: 0, fontSize: '10px', letterSpacing: '0.06em', padding: '1px 4px', marginTop: '1px',
+                display: 'inline-flex', alignItems: 'center', gap: '3px',
+                border: `1px ${eventSymbol(e).borderStyle} ${eventSymbol(e).borderColor}`,
+                background: eventSymbol(e).background,
+                color: eventSymbol(e).color, borderRadius: '2px',
               }}>
-                {e.category.replace(/_/g, ' ').slice(0, 8)}
+                {eventSymbol(e).glyph} {eventSymbol(e).label}
               </span>
-              <span style={{ color: '#6a8090', fontSize: '8px', lineHeight: 1.4 }}>
+              <span style={{ color: '#6a8090', fontSize: '10px', lineHeight: 1.4 }}>
                 {e.title.slice(0, 40)}{e.title.length > 40 ? '…' : ''}
               </span>
             </div>
@@ -288,7 +289,7 @@ export function RegionPanelOverview({
             style={{
               width: '100%', padding: '5px', background: 'rgba(0,212,255,0.04)',
               border: '1px solid rgba(0,212,255,0.15)', borderRadius: '3px',
-              color: '#2a5070', fontSize: '8px', letterSpacing: '0.12em',
+              color: '#2a5070', fontSize: '10px', letterSpacing: '0.12em',
               cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', transition: 'all 0.15s',
             }}
             onMouseEnter={e => { (e.target as HTMLElement).style.color = '#00d4ff'; (e.target as HTMLElement).style.borderColor = 'rgba(0,212,255,0.3)' }}
@@ -302,12 +303,12 @@ export function RegionPanelOverview({
       {/* ── Wikipedia Summary ───────────────────────────────────────────────── */}
       <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-          <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em' }}>WIKIPEDIA</span>
+          <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>WIKIPEDIA</span>
           {wikiData?.content_urls?.desktop?.page && (
             <a
               href={wikiData.content_urls.desktop.page}
               target="_blank" rel="noreferrer"
-              style={{ color: '#4a6fa5', fontSize: '7px', letterSpacing: '0.08em', textDecoration: 'none' }}
+              style={{ color: '#4a6fa5', fontSize: '10px', letterSpacing: '0.08em', textDecoration: 'none' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#00d4ff')}
               onMouseLeave={e => (e.currentTarget.style.color = '#4a6fa5')}
             >
@@ -316,7 +317,7 @@ export function RegionPanelOverview({
           )}
         </div>
         {wikiLoading && (
-          <div style={{ color: '#2a4060', fontSize: '8px', letterSpacing: '0.08em' }}>↻ Loading…</div>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em' }}>↻ Loading…</div>
         )}
         {wikiData && !wikiLoading && (() => {
           const extract = wikiData.extract.length > 300
@@ -335,7 +336,7 @@ export function RegionPanelOverview({
                   }}
                 />
               )}
-              <p style={{ color: '#7a9ab0', fontSize: '9px', lineHeight: 1.55, margin: 0 }}>
+              <p style={{ color: '#7a9ab0', fontSize: '11px', lineHeight: 1.55, margin: 0 }}>
                 {extract}
               </p>
             </>

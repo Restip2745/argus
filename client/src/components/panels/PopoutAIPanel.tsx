@@ -20,7 +20,7 @@ interface Props {
 function AgentEntry({ entry }: { entry: AgentEntry }) {
   return (
     <div style={{ marginBottom: '10px' }}>
-      <div style={{ color: '#00d4ff', fontSize: '8px', letterSpacing: '0.08em', marginBottom: '4px', opacity: 0.7 }}>
+      <div style={{ color: '#00d4ff', fontSize: '10px', letterSpacing: '0.08em', marginBottom: '4px', opacity: 0.7 }}>
         ▸ {entry.question}
       </div>
       {entry.streaming ? (
@@ -71,7 +71,7 @@ export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'IN
         display:      'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink:   0,
       }}>
-        <span style={{ color: '#00d4ff', fontSize: '9px', letterSpacing: '0.15em' }}>◈ {label}</span>
+        <span style={{ color: '#00d4ff', fontSize: '11px', letterSpacing: '0.15em' }}>◈ {label}</span>
         {history.length > 0 && (
           <button
             onClick={clear}
@@ -79,7 +79,7 @@ export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'IN
             style={{
               background: 'none', border: 'none',
               color: '#2a4060', cursor: 'pointer',
-              fontSize: '8px', letterSpacing: '0.1em',
+              fontSize: '10px', letterSpacing: '0.1em',
               fontFamily: 'JetBrains Mono, monospace',
               transition: 'color 0.15s',
             }}
@@ -92,7 +92,7 @@ export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'IN
       {/* Suggested queries */}
       {suggestedQueries.length > 0 && (
         <div style={{ padding: '10px 14px 6px', borderBottom: '1px solid rgba(0,180,255,0.07)', flexShrink: 0 }}>
-          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '6px' }}>SUGGESTED</div>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '6px' }}>SUGGESTED</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
             {suggestedQueries.map((q) => (
               <button
@@ -102,7 +102,7 @@ export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'IN
                   background:   'rgba(0,212,255,0.05)',
                   border:       '1px solid rgba(0,212,255,0.18)',
                   borderRadius: '2px', color: '#4a90b8',
-                  fontSize: '8px', padding: '3px 8px',
+                  fontSize: '10px', padding: '3px 8px',
                   cursor: 'pointer',
                   fontFamily: 'JetBrains Mono, monospace',
                   letterSpacing: '0.05em', transition: 'all 0.15s',
@@ -118,19 +118,19 @@ export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'IN
       {/* Chat history */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', minHeight: 0, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
         {history.length === 0 && !loading && (
-          <div style={{ color: '#2a4060', fontSize: '9px', letterSpacing: '0.08em', textAlign: 'center', marginTop: '24px' }}>
+          <div style={{ color: '#2a4060', fontSize: '11px', letterSpacing: '0.08em', textAlign: 'center', marginTop: '24px' }}>
             Ask the intelligence agent about this data.
           </div>
         )}
         {history.map((entry) => <AgentEntry key={entry.id} entry={entry} />)}
         {loading && history.length > 0 && history[history.length - 1]?.html === '' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em' }}>ANALYZING</span>
+            <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>ANALYZING</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>
           </div>
         )}
         {error && (
-          <div style={{ color: '#ff4d4d', fontSize: '9px', marginBottom: '6px', letterSpacing: '0.06em' }}>⚠ {error}</div>
+          <div style={{ color: '#ff4d4d', fontSize: '11px', marginBottom: '6px', letterSpacing: '0.06em' }}>⚠ {error}</div>
         )}
         <div ref={scrollRef} />
       </div>

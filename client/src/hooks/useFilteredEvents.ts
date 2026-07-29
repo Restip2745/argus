@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useAppStore } from '../store'
+import { severityRank } from '../data/symbology'
 import type { ArgusEvent } from '../types'
 
 const TIME_RANGE_MS: Record<string, number> = {
@@ -13,8 +14,6 @@ function safeTs(iso: string | null | undefined): number {
   const t = new Date(iso).getTime()
   return isNaN(t) ? 0 : t
 }
-
-const INTENSITY_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MODERATE: 2, LOW: 1 }
 
 /** Returns the same sorted/filtered event list that EventStack renders. */
 export function useFilteredEvents(): ArgusEvent[] {
@@ -37,7 +36,7 @@ export function useFilteredEvents(): ArgusEvent[] {
       if (eventSortOrder === 'heat')
         return (b.heat_score ?? 0) - (a.heat_score ?? 0)
       if (eventSortOrder === 'intensity')
-        return (INTENSITY_RANK[b.intensity] ?? 0) - (INTENSITY_RANK[a.intensity] ?? 0)
+        return severityRank(b.intensity) - severityRank(a.intensity)
       return safeTs(b.published_at) - safeTs(a.published_at)
     }
 

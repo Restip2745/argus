@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
-import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
+import { eventSymbol } from '../../data/symbology'
 import type { ArgusEvent } from '../../types'
 
 const TOAST_DURATION_MS = 3000
@@ -15,9 +15,9 @@ interface Toast {
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
   const { t } = useTranslation()
-  const color = CATEGORY_COLOR[toast.event.category] ?? '#4a6070'
-  const icon  = CATEGORY_ICON[toast.event.category]  ?? '◉'
-  const isCritical = toast.event.intensity === 'CRITICAL'
+  const sym   = eventSymbol(toast.event)
+  const color = sym.color
+  const icon  = sym.glyph
   const intensityLabel = t(`event.intensity.${toast.event.intensity}`, toast.event.intensity)
 
   return (
@@ -49,12 +49,15 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
       {/* Content */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
-          <span style={{ fontSize: '7px', letterSpacing: '0.12em', fontWeight: 700, color: isCritical ? '#ff4d4d' : '#ff9c2a' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.12em', fontWeight: 700, color }}>
             {intensityLabel}
+          </span>
+          <span style={{ fontSize: '10px', letterSpacing: '0.1em', color: '#5d7c92' }}>
+            {sym.label}
           </span>
           {toast.count > 1 && (
             <span style={{
-              fontSize: '6px', fontWeight: 700, letterSpacing: '0.08em',
+              fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em',
               padding: '0 3px', borderRadius: '2px',
               background: `${color}22`, color,
             }}>
@@ -64,7 +67,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         </div>
         <div
           style={{
-            fontSize: '9px',
+            fontSize: '11px',
             color: '#c8dde8',
             lineHeight: 1.35,
             overflow: 'hidden',
@@ -83,7 +86,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         style={{
           flexShrink: 0,
           color: '#2a4060',
-          fontSize: '9px',
+          fontSize: '11px',
           lineHeight: 1,
           cursor: 'pointer',
           background: 'none',

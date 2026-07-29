@@ -20,7 +20,7 @@ export function LanguageSwitcher() {
     <button
       onClick={toggle}
       style={{ height: '28px' }}
-      className="px-2 text-[9px] tracking-widest font-mono text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors bg-[rgba(4,9,22,0.8)]"
+      className="px-2 text-[11px] tracking-widest font-mono text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors bg-[rgba(4,9,22,0.8)]"
     >
       {LANGS.find((l) => l.code !== language)?.label}
     </button>

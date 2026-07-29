@@ -32,7 +32,7 @@ export function RegionPanelAgent({
       {/* Suggested Queries */}
       {suggestedQueries.length > 0 && (
         <div style={{ padding: '7px 12px 5px', borderBottom: '1px solid rgba(0,180,255,0.07)' }}>
-          <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>SUGGESTED QUERIES</div>
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>SUGGESTED QUERIES</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {suggestedQueries.map(q => (
               <button
@@ -40,7 +40,7 @@ export function RegionPanelAgent({
                 onClick={() => { setInput(q); ask(q, agentContext) }}
                 style={{
                   background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.18)',
-                  borderRadius: '2px', color: '#4a90b8', fontSize: '8px',
+                  borderRadius: '2px', color: '#4a90b8', fontSize: '10px',
                   padding: '3px 7px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace',
                   letterSpacing: '0.05em', transition: 'all 0.15s',
                 }}
@@ -56,7 +56,7 @@ export function RegionPanelAgent({
 
       {/* Agent Chat */}
       <div style={{ padding: '7px 12px 10px' }}>
-        <div style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em', marginBottom: '5px' }}>◈ INTELLIGENCE AGENT</div>
+        <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>◈ INTELLIGENCE AGENT</div>
 
         {history.length > 0 && (
           <div style={{
@@ -65,11 +65,11 @@ export function RegionPanelAgent({
           }}>
             {history.map((entry) => (
               <div key={entry.id} style={{ marginBottom: '7px' }}>
-                <div style={{ color: '#00d4ff', fontSize: '8px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
+                <div style={{ color: '#00d4ff', fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
                   ▸ {entry.question}
                 </div>
                 {entry.streaming ? (
-                  <div style={{ color: '#8aabbf', fontSize: '9px', lineHeight: 1.6 }}>
+                  <div style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.6 }}>
                     {entry.html}
                     <span className="agent-stream-cursor" />
                   </div>
@@ -77,7 +77,7 @@ export function RegionPanelAgent({
                   <div
                     className="agent-response"
                     dangerouslySetInnerHTML={{ __html: entry.html }}
-                    style={{ color: '#8aabbf', fontSize: '9px', lineHeight: 1.6 }}
+                    style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.6 }}
                   />
                 )}
               </div>
@@ -88,13 +88,13 @@ export function RegionPanelAgent({
 
         {loading && history.length > 0 && (history[history.length - 1]?.html === '') && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
-            <span style={{ color: '#2a4060', fontSize: '7px', letterSpacing: '0.15em' }}>ANALYZING</span>
+            <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>ANALYZING</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>
           </div>
         )}
 
         {error && (
-          <div style={{ color: '#ff4d4d', fontSize: '8px', marginBottom: '5px', letterSpacing: '0.06em' }}>⚠ {error}</div>
+          <div style={{ color: '#ff4d4d', fontSize: '10px', marginBottom: '5px', letterSpacing: '0.06em' }}>⚠ {error}</div>
         )}
 
         <div style={{ display: 'flex', gap: '5px' }}>
@@ -106,7 +106,7 @@ export function RegionPanelAgent({
             disabled={loading}
             style={{
               flex: 1, background: 'rgba(0,180,255,0.05)', border: '1px solid rgba(0,180,255,0.2)',
-              borderRadius: '3px', color: '#a8c4d8', fontSize: '9px', padding: '5px 8px',
+              borderRadius: '3px', color: '#a8c4d8', fontSize: '11px', padding: '5px 8px',
               fontFamily: 'JetBrains Mono, monospace', outline: 'none', opacity: loading ? 0.5 : 1,
             }}
           />
@@ -116,7 +116,7 @@ export function RegionPanelAgent({
             style={{
               background: loading ? 'rgba(0,212,255,0.04)' : 'rgba(0,212,255,0.08)',
               border: '1px solid rgba(0,212,255,0.25)', borderRadius: '3px',
-              color: loading ? '#2a4060' : '#00d4ff', fontSize: '9px',
+              color: loading ? '#2a4060' : '#00d4ff', fontSize: '11px',
               padding: '5px 10px', cursor: loading ? 'wait' : 'pointer',
               fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em', transition: 'all 0.15s',
             }}

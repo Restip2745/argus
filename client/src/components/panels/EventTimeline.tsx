@@ -7,15 +7,8 @@
  * EventPanel.  Clicking the already-active row is a no-op.
  */
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { CATEGORY_ICON, CATEGORY_COLOR } from '../../data/categoryConfig'
+import { eventSymbol, severityColor } from '../../data/symbology'
 import type { ArgusEvent } from '../../types'
-
-const INTENSITY_COLOR: Record<string, string> = {
-  LOW:      '#4a6fa5',
-  MODERATE: '#ff9c2a',
-  HIGH:     '#ff6b35',
-  CRITICAL: '#ff4d4d',
-}
 
 function relativeTime(iso: string | null): string {
   if (!iso) return ''
@@ -43,8 +36,9 @@ interface RowProps {
 }
 
 function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSelect }: RowProps) {
-  const color = CATEGORY_COLOR[ev.category] ?? '#4a6070'
-  const icon  = CATEGORY_ICON[ev.category]  ?? '◉'
+  const sym   = eventSymbol(ev)
+  const color = sym.color
+  const icon  = sym.glyph
 
   const prevNudgeGen = useRef(nudgeGen)
   const [nudging, setNudging] = useState(false)
@@ -116,19 +110,19 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
 
       {/* Header row: icon · time · intensity dot · bookmark */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-        <span style={{ fontSize: 9, color, lineHeight: 1 }}>{icon}</span>
-        <span style={{ fontSize: 7, color: '#2a4060', letterSpacing: '0.06em' }}>
+        <span style={{ fontSize: 11, color, lineHeight: 1 }}>{icon}</span>
+        <span style={{ fontSize: 10, color: '#2a4060', letterSpacing: '0.06em' }}>
           {relativeTime(ev.published_at)}
         </span>
         <span style={{
           marginLeft: 'auto',
           width: 4, height: 4, borderRadius: '50%', flexShrink: 0,
-          background: INTENSITY_COLOR[ev.intensity] ?? '#4a6fa5',
+          background: severityColor(ev.intensity),
         }} />
         {/* Bookmark ▶ marks the currently displayed event */}
         {isActive && (
           <span style={{
-            fontSize: 7,
+            fontSize: 10,
             color: accentColor,
             lineHeight: 1,
             marginLeft: 2,
@@ -139,7 +133,7 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
 
       {/* Title */}
       <p style={{
-        margin: 0, fontSize: 8.5, lineHeight: 1.35,
+        margin: 0, fontSize: 11, lineHeight: 1.35,
         color: isActive ? '#a8c4d8' : '#7a9ab0',
         fontWeight: isActive ? 600 : 400,
         display: '-webkit-box', WebkitLineClamp: 2,
@@ -217,9 +211,9 @@ export function EventTimeline({
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${accentColor}08` }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(2,6,14,0.97)' }}
       >
-        <span style={{ color: accentColor, fontSize: 8, opacity: 0.7 }}>▶</span>
+        <span style={{ color: accentColor, fontSize: 10, opacity: 0.7 }}>▶</span>
         <span style={{
-          fontSize: 7, letterSpacing: '0.1em', color: '#2a4060',
+          fontSize: 10, letterSpacing: '0.1em', color: '#2a4060',
           fontFamily: 'JetBrains Mono, monospace', fontWeight: 600,
           writingMode: 'vertical-rl', textOrientation: 'mixed',
           transform: 'rotate(180deg)', userSelect: 'none',
@@ -247,9 +241,9 @@ export function EventTimeline({
         borderBottom: `1px solid ${accentColor}18`,
         display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
       }}>
-        <span style={{ color: accentColor, fontSize: 8, opacity: 0.6 }}>◈</span>
+        <span style={{ color: accentColor, fontSize: 10, opacity: 0.6 }}>◈</span>
         <span style={{
-          fontSize: 7, letterSpacing: '0.12em', color: '#2a4060',
+          fontSize: 10, letterSpacing: '0.12em', color: '#2a4060',
           fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, flex: 1,
         }}>
           TIMELINE · {count}
@@ -259,7 +253,7 @@ export function EventTimeline({
           title="Collapse"
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            color: '#2a4060', fontSize: 9, lineHeight: 1, padding: '1px 2px',
+            color: '#2a4060', fontSize: 11, lineHeight: 1, padding: '1px 2px',
             transition: 'color 0.15s',
           }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = accentColor }}
@@ -273,7 +267,7 @@ export function EventTimeline({
         scrollbarWidth: 'thin', scrollbarColor: `${accentColor}50 transparent`,
       }}>
         {loading && (
-          <div style={{ padding: '12px 10px', color: '#2a4060', fontSize: 8, letterSpacing: '0.08em' }}>
+          <div style={{ padding: '12px 10px', color: '#2a4060', fontSize: 10, letterSpacing: '0.08em' }}>
             LOADING…
           </div>
         )}

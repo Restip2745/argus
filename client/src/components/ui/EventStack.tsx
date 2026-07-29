@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, memo } from 'react'
 import { useAppStore } from '../../store'
 import type { ArgusEvent } from '../../types'
 
-import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
+import { eventSymbol, SEVERITY_LABEL } from '../../data/symbology'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { highlightText } from '../../utils/highlightText'
+import { STATUS_BAR_H } from './StatusBar'
 
 interface IconItemProps {
   event: ArgusEvent
@@ -30,8 +31,9 @@ const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, sea
     }
   }, [nudgeGen])
 
-  const color = CATEGORY_COLOR[event.category] ?? '#4a6070'
-  const icon  = CATEGORY_ICON[event.category]  ?? '◉'
+  const sym   = eventSymbol(event)
+  const color = sym.color
+  const icon  = sym.glyph
   const title = event.title
 
   let animation: string
@@ -49,13 +51,14 @@ const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, sea
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={() => setActivePanelId(event.id)}
-        className="flex items-center justify-center font-mono border rounded pointer-events-auto"
+        className="flex items-center justify-center font-mono rounded pointer-events-auto"
         style={{
           width: '26px',
           height: '26px',
-          fontSize: '11px',
+          fontSize: '12px',
           color,
-          borderColor: hovered ? color + '80' : color + '28',
+          // Border style is the reliability channel; colour is severity.
+          border: `1px ${sym.borderStyle} ${hovered ? color + 'aa' : sym.borderColor}`,
           background: hovered ? color + '1e' : 'rgba(4,9,22,0.82)',
           transform: hovered ? 'scale(1.55)' : 'scale(1)',
           transition: 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1), background 0.12s, border-color 0.12s, box-shadow 0.12s',
@@ -84,24 +87,30 @@ const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, sea
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             zIndex: 60,
-            fontSize: '9px',
+            fontSize: '11px',
           }}
         >
-          <span style={{ color }}>{icon} </span>
+          {/* Name the symbol so the glyph is learnable in passing */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+            <span style={{ color }}>{icon}</span>
+            <span style={{ color: '#5d7c92', fontSize: '10px', letterSpacing: '0.1em' }}>{sym.label}</span>
+            <span style={{ color, fontSize: '10px', letterSpacing: '0.08em' }}>{SEVERITY_LABEL[event.intensity]}</span>
+            <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.06em' }}>{sym.reliabilityLabel}</span>
+          </div>
           <span style={{ color: '#c8dde8' }}>{highlightText(title, searchQuery)}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
             {event.published_at && (
-              <span style={{ color: '#2a4060', fontSize: 8 }}>
+              <span style={{ color: '#2a4060', fontSize: 10 }}>
                 {relativeTime(event.published_at)}
               </span>
             )}
             {event.heat_score != null && (
               <>
-                <span style={{ color: '#1a3050', fontSize: 7 }}>·</span>
-                <span style={{ color: '#1a3050', fontSize: 7, letterSpacing: '0.12em' }}>HEAT</span>
+                <span style={{ color: '#1a3050', fontSize: 10 }}>·</span>
+                <span style={{ color: '#1a3050', fontSize: 10, letterSpacing: '0.12em' }}>HEAT</span>
                 <span style={{
                   color: heatColor(event.heat_score),
-                  fontSize: 8,
+                  fontSize: 10,
                   fontWeight: 600,
                 }}>
                   {event.heat_score.toFixed(2)}
@@ -203,7 +212,7 @@ export function EventStack() {
     <div
       ref={containerRef}
       className="absolute left-2 pointer-events-none"
-      style={{ top: '44px', bottom: '36px', overflow: 'hidden' }}
+      style={{ top: `${STATUS_BAR_H + 44}px`, bottom: '36px', overflow: 'hidden' }}
     >
       {/* Loading skeleton — shown until first REST fetch resolves */}
       {!eventsLoaded && filtered.length === 0 && (

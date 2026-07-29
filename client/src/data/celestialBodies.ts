@@ -571,5 +571,26 @@ export function bodyViewDistance(id: CelestialBodyName): number {
   return r * factor
 }
 
-/** Earth detail-layer threshold in scene units */
+// ── Camera-distance thresholds ───────────────────────────────────────────────
+// These four values are a single ladder and only make sense relative to each
+// other, so they live together. `styles`-style drift here is invisible until
+// the app lands in a state where the layers and the markers disagree about what
+// zoom level the operator is at. Ordering is asserted in
+// `data/__tests__/cameraThresholds.test.ts`.
+
+/** Earth detail-layer threshold in scene units — political layer + markers on. */
 export const EARTH_DETAIL_THRESHOLD = 20.0
+
+/** Event-marker clustering tiers: farther → tier 0 (solar), nearer → tier 2. */
+export const TIER_TO_ORBITAL = 80
+export const TIER_TO_SURFACE = 12
+
+/**
+ * Camera distance for the Earth home view.
+ *
+ * Sits inside EARTH_DETAIL_THRESHOLD so the political layer and event markers
+ * are live on arrival, but outside TIER_TO_SURFACE so markers still cluster —
+ * landing on 250 uncollapsed pins is a worse first impression than landing on a
+ * readable dozen.
+ */
+export const EARTH_HOME_DISTANCE = 14.0

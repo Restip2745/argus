@@ -6,6 +6,7 @@ import { SolarSystem } from './components/scene/SolarSystem'
 import { EventPanel } from './components/panels/EventPanel'
 import { RegionPanel } from './components/panels/RegionPanel'
 import { Sidebar } from './components/ui/Sidebar'
+import { StatusBar, STATUS_BAR_H } from './components/ui/StatusBar'
 import { LanguageSwitcher } from './components/ui/LanguageSwitcher'
 import { AnnotationToolbar } from './components/ui/AnnotationToolbar'
 import { CelestialNavList } from './components/ui/CelestialNavList'
@@ -24,11 +25,20 @@ import { useAppStore } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
 import { usePopoutSync } from './hooks/usePopoutSync'
 import { useFilteredEvents } from './hooks/useFilteredEvents'
+import { useArgusSound } from './hooks/useArgusSound'
 import './i18n'
 
 export default function App() {
   useOllamaSocket()
   usePopoutSync('host')
+  useArgusSound()
+  const decorativeFx = useAppStore((s) => s.decorativeFx)
+
+  // Expose the motion preference to CSS so class-based decorative animation can
+  // be switched off without every component having to read the store.
+  useEffect(() => {
+    document.documentElement.dataset.fx = decorativeFx ? 'on' : 'off'
+  }, [decorativeFx])
   const showConfig    = useAppStore((s) => s.showConfig)
   const setShowConfig = useAppStore((s) => s.setShowConfig)
   const uiScale       = useAppStore((s) => s.uiScale)
@@ -142,13 +152,22 @@ export default function App() {
 
         {hudVisible ? (
           <>
+            {/* ── Always-on global situational readout ───────────────────── */}
+            <StatusBar
+              onOpenConfig={() => setShowConfig(true)}
+              onToggleCanvasAnalysis={() => setShowCanvasAnalysis(v => !v)}
+              canvasAnalysisOpen={showCanvasAnalysis}
+              onEnterImmersive={() => { setImmersiveMode(true); setLiteMode(false) }}
+              languageSwitcher={<LanguageSwitcher />}
+            />
+
             {/* ── Sidebar / Lite mode ────────────────────────────────────── */}
             {liteMode ? (
               <>
                 <button
                   onClick={() => setLiteMode(false)}
                   title="Normal mode"
-                  style={{ width: '28px', height: '28px', top: '8px', left: '8px' }}
+                  style={{ width: '28px', height: '28px', top: `${STATUS_BAR_H + 8}px`, left: '8px' }}
                   className="absolute z-50 flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors bg-[rgba(4,9,22,0.8)] text-[13px] font-mono"
                 >
                   ☰
@@ -167,38 +186,6 @@ export default function App() {
             <ErrorBoundary label="Person Panel"><PersonPanel /></ErrorBoundary>
             <ErrorBoundary label="Context Panel"><MultiEntityContextPanel /></ErrorBoundary>
             <CelestialNavList />
-
-            {/* ── Top-right control bar ──────────────────────────────────── */}
-            <div className="absolute top-3 right-3 z-50 flex items-center gap-1.5">
-              <LanguageSwitcher />
-              <button
-                onClick={() => setShowCanvasAnalysis(v => !v)}
-                title="AI Canvas Analysis"
-                style={{ width: '28px', height: '28px' }}
-                className={`flex items-center justify-center border rounded transition-colors bg-[rgba(4,9,22,0.8)] text-[10px] ${
-                  showCanvasAnalysis
-                    ? 'text-[#9b6dff] border-[rgba(155,109,255,0.5)]'
-                    : 'text-[#4a6070] border-[rgba(0,180,255,0.15)] hover:text-[#9b6dff]'
-                }`}
-              >⊙</button>
-              <button
-                onClick={() => setShowConfig(true)}
-                title="Configuration"
-                style={{ width: '28px', height: '28px' }}
-                className="flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors bg-[rgba(4,9,22,0.8)]"
-              >
-                ⚙
-              </button>
-              {/* Immersive toggle */}
-              <button
-                onClick={() => { setImmersiveMode(true); setLiteMode(false) }}
-                title="Immersive mode (I)"
-                style={{ width: '28px', height: '28px' }}
-                className="flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors bg-[rgba(4,9,22,0.8)] text-[11px]"
-              >
-                ⊠
-              </button>
-            </div>
 
             {/* ── Config modal ───────────────────────────────────────────── */}
             {showConfig && <ConfigModal />}

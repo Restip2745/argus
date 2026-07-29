@@ -83,7 +83,7 @@ export function CanvasAnalysisPanel({ onClose }: Props) {
         padding: '8px 10px', borderBottom: '1px solid rgba(0,180,255,0.1)',
         flexShrink: 0,
       }}>
-        <span style={{ color: '#9b6dff', fontSize: '8px', letterSpacing: '0.15em' }}>
+        <span style={{ color: '#9b6dff', fontSize: '10px', letterSpacing: '0.15em' }}>
           ◈ AI CANVAS ANALYSIS
         </span>
         <div style={{ display: 'flex', gap: '4px' }}>
@@ -91,7 +91,7 @@ export function CanvasAnalysisPanel({ onClose }: Props) {
             <button
               onClick={clear}
               title="Clear result"
-              style={{ background:'none', border:'none', color:'#4a6070', cursor:'pointer', fontSize:'9px' }}
+              style={{ background:'none', border:'none', color:'#4a6070', cursor:'pointer', fontSize:'11px' }}
             >CLEAR</button>
           )}
           <button
@@ -113,13 +113,13 @@ export function CanvasAnalysisPanel({ onClose }: Props) {
         )}
 
         {loading && (
-          <div style={{ color: '#4a6070', fontSize: '9px', letterSpacing: '0.1em' }}>
+          <div style={{ color: '#4a6070', fontSize: '11px', letterSpacing: '0.1em' }}>
             ◌ ANALYZING CANVAS...
           </div>
         )}
 
         {error && (
-          <div style={{ color: '#ff4d4d', fontSize: '9px' }}>
+          <div style={{ color: '#ff4d4d', fontSize: '11px' }}>
             ✗ {error}
           </div>
         )}
@@ -147,7 +147,7 @@ export function CanvasAnalysisPanel({ onClose }: Props) {
             borderRadius: '3px',
             color: loading ? '#4a3070' : '#9b6dff',
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '9px',
+            fontSize: '11px',
             letterSpacing: '0.12em',
             fontFamily: 'JetBrains Mono, monospace',
             transition: 'all 0.15s',
@@ -169,7 +169,7 @@ export function CanvasAnalysisPanel({ onClose }: Props) {
                 borderRadius: '2px',
                 color: '#2a5070',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '8px',
+                fontSize: '10px',
                 padding: '2px 6px',
                 fontFamily: 'JetBrains Mono, monospace',
               }}

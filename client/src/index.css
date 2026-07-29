@@ -172,7 +172,7 @@ canvas {
 /* ── Agent stream interrupted notice ──────────────────────── */
 .stream-interrupted-notice {
   color: #ff8c00;
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   margin-top: 5px;
   padding: 2px 5px;
@@ -186,7 +186,7 @@ canvas {
 /* ── Agent context truncation notice ──────────────────────── */
 .context-truncated-notice {
   color: #ff8c00;
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   margin-bottom: 5px;
   padding: 2px 5px;
@@ -273,6 +273,57 @@ canvas {
 .timeline-scroll::-webkit-scrollbar-track  { background: transparent; }
 .timeline-scroll::-webkit-scrollbar-thumb  { background: rgba(0,180,255,0.35); border-radius: 2px; }
 .timeline-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,180,255,0.6); }
+
+/* ── StatusBar ─────────────────────────────────────────────── */
+/* Severity count rose — brief flare so a new CRITICAL is felt, not hunted for.
+   Luminance only, no transform: the status bar clips overflow, and a scaling
+   number in a tight row can clip its own edge for the length of the animation. */
+@keyframes statFlash {
+  0%   { filter: brightness(2.4) drop-shadow(0 0 6px currentColor); }
+  45%  { filter: brightness(1.5) drop-shadow(0 0 3px currentColor); }
+  100% { filter: brightness(1)   drop-shadow(0 0 0   transparent);  }
+}
+
+/* Progressive disclosure — narrow viewports drop the lower-priority modules
+   before anything is allowed to overflow or wrap. Priority order, last to go:
+   POSTURE > COVERAGE > TREND > TEMPO. */
+@media (max-width: 1500px) {
+  .sb-hide-lg { display: none !important; }   /* TEMPO */
+}
+@media (max-width: 1400px) {
+  .sb-hide-mdlg { display: none !important; } /* TREND */
+}
+@media (max-width: 1180px) {
+  .sb-hide-md { display: none !important; }   /* COVERAGE */
+}
+
+/* ── Decorative motion switch ──────────────────────────────── */
+/* `data-fx="off"` (Settings → Presentation, or prefers-reduced-motion) strips
+   ornamental motion only. Motion that carries meaning is never disabled here:
+   marker pulses (severity), statFlash (a count rose), arrival animations,
+   loading states and panel slide (navigation feedback) all keep running. */
+:root[data-fx="off"] .nav-body-item {
+  transition: none !important;
+}
+:root[data-fx="off"] .nav-body-item:hover,
+:root[data-fx="off"] .nav-body-item.is-focused,
+:root[data-fx="off"] .nav-body-item.is-focused:hover {
+  transform: none !important;
+  filter: none !important;
+}
+:root[data-fx="off"] .region-panel-enter,
+:root[data-fx="off"] .animate-nav-fade-in {
+  animation: none !important;
+}
+
+/* ── Status bar arrival sweep ──────────────────────────────── */
+/* Fires only for CRITICAL/HIGH arrivals — the single moment the whole HUD is
+   allowed to draw the eye at once. */
+@keyframes arrivalSweep {
+  0%   { opacity: 0;   transform: translateX(-100%); }
+  35%  { opacity: 1;   }
+  100% { opacity: 0;   transform: translateX(100%);  }
+}
 
 /* ── Scrollbars ────────────────────────────────────────────── */
 ::-webkit-scrollbar {

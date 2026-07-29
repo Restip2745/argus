@@ -1,9 +1,20 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useAppStore } from '../../store'
 import { useTranslation } from 'react-i18next'
-import { CATEGORY_COLOR, CATEGORY_ICON } from '../../data/categoryConfig'
+import {
+  CATEGORY_GLYPH, CATEGORY_TINT, severityRank,
+  SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER,
+} from '../../data/symbology'
+import type { MapMode } from '../../store'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
+
+const MAP_MODES: { id: MapMode; icon: string; label: string }[] = [
+  { id: 'none',      icon: '○', label: 'NONE'      },
+  { id: 'political', icon: '▦', label: 'POLITICAL' },
+  { id: 'posture',   icon: '◈', label: 'POSTURE'   },
+  { id: 'activity',  icon: '≋', label: 'ACTIVITY'  },
+]
 
 interface DockBtnProps {
   icon: string
@@ -26,7 +37,7 @@ function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active
           position: 'absolute', bottom: '36px', left: '50%', transform: 'translateX(-50%)',
           background: 'rgba(4,9,22,0.95)', border: '1px solid rgba(0,180,255,0.2)',
           borderRadius: '3px', padding: '3px 7px', whiteSpace: 'nowrap',
-          color: '#a8c4d8', fontSize: '8px', letterSpacing: '0.1em',
+          color: '#a8c4d8', fontSize: '10px', letterSpacing: '0.1em',
           pointerEvents: 'none', zIndex: 100,
         }}>
           {label}
@@ -53,9 +64,9 @@ function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active
           <span style={{
             position: 'absolute', top: '2px', right: '2px',
             background: '#ff4d4d', color: '#fff',
-            fontSize: '6px', fontWeight: 700,
-            borderRadius: '2px', padding: '0 2px',
-            lineHeight: '9px', minWidth: '9px', textAlign: 'center',
+            fontSize: '10px', fontWeight: 700,
+            borderRadius: '2px', padding: '0 3px',
+            lineHeight: '12px', minWidth: '12px', textAlign: 'center',
           }}>
             {typeof badge === 'number' && badge > 99 ? '99+' : badge}
           </span>
@@ -64,9 +75,9 @@ function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active
           <span style={{
             position: 'absolute', top: '2px', left: '2px',
             background: '#ff8c00', color: '#fff',
-            fontSize: '6px', fontWeight: 700,
-            borderRadius: '2px', padding: '0 2px',
-            lineHeight: '9px', minWidth: '9px', textAlign: 'center',
+            fontSize: '10px', fontWeight: 700,
+            borderRadius: '2px', padding: '0 3px',
+            lineHeight: '12px', minWidth: '12px', textAlign: 'center',
           }}>!</span>
         )}
       </button>
@@ -109,8 +120,8 @@ export function FloatDock() {
   const setShowShipsLayer    = useAppStore((s) => s.setShowShipsLayer)
   const showConflictLayer    = useAppStore((s) => s.showConflictLayer)
   const setShowConflictLayer = useAppStore((s) => s.setShowConflictLayer)
-  const showHeatmapLayer     = useAppStore((s) => s.showHeatmapLayer)
-  const setShowHeatmapLayer  = useAppStore((s) => s.setShowHeatmapLayer)
+  const mapMode              = useAppStore((s) => s.mapMode)
+  const setMapMode           = useAppStore((s) => s.setMapMode)
   const layerErrors          = useAppStore((s) => s.layerErrors)
   const layerLoading         = useAppStore((s) => s.layerLoading)
 
@@ -134,20 +145,14 @@ export function FloatDock() {
     return bars.map((v) => v / peak)  // 0..1 normalised heights
   }, [events])
 
-  const { alertCount, topCats } = useMemo(() => {
+  const topCats = useMemo(() => {
     const hidden = new Set(hiddenCategories)
-    let critical = 0, high = 0
     const counts: Record<string, number> = {}
     for (const e of events) {
       if (hidden.has(e.category)) continue
-      if (e.intensity === 'CRITICAL') critical++
-      else if (e.intensity === 'HIGH') high++
       counts[e.category] = (counts[e.category] ?? 0) + 1
     }
-    return {
-      alertCount: critical + high,
-      topCats: Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4),
-    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4)
   }, [events, hiddenCategories])
 
   // Close brief when clicking outside
@@ -187,24 +192,24 @@ export function FloatDock() {
           maxHeight: '70vh', display: 'flex', flexDirection: 'column',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexShrink: 0 }}>
-            <span style={{ color: '#ffd700', fontSize: '7px', letterSpacing: '0.15em', fontWeight: 700 }}>◇ INTEL BRIEF</span>
-            <span style={{ color: '#2a4060', fontSize: '7px' }}>
+            <span style={{ color: '#ffd700', fontSize: '10px', letterSpacing: '0.15em', fontWeight: 700 }}>◇ INTEL BRIEF</span>
+            <span style={{ color: '#2a4060', fontSize: '10px' }}>
               {new Date(intelBrief.generatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
           <div
             className="agent-response"
-            style={{ color: '#a8c4d8', fontSize: '9px', lineHeight: 1.5, flexShrink: 0 }}
+            style={{ color: '#a8c4d8', fontSize: '11px', lineHeight: 1.5, flexShrink: 0 }}
             dangerouslySetInnerHTML={{ __html: intelBrief.summary }}
           />
           {/* Brief history — older entries collapsible */}
           {intelBriefHistory.length > 1 && (
             <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,215,0,0.12)', paddingTop: '6px', overflowY: 'auto', flexShrink: 1 }}>
-              <div style={{ color: '#4a5060', fontSize: '7px', letterSpacing: '0.12em', marginBottom: '5px' }}>PREVIOUS BRIEFS</div>
+              <div style={{ color: '#4a5060', fontSize: '10px', letterSpacing: '0.12em', marginBottom: '5px' }}>PREVIOUS BRIEFS</div>
               {intelBriefHistory.slice(1).map((b) => (
                 <details key={b.id} style={{ marginBottom: '5px' }}>
                   <summary style={{
-                    color: '#3a5060', fontSize: '7px', letterSpacing: '0.1em',
+                    color: '#3a5060', fontSize: '10px', letterSpacing: '0.1em',
                     cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '5px',
                   }}>
                     <span style={{ color: '#2a3850' }}>▸</span>
@@ -214,7 +219,7 @@ export function FloatDock() {
                   </summary>
                   <div
                     className="agent-response"
-                    style={{ color: '#6a8090', fontSize: '8px', lineHeight: 1.5, marginTop: '4px', paddingLeft: '10px' }}
+                    style={{ color: '#6a8090', fontSize: '10px', lineHeight: 1.5, marginTop: '4px', paddingLeft: '10px' }}
                     dangerouslySetInnerHTML={{ __html: b.summary }}
                   />
                 </details>
@@ -223,6 +228,44 @@ export function FloatDock() {
           )}
         </div>
       )}
+
+    {/* Map-mode legend — a fill scheme with no key is decoration. Political
+        mode needs none: its colours deliberately mean nothing. */}
+    {(mapMode === 'posture' || mapMode === 'activity') && (
+      <div style={{
+        position: 'absolute', bottom: '44px', left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: '4px 9px', whiteSpace: 'nowrap',
+        background: 'rgba(4,9,22,0.92)',
+        border: '1px solid rgba(0,180,255,0.15)',
+        borderRadius: '4px', backdropFilter: 'blur(8px)',
+        fontFamily: 'JetBrains Mono, monospace',
+      }}>
+        <span style={{ fontSize: '10px', letterSpacing: '0.14em', color: '#2a4a63' }}>
+          {t(`mapMode.${mapMode}`, mapMode.toUpperCase())} · 24H
+        </span>
+        {mapMode === 'posture' ? (
+          SEVERITY_ORDER.map((k) => (
+            <span key={k} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{
+                width: '9px', height: '9px', borderRadius: '2px',
+                background: SEVERITY_COLOR[k], opacity: 0.85,
+              }} />
+              <span style={{ fontSize: '10px', color: SEVERITY_COLOR[k] }}>{SEVERITY_LABEL[k]}</span>
+            </span>
+          ))
+        ) : (
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ fontSize: '10px', color: '#2a4a63' }}>{t('mapMode.less', 'LESS')}</span>
+            <span style={{
+              width: '76px', height: '9px', borderRadius: '2px',
+              background: 'linear-gradient(90deg, rgba(63,200,224,0.10), rgba(63,200,224,0.55))',
+            }} />
+            <span style={{ fontSize: '10px', color: '#3fc8e0' }}>{t('mapMode.more', 'MORE')}</span>
+          </span>
+        )}
+      </div>
+    )}
 
     <div style={{
       display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px',
@@ -259,19 +302,10 @@ export function FloatDock() {
         />
       </div>
 
-      {/* Alert badge */}
-      {alertCount > 0 && (
-        <DockBtn
-          icon="⚠"
-          label={`${alertCount} HIGH/CRITICAL ALERTS`}
-          badge={alertCount}
-          color="#ff4d4d"
-          onClick={() => {
-            const first = events.find(e => e.intensity === 'CRITICAL' || e.intensity === 'HIGH')
-            if (first) setActivePanelId(first.id)
-          }}
-        />
-      )}
+      {/* The HIGH/CRITICAL alert count used to live here. The status bar's
+          POSTURE module now owns it with more precision (per-severity, each
+          cell jumping to its own newest event), and two alert counts computed
+          from different sets is the ambiguity this pass exists to remove. */}
 
       {/* Service health badge — only shows when degraded */}
       {!serviceHealth.healthy && (
@@ -339,11 +373,17 @@ export function FloatDock() {
       {topCats.map(([cat, count]) => (
         <DockBtn
           key={cat}
-          icon={CATEGORY_ICON[cat] ?? '◉'}
+          icon={CATEGORY_GLYPH[cat as keyof typeof CATEGORY_GLYPH] ?? '◇'}
           label={`${cat.replace(/_/g,' ')} (${count})`}
-          color={CATEGORY_COLOR[cat] ?? '#4a6070'}
+          color={CATEGORY_TINT[cat as keyof typeof CATEGORY_TINT] ?? '#4a6070'}
           onClick={() => {
-            const ev = events.find(e => e.category === cat)
+            // Most severe first, newest as tiebreak — never array order.
+            const ev = events
+              .filter(e => e.category === cat)
+              .sort((a, b) =>
+                severityRank(b.intensity) - severityRank(a.intensity) ||
+                new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+              )[0]
             if (ev) setActivePanelId(ev.id)
           }}
         />
@@ -360,6 +400,36 @@ export function FloatDock() {
         active={showEarthTexture}
         onClick={() => setShowEarthTexture(!showEarthTexture)}
       />
+
+      {/* ── Map mode — exclusive. Only one variable may be painted across the
+             globe at a time; the overlays after the next divider are additive
+             because point and line data does not compete for the surface. ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '1px',
+        marginLeft: '4px', padding: '1px',
+        border: '1px solid rgba(0,180,255,0.15)', borderRadius: '4px',
+        background: 'rgba(0,20,40,0.35)',
+      }}>
+        {MAP_MODES.map(({ id, icon, label }) => {
+          const active = mapMode === id
+          return (
+            <button
+              key={id}
+              onClick={() => setMapMode(id)}
+              title={`${t('mapMode.label', 'MAP MODE')} — ${t(`mapMode.${id}`, label)}`}
+              aria-pressed={active}
+              style={{
+                width: '24px', height: '24px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '12px', borderRadius: '3px', border: 'none',
+                background: active ? 'rgba(0,212,255,0.18)' : 'transparent',
+                color: active ? '#00d4ff' : '#3a5060',
+                cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
+              }}
+            >{icon}</button>
+          )
+        })}
+      </div>
 
       {/* Divider */}
       <div style={{ width: '1px', height: '16px', background: 'rgba(0,180,255,0.12)', margin: '0 2px' }} />
@@ -400,13 +470,9 @@ export function FloatDock() {
         loading={showConflictLayer && layerLoading.conflict}
         onClick={() => setShowConflictLayer(!showConflictLayer)}
       />
-      <DockBtn
-        icon="⬡"
-        label="EVENT HEATMAP (24H)"
-        color="#ff9c2a"
-        active={showHeatmapLayer}
-        onClick={() => setShowHeatmapLayer(!showHeatmapLayer)}
-      />
+      {/* The old EVENT HEATMAP toggle became the ACTIVITY map mode. It was a
+          surface fill competing with the other fills, so it belongs in the
+          exclusive mode group, not among the additive overlays. */}
 
       {/* Annotation system toggle */}
       <DockBtn

@@ -6,6 +6,7 @@ import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { copyToClipboard } from '../../utils/clipboard'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { preview } from '../../lib/sound'
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
@@ -36,7 +37,7 @@ function SectionTitle({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 mb-4">
       <div className="h-px flex-1 bg-[rgba(0,180,255,0.12)]" />
-      <span className="text-[#9b6dff] tracking-[0.12em] text-[9px] uppercase">{label}</span>
+      <span className="text-[#9b6dff] tracking-[0.12em] text-[11px] uppercase">{label}</span>
       <div className="h-px flex-1 bg-[rgba(0,180,255,0.12)]" />
     </div>
   )
@@ -52,6 +53,48 @@ function FieldLabel({ text, value }: { text: string; value?: React.ReactNode }) 
   )
 }
 
+// ── Toggle row ────────────────────────────────────────────────────────────────
+function ToggleRow({ label, hint, checked, onChange, accent = '#00d4ff' }: {
+  label: string
+  hint?: string
+  checked: boolean
+  onChange: (v: boolean) => void
+  accent?: string
+}) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      role="switch"
+      aria-checked={checked}
+      className="w-full flex items-start gap-2.5 text-left py-1.5"
+      style={{ cursor: 'pointer', background: 'none', border: 'none' }}
+    >
+      <span
+        aria-hidden
+        style={{
+          flexShrink: 0, marginTop: '1px',
+          width: '26px', height: '15px', borderRadius: '8px',
+          background: checked ? accent + '30' : 'rgba(0,180,255,0.06)',
+          border: `1px solid ${checked ? accent + '80' : 'rgba(0,180,255,0.18)'}`,
+          position: 'relative', transition: 'background 0.15s, border-color 0.15s',
+        }}
+      >
+        <span style={{
+          position: 'absolute', top: '2px', left: checked ? '13px' : '2px',
+          width: '9px', height: '9px', borderRadius: '50%',
+          background: checked ? accent : '#3a5060',
+          boxShadow: checked ? `0 0 6px ${accent}` : 'none',
+          transition: 'left 0.15s, background 0.15s',
+        }} />
+      </span>
+      <span style={{ minWidth: 0 }}>
+        <span className="block text-[11px]" style={{ color: checked ? '#c8dde8' : '#5d7c92' }}>{label}</span>
+        {hint && <span className="block text-[10px] mt-0.5 leading-snug" style={{ color: '#2a4a63' }}>{hint}</span>}
+      </span>
+    </button>
+  )
+}
+
 export function ConfigModal() {
   const { t } = useTranslation()
   const filteredEvents = useFilteredEvents()
@@ -59,6 +102,14 @@ export function ConfigModal() {
   const setShowConfig  = useAppStore((s) => s.setShowConfig)
   const [curlCopied, setCurlCopied] = useState(false)
   const uiScale       = useAppStore((s) => s.uiScale)
+  const homeView        = useAppStore((s) => s.homeView)
+  const setHomeView     = useAppStore((s) => s.setHomeView)
+  const decorativeFx    = useAppStore((s) => s.decorativeFx)
+  const setDecorativeFx = useAppStore((s) => s.setDecorativeFx)
+  const soundEnabled    = useAppStore((s) => s.soundEnabled)
+  const setSoundEnabled = useAppStore((s) => s.setSoundEnabled)
+  const soundVolume     = useAppStore((s) => s.soundVolume)
+  const setSoundVolume  = useAppStore((s) => s.setSoundVolume)
   const setUiScale    = useAppStore((s) => s.setUiScale)
   const cardRef = useRef<HTMLDivElement>(null)
   useFocusTrap(cardRef, true)
@@ -292,7 +343,7 @@ export function ConfigModal() {
                     <FieldLabel text={t('config.fields.model')} />
                     <button
                       onClick={fetchAll} disabled={isLoading}
-                      className="text-[#4a6070] hover:text-[#00d4ff] transition-colors text-[9px]"
+                      className="text-[#4a6070] hover:text-[#00d4ff] transition-colors text-[11px]"
                     >{t('config.model.refresh')}</button>
                   </div>
                   {models.length > 0 ? (
@@ -312,7 +363,7 @@ export function ConfigModal() {
                       placeholder="gemma4:e4b" disabled={isLoading}
                     />
                   )}
-                  <span className="text-[#2a4060] text-[9px] mt-1 block">
+                  <span className="text-[#2a4060] text-[11px] mt-1 block">
                     {models.length > 0
                       ? t('config.model.available', { count: models.length })
                       : t('config.model.enterManually')}
@@ -327,7 +378,7 @@ export function ConfigModal() {
                     onChange={(e) => patch('temperature', parseFloat(e.target.value))}
                     className="w-full cursor-pointer" disabled={isLoading}
                   />
-                  <div className="flex justify-between text-[#2a4060] text-[9px] mt-0.5">
+                  <div className="flex justify-between text-[#2a4060] text-[11px] mt-0.5">
                     <span>{t('config.temp.precise')}</span><span>{t('config.temp.creative')}</span>
                   </div>
                 </label>
@@ -342,7 +393,7 @@ export function ConfigModal() {
                     style={{ '--thumb-color': '#9b6dff', '--thumb-glow': 'rgba(155,109,255,0.6)' } as React.CSSProperties}
                     disabled={isLoading}
                   />
-                  <div className="flex justify-between text-[#2a4060] text-[9px] mt-0.5">
+                  <div className="flex justify-between text-[#2a4060] text-[11px] mt-0.5">
                     <span>512</span><span>32 768</span>
                   </div>
                 </label>
@@ -364,10 +415,81 @@ export function ConfigModal() {
                     onChange={(e) => { setLocalScale(parseFloat(e.target.value)); setDirty(true) }}
                     className="w-full cursor-pointer"
                   />
-                  <div className="flex justify-between text-[#2a4060] text-[9px] mt-0.5">
+                  <div className="flex justify-between text-[#2a4060] text-[11px] mt-0.5">
                     <span>75%</span><span>100%</span><span>150%</span>
                   </div>
                 </label>
+
+                {/* Startup view */}
+                <div className="mt-3 pt-3 border-t border-[rgba(0,180,255,0.08)]">
+                  <FieldLabel text={t('config.fields.homeView', 'STARTUP VIEW')} />
+                  <div className="flex rounded overflow-hidden" style={{ border: '1px solid rgba(0,180,255,0.15)' }}>
+                    {([
+                      { v: 'earth', label: t('config.fields.homeViewEarth', 'EARTH') },
+                      { v: 'solar', label: t('config.fields.homeViewSolar', 'SOLAR SYSTEM') },
+                    ] as const).map(({ v, label }, i) => (
+                      <button
+                        key={v}
+                        onClick={() => setHomeView(v)}
+                        className="flex-1 text-[11px] tracking-[0.08em] py-1"
+                        style={{
+                          color: homeView === v ? '#00d4ff' : '#2a5070',
+                          background: homeView === v ? 'rgba(0,212,255,0.12)' : 'transparent',
+                          borderLeft: i > 0 ? '1px solid rgba(0,180,255,0.12)' : 'none',
+                          cursor: 'pointer',
+                        }}
+                      >{label}</button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] mt-1 leading-snug" style={{ color: '#2a4a63' }}>
+                    {t('config.fields.homeViewHint', 'Applies on next load. Earth lands at working altitude with the political layer and markers live.')}
+                  </p>
+                </div>
+
+                {/* Motion + audio — applied immediately, not on Apply, so the
+                    effect of the toggle is visible while the dialog is open. */}
+                <div className="mt-3 pt-3 border-t border-[rgba(0,180,255,0.08)]">
+                  <ToggleRow
+                    label={t('config.fields.decorativeFx', 'Decorative motion')}
+                    hint={t('config.fields.decorativeFxHint', 'Hover tilt, sheen and staggered reveals. Alerts, arrivals and loading states always animate.')}
+                    checked={decorativeFx}
+                    onChange={setDecorativeFx}
+                  />
+                  <ToggleRow
+                    label={t('config.fields.sound', 'Alert sound')}
+                    hint={t('config.fields.soundHint', 'A low tone when a CRITICAL or HIGH event arrives, plus a quiet confirm click. Nothing else makes a sound.')}
+                    checked={soundEnabled}
+                    onChange={(v) => { setSoundEnabled(v); if (v) preview('alert') }}
+                    accent="#ffd426"
+                  />
+                  {soundEnabled && (
+                    <div className="pl-[36px] mt-1">
+                      <FieldLabel
+                        text={t('config.fields.soundVolume', 'VOLUME')}
+                        value={`${Math.round(soundVolume * 100)}%`}
+                      />
+                      <input
+                        type="range" min={0} max={1} step={0.05}
+                        value={soundVolume}
+                        onChange={(e) => setSoundVolume(parseFloat(e.target.value))}
+                        className="w-full cursor-pointer"
+                        style={{ ['--thumb-color' as string]: '#ffd426', ['--thumb-glow' as string]: 'rgba(255,212,38,0.6)' }}
+                      />
+                      <div className="flex gap-2 mt-1.5">
+                        <button
+                          onClick={() => preview('alert')}
+                          className="text-[10px] tracking-[0.08em] px-2 py-0.5 rounded"
+                          style={{ color: '#ffd426', border: '1px solid rgba(255,212,38,0.3)', background: 'rgba(255,212,38,0.08)', cursor: 'pointer' }}
+                        >{t('config.fields.testAlert', 'TEST ALERT')}</button>
+                        <button
+                          onClick={() => preview('tick')}
+                          className="text-[10px] tracking-[0.08em] px-2 py-0.5 rounded"
+                          style={{ color: '#4a6070', border: '1px solid rgba(0,180,255,0.15)', background: 'none', cursor: 'pointer' }}
+                        >{t('config.fields.testTick', 'TEST CLICK')}</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* RSS Feeds */}
@@ -393,7 +515,7 @@ export function ConfigModal() {
                       <div key={i} className="flex items-center gap-2 py-1 border-b border-[rgba(0,180,255,0.06)]">
                         <button
                           onClick={() => toggleFeed(i)} disabled={isLoading}
-                          className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors text-[9px] flex items-center justify-center
+                          className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors text-[11px] flex items-center justify-center
                             ${feed.enabled
                               ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.15)] text-[#00d4ff]'
                               : 'border-[rgba(0,180,255,0.2)] text-[#2a4060]'}`}
@@ -460,7 +582,7 @@ export function ConfigModal() {
               {serviceHealth.webhookEnabled && (
                 <div>
                   <SectionTitle label={t('config.sections.webhook')} />
-                  <div className="text-[#2a4060] text-[9px] mb-2 leading-relaxed">
+                  <div className="text-[#2a4060] text-[11px] mb-2 leading-relaxed">
                     {t('config.webhook.description')}
                     <code className="block mt-1 text-[#4a6070] bg-[rgba(0,180,255,0.05)] border border-[rgba(0,180,255,0.12)] rounded px-2 py-1">
                       POST {API}/api/events/webhook
@@ -476,7 +598,7 @@ export function ConfigModal() {
                         if (ok) { setCurlCopied(true); setTimeout(() => setCurlCopied(false), 2000) }
                       })
                     }}
-                    className="px-3 py-1 text-[9px] tracking-widest border rounded transition-colors border-[rgba(0,180,255,0.2)] text-[#2a5070] hover:text-[#00d4ff] hover:border-[rgba(0,212,255,0.4)]"
+                    className="px-3 py-1 text-[11px] tracking-widest border rounded transition-colors border-[rgba(0,180,255,0.2)] text-[#2a5070] hover:text-[#00d4ff] hover:border-[rgba(0,212,255,0.4)]"
                   >
                     {curlCopied ? t('config.webhook.copied') : t('config.webhook.copyCurl')}
                   </button>
@@ -498,7 +620,7 @@ export function ConfigModal() {
             style={{ background: '#04090e' }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-[9px] tracking-widest">
+              <span className="text-[11px] tracking-widest">
                 {status === 'saving' && <span className="text-[#00d4ff]">{t('config.status.saving')}</span>}
                 {status === 'idle' && !dirty && <span className="text-[#2a4060]">{t('config.status.noChanges')}</span>}
                 {status === 'idle' &&  dirty && <span className="text-[#ff9c2a]">{t('config.status.unsaved')}</span>}
@@ -506,13 +628,13 @@ export function ConfigModal() {
               <a
                 href={`${API}/api/events/export?format=json`}
                 download
-                className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[11px] tracking-widest"
                 title={`Download all ${allEvents.length} events as JSON`}
               >↓ JSON</a>
               <a
                 href={`${API}/api/events/export?format=csv`}
                 download
-                className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[11px] tracking-widest"
                 title={`Download all ${allEvents.length} events as CSV`}
               >↓ CSV</a>
               {hasActiveFilter && (
@@ -520,13 +642,13 @@ export function ConfigModal() {
                   <a
                     href={`${API}/api/events/export?format=json&ids=${encodeURIComponent(filteredIds)}`}
                     download
-                    className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                    className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[11px] tracking-widest"
                     title={`Download filtered ${filteredEvents.length} events as JSON`}
                   >↓ JSON ({filteredEvents.length})</a>
                   <a
                     href={`${API}/api/events/export?format=csv&ids=${encodeURIComponent(filteredIds)}`}
                     download
-                    className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[9px] tracking-widest"
+                    className="text-[#2a4060] hover:text-[#4a6070] transition-colors text-[11px] tracking-widest"
                     title={`Download filtered ${filteredEvents.length} events as CSV`}
                   >↓ CSV ({filteredEvents.length})</a>
                 </>

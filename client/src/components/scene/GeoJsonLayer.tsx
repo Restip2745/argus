@@ -4,6 +4,11 @@ import * as THREE from 'three'
 import { useAppStore } from '../../store'
 import { getGAST, gastToRotY } from '../../hooks/useGAST'
 import { latLngToLocal, AXIAL_TILT_RAD } from '../../lib/coordinates'
+import { unwrapRing, emitSubdividedTriangle } from '../../lib/geoFill'
+import {
+  assignRegionColors, geometryBBoxes, NEUTRAL_FILLS, type ColorableRegion,
+} from '../../data/mapColoring'
+import { severityColor, severityRank } from '../../data/symbology'
 import type { CelestialBodyName } from '../../types'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -181,18 +186,44 @@ function buildHighlightFillGeometry(feature: GeoFeature): THREE.BufferGeometry |
 
 const HEATMAP_FILL_RADIUS = 1.003
 
-// Map total heat score → CSS hex color (blue → amber → red)
-function heatmapColor(total: number): string {
-  if (total >= 3.0) return '#ff2222'
-  if (total >= 2.0) return '#ff6600'
-  if (total >= 1.2) return '#ff9c2a'
-  if (total >= 0.6) return '#ffd700'
-  return '#00d4ff'
+/**
+ * Subdivision threshold for surface fills, in degrees of arc.
+ *
+ * At radius 1.003 over a unit Earth the geometry may span at most
+ * `maxSafeSpanDeg(1.003, 1.0)` ≈ 8.9° before a flat triangle's centre sinks
+ * below the terrain. 4° leaves a wide margin: the residual sag is ~0.0006,
+ * a fifth of the 0.003 clearance.
+ */
+const FILL_MAX_EDGE_DEG = 4
+
+/**
+ * Activity mode ramp — single hue, opacity carries the quantity.
+ *
+ * The previous heatmap stepped blue → gold → amber → orange → red, which was a
+ * near-copy of the severity ramp with different breakpoints: a country busy
+ * with routine news lit up the same red as a CRITICAL marker. A quantity gets a
+ * sequential ramp in one cool hue instead, leaving the warm band to severity.
+ */
+const ACTIVITY_HUE = '#3fc8e0'
+
+function activityOpacity(total: number): number {
+  return Math.min(0.34, 0.07 + total * 0.07)
 }
 
-// Opacity scales with intensity, capped at 0.22
-function heatmapOpacity(total: number): number {
-  return Math.min(0.22, 0.06 + total * 0.06)
+interface FillEntry {
+  geo: THREE.BufferGeometry
+  color: string
+  opacity: number
+}
+
+/** Stable identity for a GeoJSON feature, used as the colouring key. */
+function featureKey(f: GeoFeature): string {
+  return (
+    (f.properties['ADM0_A3'] as string) ??
+    (f.properties['ADMIN']   as string) ??
+    (f.properties['NAME']    as string) ??
+    JSON.stringify(f.properties['NAME_LONG'] ?? Math.random())
+  )
 }
 
 function buildHeatFillGeometry(feature: GeoFeature): THREE.BufferGeometry | null {
@@ -205,23 +236,29 @@ function buildHeatFillGeometry(feature: GeoFeature): THREE.BufferGeometry | null
 
   for (const poly of polygons) {
     if (poly.length === 0) continue
+    // Unwrap first: a ring spanning ±180 would otherwise triangulate into a
+    // band stretching the wrong way around the globe.
+    const outer = unwrapRing(poly[0])
     const shape = new THREE.Shape(
-      poly[0].map(([lng, lat]) => new THREE.Vector2(lng, lat)),
+      outer.map(([lng, lat]) => new THREE.Vector2(lng, lat)),
     )
     for (let h = 1; h < poly.length; h++) {
       shape.holes.push(new THREE.Path(
-        poly[h].map(([lng, lat]) => new THREE.Vector2(lng, lat)),
+        unwrapRing(poly[h]).map(([lng, lat]) => new THREE.Vector2(lng, lat)),
       ))
     }
     const pts2d   = shape.extractPoints(1)
     const indices = THREE.ShapeUtils.triangulateShape(pts2d.shape, pts2d.holes)
     const allPts  = [...pts2d.shape, ...pts2d.holes.flat()]
     for (const [a, b, c] of indices) {
-      for (const idx of [a, b, c]) {
-        const pt = allPts[idx]
-        const v  = latLngToLocal(pt.y, pt.x, HEATMAP_FILL_RADIUS)
-        positions.push(v.x, v.y, v.z)
-      }
+      const pa = allPts[a], pb = allPts[b], pc = allPts[c]
+      // Subdivide so the flat chords never sag below the terrain.
+      emitSubdividedTriangle(
+        [pa.x, pa.y], [pb.x, pb.y], [pc.x, pc.y],
+        HEATMAP_FILL_RADIUS,
+        positions,
+        { maxEdgeDeg: FILL_MAX_EDGE_DEG },
+      )
     }
   }
 
@@ -242,7 +279,7 @@ export function GeoJsonLayer({ positionsRef }: Props) {
   const setSelectedCountry     = useAppStore((s) => s.setSelectedCountry)
   const selectedCountry        = useAppStore((s) => s.selectedCountry)
   const setOnEarthSurfaceClick = useAppStore((s) => s.setOnEarthSurfaceClick)
-  const showHeatmapLayer       = useAppStore((s) => s.showHeatmapLayer)
+  const mapMode                = useAppStore((s) => s.mapMode)
   const events                 = useAppStore((s) => s.events)
 
   const outerRef = useRef<THREE.Group>(null)   // Earth position + axial tilt
@@ -357,25 +394,57 @@ export function GeoJsonLayer({ positionsRef }: Props) {
 
   // ── Compare mode: highlight all compared countries ────────────────────────────
   // ── Heatmap: per-country total heat score from events ────────────────────────
-  const heatmapEntries = useMemo(() => {
-    if (!showHeatmapLayer || !showGeoJsonLayer || features.length === 0) return []
+  // ── Neutral political colouring ──────────────────────────────────────────────
+  // Computed once per feature set. Purely for telling neighbours apart; carries
+  // no meaning, which is why it is safe to leave on underneath the data modes.
+  const politicalColors = useMemo(() => {
+    if (features.length === 0) return new Map<string, string>()
+    const regions: ColorableRegion[] = []
+    for (const f of features) {
+      const bboxes = geometryBBoxes(f.geometry)
+      if (bboxes.length) regions.push({ id: featureKey(f), bboxes })
+    }
+    return assignRegionColors(regions)
+  }, [features])
 
-    // Build label → total heat score map (events in last 24 h only)
+  // ── Surface fills for the active map mode ────────────────────────────────────
+  const fillEntries = useMemo(() => {
+    if (mapMode === 'none' || !showGeoJsonLayer || features.length === 0) return []
+
+    // Political mode paints every country, so it needs no event lookup.
+    if (mapMode === 'political') {
+      const entries: FillEntry[] = []
+      for (const f of features) {
+        const geo = buildHeatFillGeometry(f)
+        if (!geo) continue
+        entries.push({
+          geo,
+          color: politicalColors.get(featureKey(f)) ?? NEUTRAL_FILLS[0],
+          opacity: 0.30,
+        })
+      }
+      return entries
+    }
+
+    // Data modes aggregate the last 24 h of events per country.
     const cutoff = Date.now() - 24 * 60 * 60 * 1000
-    const scoreByLabel = new Map<string, number>()
+    const byLabel = new Map<string, { heat: number; count: number; peak: string }>()
     for (const e of events) {
       const label = e.location_label
       if (!label || label === '—') continue
       const ts = e.published_at ? new Date(e.published_at).getTime() : 0
       if (ts > 0 && ts < cutoff) continue
-      const heat = e.heat_score ?? 0.1
-      scoreByLabel.set(label, (scoreByLabel.get(label) ?? 0) + heat)
+      const prev = byLabel.get(label) ?? { heat: 0, count: 0, peak: 'LOW' }
+      byLabel.set(label, {
+        heat:  prev.heat + (e.heat_score ?? 0.1),
+        count: prev.count + 1,
+        peak:  severityRank(e.intensity) > severityRank(prev.peak) ? e.intensity : prev.peak,
+      })
     }
-    if (scoreByLabel.size === 0) return []
+    if (byLabel.size === 0) return []
 
-    // Match labels to GeoJSON features (case-insensitive substring)
-    const entries: { geo: THREE.BufferGeometry; color: string; opacity: number }[] = []
-    for (const [label, total] of scoreByLabel) {
+    const entries: FillEntry[] = []
+    for (const [label, agg] of byLabel) {
       const lower = label.toLowerCase()
       const feat = features.find((f) => {
         const name  = ((f.properties['NAME']  as string) ?? '').toLowerCase()
@@ -386,10 +455,23 @@ export function GeoJsonLayer({ positionsRef }: Props) {
       if (!feat) continue
       const geo = buildHeatFillGeometry(feat)
       if (!geo) continue
-      entries.push({ geo, color: heatmapColor(total), opacity: heatmapOpacity(total) })
+
+      if (mapMode === 'posture') {
+        // Colour is severity — the same ramp as the markers and the status bar,
+        // so the globe reads as one continuous severity surface.
+        entries.push({
+          geo,
+          color: severityColor(agg.peak),
+          opacity: 0.14 + severityRank(agg.peak) * 0.05,
+        })
+      } else {
+        // Activity is a quantity, so it gets a single-hue sequential ramp.
+        // Deliberately cool: a volume of LOW events must never look like alarm.
+        entries.push({ geo, color: ACTIVITY_HUE, opacity: activityOpacity(agg.heat) })
+      }
     }
     return entries
-  }, [showHeatmapLayer, showGeoJsonLayer, features, events])
+  }, [mapMode, showGeoJsonLayer, features, events, politicalColors])
 
   if (!showGeoJsonLayer) return null
 
@@ -433,8 +515,8 @@ export function GeoJsonLayer({ positionsRef }: Props) {
             </mesh>
           )}
 
-          {/* Heatmap: country fills colored by 24h event heat score */}
-          {heatmapEntries.map(({ geo, color, opacity }, i) => (
+          {/* Surface fill for the active map mode */}
+          {fillEntries.map(({ geo, color, opacity }, i) => (
             <mesh key={`heat-${i}`} geometry={geo}>
               <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
             </mesh>

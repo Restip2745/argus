@@ -9,6 +9,15 @@ import type { BodyDef } from '../data/celestialBodies'
 
 const CONTEXT_ENTITY_LIMIT = 8
 
+/**
+ * Earth surface fill modes.
+ *   none      outlines only
+ *   political neutral four-colour fills — legibility, carries no meaning
+ *   posture   worst live severity per country, on the severity ramp
+ *   activity  event volume per country, single-hue sequential
+ */
+export type MapMode = 'none' | 'political' | 'posture' | 'activity'
+
 export interface FilterPreset {
   id: string
   name: string
@@ -84,8 +93,12 @@ interface AppState {
   setShowShipsLayer: (v: boolean) => void
   showConflictLayer: boolean
   setShowConflictLayer: (v: boolean) => void
-  showHeatmapLayer: boolean
-  setShowHeatmapLayer: (v: boolean) => void
+  /** Earth surface fill. Exclusive by construction — only one variable may be
+   *  painted across the globe at a time, or the fills become mud. Tracking
+   *  overlays (aircraft, vessels, fronts) stay additive; they are point and
+   *  line data, not a surface fill, so they do not compete. */
+  mapMode: MapMode
+  setMapMode: (v: MapMode) => void
   layerErrors: { aircraft: boolean; satellites: boolean; ships: boolean; conflict: boolean }
   setLayerError: (layer: 'aircraft' | 'satellites' | 'ships' | 'conflict', error: boolean) => void
   layerLoading: { aircraft: boolean; satellites: boolean; ships: boolean; conflict: boolean }
@@ -142,6 +155,21 @@ interface AppState {
   // ── Display ───────────────────────────────────────────────
   uiScale: number
   setUiScale: (v: number) => void
+
+  // ── Presentation ──────────────────────────────────────────
+  /** Where the camera lands on load. 'earth' puts the operator at the working
+   *  altitude immediately; 'solar' keeps the old system-wide establishing shot. */
+  homeView: 'earth' | 'solar'
+  setHomeView: (v: 'earth' | 'solar') => void
+
+  /** Decorative motion (hover tilt, sheen, staggered reveals). Off collapses
+   *  the HUD to functional motion only — arrivals and state changes. */
+  decorativeFx: boolean
+  setDecorativeFx: (v: boolean) => void
+  soundEnabled: boolean
+  setSoundEnabled: (v: boolean) => void
+  soundVolume: number
+  setSoundVolume: (v: number) => void
 
   // ── Lite mode ─────────────────────────────────────────────
   liteMode: boolean
@@ -279,8 +307,16 @@ export const useAppStore = create<AppState>((set) => ({
   setShowShipsLayer:    (showShipsLayer) => set({ showShipsLayer }),
   showConflictLayer:    false,
   setShowConflictLayer: (showConflictLayer) => set({ showConflictLayer }),
-  showHeatmapLayer:     false,
-  setShowHeatmapLayer:  (showHeatmapLayer) => set({ showHeatmapLayer }),
+  mapMode: ((): MapMode => {
+    const saved = localStorage.getItem('argus-map-mode')
+    return saved === 'none' || saved === 'political' || saved === 'posture' || saved === 'activity'
+      ? saved
+      : 'political'
+  })(),
+  setMapMode: (mapMode) => {
+    localStorage.setItem('argus-map-mode', mapMode)
+    set({ mapMode })
+  },
   layerErrors: { aircraft: false, satellites: false, ships: false, conflict: false },
   setLayerError: (layer, error) => set((s) => ({ layerErrors: { ...s.layerErrors, [layer]: error } })),
   layerLoading: { aircraft: false, satellites: false, ships: false, conflict: false },
@@ -350,6 +386,36 @@ export const useAppStore = create<AppState>((set) => ({
   // Display
   uiScale:    1.0,
   setUiScale: (uiScale) => set({ uiScale }),
+
+  // Presentation — persisted in localStorage
+  homeView: localStorage.getItem('argus-home-view') === 'solar' ? 'solar' : 'earth',
+  setHomeView: (homeView) => {
+    localStorage.setItem('argus-home-view', homeView)
+    set({ homeView })
+  },
+  decorativeFx: (() => {
+    const saved = localStorage.getItem('argus-decorative-fx')
+    if (saved !== null) return saved === 'true'
+    // No stored preference: follow the OS accessibility setting.
+    return !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  })(),
+  setDecorativeFx: (decorativeFx) => {
+    localStorage.setItem('argus-decorative-fx', String(decorativeFx))
+    set({ decorativeFx })
+  },
+  soundEnabled: localStorage.getItem('argus-sound-enabled') === 'true',
+  setSoundEnabled: (soundEnabled) => {
+    localStorage.setItem('argus-sound-enabled', String(soundEnabled))
+    set({ soundEnabled })
+  },
+  soundVolume: (() => {
+    const v = parseFloat(localStorage.getItem('argus-sound-volume') ?? '')
+    return isNaN(v) ? 0.6 : Math.min(1, Math.max(0, v))
+  })(),
+  setSoundVolume: (soundVolume) => {
+    localStorage.setItem('argus-sound-volume', String(soundVolume))
+    set({ soundVolume })
+  },
 
   // Lite mode
   liteMode:    false,
