@@ -80,52 +80,41 @@ export function Sidebar() {
         borderRight: '1px solid rgba(0,180,255,0.12)',
       }}>
 
-      {/* Header */}
-      <div className="px-3 py-2 border-b border-[rgba(0,180,255,0.12)]">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#39ff8a] animate-pulse" />
-          <span className="text-[#00d4ff] text-[11px] tracking-[0.18em] uppercase font-semibold">ARGUS</span>
-          <button
-            onClick={() => setLiteMode(true)}
-            title="Lite mode"
-            className="ml-auto flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors"
-            style={{ width: '20px', height: '20px', fontSize: '11px', background: 'rgba(4,9,22,0.6)' }}
-          >
-            ⊟
-          </button>
-        </div>
-        <p className="text-[#4a6070] text-[11px] mt-0.5">{t('app.title')}</p>
-        {focusedBody && (
-          <p className="text-[#9b6dff] text-[11px] mt-1 uppercase tracking-widest">
-            ▶ {focusedBody}
-          </p>
-        )}
-      </div>
-
       {/* Feed count + why the feed looks the way it does.
-          There is no search box here on purpose — the filter bar at the top of
-          the screen owns every filter control (and the / shortcut). This strip
-          reports the resulting state rather than duplicating the controls. */}
+          No wordmark and no clock here — the status bar owns the app's identity
+          and the time, and repeating them costs a header block of feed space
+          to say nothing new. What survives is what is local to this panel: the
+          count, the active constraints, and the camera's current focus.
+
+          There is no search box here on purpose either — the filter bar at the
+          top of the screen owns every filter control (and the / shortcut).
+          This strip reports the resulting state rather than duplicating it. */}
       <div className="border-b border-[rgba(0,180,255,0.08)]">
-        <div className="px-3 py-1.5 flex items-center justify-between">
+        <div className="px-3 py-1.5 flex items-center gap-2">
           <span className="text-[11px] text-[#2a4060]">
             {t('feed.title', 'INTEL FEED')} —{' '}
             <span style={{ color: isNarrowed ? '#00d4ff' : '#4a6070' }}>{filtered.length}</span>
             {isNarrowed && <span className="text-[#1e3040]"> / {events.length}</span>}
           </span>
-          {isNarrowed && (
-            <button
-              onClick={clearAll}
-              className="text-[10px] tracking-[0.08em] text-[#4a6070] hover:text-[#00d4ff] transition-colors"
-              title={t('feed.clearAll', 'Clear all filters')}
-            >
-              {t('feed.clear', 'CLEAR')}
-            </button>
-          )}
-        </div>
 
+          {/* Camera focus — local to the scene, not shown anywhere else */}
+          {focusedBody && (
+            <span className="text-[10px] text-[#9b6dff] uppercase tracking-[0.14em] truncate">
+              ▶ {focusedBody}
+            </span>
+          )}
+
+          <button
+            onClick={() => setLiteMode(true)}
+            title={t('ui.liteMode', 'Lite mode')}
+            className="ml-auto flex-shrink-0 flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors"
+            style={{ width: '20px', height: '20px', fontSize: '11px', background: 'rgba(4,9,22,0.6)' }}
+          >
+            ⊟
+          </button>
+        </div>
         {(isNarrowed || isReordered) && (
-          <div className="px-3 pb-2 flex flex-wrap gap-1">
+          <div className="px-3 pb-2 flex flex-wrap items-center gap-1">
             {showWatchlistOnly && (
               <FilterChip
                 label={`★ ${t('feed.watchlist', 'WATCHLIST')}`}
@@ -157,6 +146,17 @@ export function Sidebar() {
                 color="#9b6dff"
                 onClear={() => setEventSortOrder('newest')}
               />
+            )}
+
+            {/* Clear-all sits with the chips it clears, not in a row of its own */}
+            {isNarrowed && (
+              <button
+                onClick={clearAll}
+                className="ml-auto text-[10px] tracking-[0.08em] text-[#4a6070] hover:text-[#00d4ff] transition-colors"
+                title={t('feed.clearAll', 'Clear all filters')}
+              >
+                {t('feed.clear', 'CLEAR')}
+              </button>
             )}
           </div>
         )}

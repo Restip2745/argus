@@ -5,6 +5,9 @@ import type { FilterPreset } from '../../store'
 import { CATEGORY_GLYPH, CATEGORY_TINT, CATEGORY_LABEL, ALL_CATEGORIES } from '../../data/symbology'
 import { STATUS_BAR_H } from './StatusBar'
 
+/** Sidebar width — must match the w-64 on <aside> in Sidebar.tsx. */
+const SIDEBAR_W = 256
+
 type TimeRange = '6h' | '12h' | '24h' | 'all'
 const TIME_RANGES: { value: TimeRange; label: string }[] = [
   { value: '6h',  label: '6h'  },
@@ -165,6 +168,7 @@ export function CategoryFilterBar() {
   const applyFilterPreset    = useAppStore((s) => s.applyFilterPreset)
   const deleteFilterPreset   = useAppStore((s) => s.deleteFilterPreset)
   const decorativeFx         = useAppStore((s) => s.decorativeFx)
+  const liteMode             = useAppStore((s) => s.liteMode)
   const [savingPreset, setSavingPreset] = useState(false)
   const [presetName,   setPresetName]   = useState('')
   const presetInputRef = useRef<HTMLInputElement>(null)
@@ -194,9 +198,18 @@ export function CategoryFilterBar() {
   return (
     <div
       className="absolute z-20 flex flex-col items-center gap-1 font-mono"
-      style={{ top: `${STATUS_BAR_H + 8}px`, left: '50%', transform: 'translateX(-50%)', alignItems: 'center' }}
+      style={{
+        top: `${STATUS_BAR_H + 8}px`,
+        // Centred on the visible map, not on the viewport. Centring on the
+        // viewport pushed the bar underneath the sidebar on narrow windows,
+        // where the time-range buttons ended up unreachable behind the feed.
+        left: liteMode ? '50%' : `calc(50% + ${SIDEBAR_W / 2}px)`,
+        transform: 'translateX(-50%)',
+        maxWidth: liteMode ? 'calc(100vw - 24px)' : `calc(100vw - ${SIDEBAR_W + 24}px)`,
+        alignItems: 'center',
+      }}
     >
-    <div className="flex items-center gap-1">
+    <div className="flex items-center justify-center gap-1 flex-wrap">
       {/* Watchlist toggle — ★ with bookmark count */}
       <button
         onClick={() => setShowWatchlistOnly(!showWatchlistOnly)}
