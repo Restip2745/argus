@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useAppStore } from '../../store'
+import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { BODY_MAP, TIER_TO_ORBITAL, TIER_TO_SURFACE } from '../../data/celestialBodies'
 import { getCountryCentroid, resolveCountryName } from '../../data/countryData'
 import { eventSymbol, peakSeverity, severityColor, severityRank, withAlpha } from '../../data/symbology'
@@ -259,7 +260,9 @@ function OrbitalMarker({
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export function EventMarkers({ positionsRef }: Props) {
-  const events           = useAppStore((s) => s.events)
+  // Same set the feed renders — hiding a category or narrowing the time
+  // range must empty the globe too, or the two disagree in plain sight.
+  const events           = useFilteredEvents()
   const showEventMarkers = useAppStore((s) => s.showEventMarkers)
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
 

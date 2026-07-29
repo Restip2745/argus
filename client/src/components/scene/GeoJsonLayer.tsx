@@ -9,6 +9,7 @@ import {
   assignRegionColors, geometryBBoxes, NEUTRAL_FILLS, type ColorableRegion,
 } from '../../data/mapColoring'
 import { severityColor, severityRank } from '../../data/symbology'
+import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { useSceneTime } from '../../hooks/useSceneTime'
 import type { CelestialBodyName } from '../../types'
 
@@ -281,7 +282,8 @@ export function GeoJsonLayer({ positionsRef }: Props) {
   const selectedCountry        = useAppStore((s) => s.selectedCountry)
   const setOnEarthSurfaceClick = useAppStore((s) => s.setOnEarthSurfaceClick)
   const mapMode                = useAppStore((s) => s.mapMode)
-  const events                 = useAppStore((s) => s.events)
+  // Choropleth aggregates the visible set, not everything held.
+  const events                 = useFilteredEvents()
   const { now: sceneNow }      = useSceneTime()
 
   const outerRef = useRef<THREE.Group>(null)   // Earth position + axial tilt

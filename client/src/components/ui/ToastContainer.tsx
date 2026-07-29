@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { eventSymbol, severityRank } from '../../data/symbology'
 import { tick } from '../../lib/sound'
+import { isCategoryVisible } from '../../lib/eventFilter'
 import type { ArgusEvent } from '../../types'
 
 const TOAST_DURATION_MS = 3000
@@ -132,6 +133,7 @@ function ToastItem({ toast, onDismiss, onOpen, onHoldStart, onHoldEnd }: ToastIt
 export function ToastContainer() {
   const events           = useAppStore((s) => s.events)
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
+  const hiddenCategories = useAppStore((s) => s.hiddenCategories)
   const [toasts, setToasts] = useState<Toast[]>([])
   const prevIdsRef    = useRef<Set<string>>(new Set())
   // true once we have seen the first non-empty event array (REST hydration complete)
@@ -200,7 +202,12 @@ export function ToastContainer() {
 
     const arriving = events.filter(
       (e) => !prevIdsRef.current.has(e.id) &&
-             (e.intensity === 'CRITICAL' || e.intensity === 'HIGH')
+             (e.intensity === 'CRITICAL' || e.intensity === 'HIGH') &&
+             // Category only — not the full filter. A toast announces something
+             // that just happened, so the time window says nothing about it, and
+             // a transient search or a watchlist view must not silence alerts on
+             // a monitoring tool. Hiding a category is a standing instruction.
+             isCategoryVisible(e, hiddenCategories)
     )
     prevIdsRef.current = currentIds
 
@@ -234,7 +241,7 @@ export function ToastContainer() {
       }
       return updated
     })
-  }, [events, scheduleExit])
+  }, [events, scheduleExit, hiddenCategories])
 
   // Cleanup timers on unmount
   useEffect(() => {

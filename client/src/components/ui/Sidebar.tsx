@@ -45,8 +45,9 @@ export function Sidebar() {
   const focusedBody      = useAppStore((s) => s.focusedBody)
   const setLiteMode      = useAppStore((s) => s.setLiteMode)
 
-  // Same source of truth as the 3-D markers and the lite-mode stack. The feed,
-  // the globe and the filter bar are now guaranteed to agree.
+  // Same source as the lite-mode stack, the 3-D markers and the map-mode fills.
+  // The rule for which surfaces filter and which do not lives in
+  // `lib/eventFilter.ts`.
   const filtered = useFilteredEvents()
 
   const hiddenCategories     = useAppStore((s) => s.hiddenCategories)
