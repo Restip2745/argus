@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Stars } from '@react-three/drei'
 import { SolarSystem } from './components/scene/SolarSystem'
+import { Nebula } from './components/scene/Nebula'
 import { EventPanel } from './components/panels/EventPanel'
 import { RegionPanel } from './components/panels/RegionPanel'
 import { Sidebar } from './components/ui/Sidebar'
@@ -132,6 +133,7 @@ export default function App() {
         shadows={{ type: THREE.PCFSoftShadowMap }}
       >
         <Suspense fallback={null}>
+          <Nebula />
           <Stars radius={8000} depth={80} count={16000} factor={3} saturation={0.15} speed={0} />
           <Stars radius={3000} depth={40} count={4000}  factor={5} saturation={0.1}  speed={0} />
           <SolarSystem />

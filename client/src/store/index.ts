@@ -175,6 +175,12 @@ interface AppState {
   homeView: 'earth' | 'solar'
   setHomeView: (v: 'earth' | 'solar') => void
 
+  /** Backdrop nebula strength, 0 (off) to 2. Taste, not correctness — the
+   *  right level depends on the display and how much the operator wants the
+   *  scene to feel like somewhere rather than like a chart. */
+  nebulaIntensity: number
+  setNebulaIntensity: (v: number) => void
+
   /** Decorative motion (hover tilt, sheen, staggered reveals). Off collapses
    *  the HUD to functional motion only — arrivals and state changes. */
   decorativeFx: boolean
@@ -430,6 +436,14 @@ export const useAppStore = create<AppState>((set) => ({
   setSoundEnabled: (soundEnabled) => {
     localStorage.setItem('argus-sound-enabled', String(soundEnabled))
     set({ soundEnabled })
+  },
+  nebulaIntensity: (() => {
+    const v = parseFloat(localStorage.getItem('argus-nebula') ?? '')
+    return isNaN(v) ? 1.2 : Math.min(2, Math.max(0, v))
+  })(),
+  setNebulaIntensity: (nebulaIntensity) => {
+    localStorage.setItem('argus-nebula', String(nebulaIntensity))
+    set({ nebulaIntensity })
   },
   soundVolume: (() => {
     const v = parseFloat(localStorage.getItem('argus-sound-volume') ?? '')

@@ -104,6 +104,8 @@ export function ConfigModal() {
   const uiScale       = useAppStore((s) => s.uiScale)
   const homeView        = useAppStore((s) => s.homeView)
   const setHomeView     = useAppStore((s) => s.setHomeView)
+  const nebulaIntensity    = useAppStore((s) => s.nebulaIntensity)
+  const setNebulaIntensity = useAppStore((s) => s.setNebulaIntensity)
   const decorativeFx    = useAppStore((s) => s.decorativeFx)
   const setDecorativeFx = useAppStore((s) => s.setDecorativeFx)
   const soundEnabled    = useAppStore((s) => s.soundEnabled)
@@ -455,6 +457,29 @@ export function ConfigModal() {
                     checked={decorativeFx}
                     onChange={setDecorativeFx}
                   />
+                  {/* Backdrop strength. Pure taste, so it gets a control
+                      rather than a number someone has to argue me into. */}
+                  <div className="pt-1">
+                    <FieldLabel
+                      text={t('config.fields.nebula', 'BACKDROP NEBULA')}
+                      value={nebulaIntensity === 0
+                        ? t('config.fields.nebulaOff', 'OFF')
+                        : `${Math.round(nebulaIntensity * 100)}%`}
+                    />
+                    <input
+                      type="range" min={0} max={2} step={0.05}
+                      value={nebulaIntensity}
+                      onChange={(e) => setNebulaIntensity(parseFloat(e.target.value))}
+                      className="w-full cursor-pointer"
+                      style={{ ['--thumb-color' as string]: '#9b6dff', ['--thumb-glow' as string]: 'rgba(155,109,255,0.6)' }}
+                    />
+                    <div className="flex justify-between text-[#2a4060] text-[10px] mt-0.5">
+                      <span>{t('config.fields.nebulaOff', 'OFF')}</span>
+                      <span>100%</span>
+                      <span>200%</span>
+                    </div>
+                  </div>
+
                   <ToggleRow
                     label={t('config.fields.sound', 'Alert sound')}
                     hint={t('config.fields.soundHint', 'A low tone when a CRITICAL or HIGH event arrives, plus a quiet confirm click. Nothing else makes a sound.')}

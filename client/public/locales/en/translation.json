@@ -213,7 +213,9 @@
       "homeView": "STARTUP VIEW",
       "homeViewEarth": "EARTH",
       "homeViewSolar": "SOLAR SYSTEM",
-      "homeViewHint": "Applies on next load. Earth lands at working altitude with the political layer and markers live."
+      "homeViewHint": "Applies on next load. Earth lands at working altitude with the political layer and markers live.",
+      "nebula": "BACKDROP NEBULA",
+      "nebulaOff": "OFF"
     },
     "title": "⚙ Configuration",
     "sections": {

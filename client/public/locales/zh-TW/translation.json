@@ -213,7 +213,9 @@
       "homeView": "啟動視角",
       "homeViewEarth": "地球",
       "homeViewSolar": "太陽系",
-      "homeViewHint": "下次載入時生效。地球視角直接落在工作高度，政治圖層與事件標記已就緒。"
+      "homeViewHint": "下次載入時生效。地球視角直接落在工作高度，政治圖層與事件標記已就緒。",
+      "nebula": "背景星雲",
+      "nebulaOff": "關閉"
     },
     "title": "⚙ 設定",
     "sections": {
