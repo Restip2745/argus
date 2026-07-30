@@ -58,7 +58,10 @@
       "agent": "◈ 情報代理",
       "analyzing": "分析中",
       "viewSource": "查看原文",
-      "askAgent": "詢問情報分析…"
+      "askAgent": "詢問情報分析…",
+      "loadingGraph": "載入關聯圖…",
+      "relatedEvents": "關聯事件",
+      "graphHint": "滑過節點可讀取 · 點擊開啟"
     },
     "timeRange": {
       "6h": "6小時",

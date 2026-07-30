@@ -58,7 +58,10 @@
       "agent": "◈ INTELLIGENCE AGENT",
       "analyzing": "ANALYZING",
       "viewSource": "VIEW SOURCE",
-      "askAgent": "Ask intelligence analysis…"
+      "askAgent": "Ask intelligence analysis…",
+      "loadingGraph": "LOADING GRAPH…",
+      "relatedEvents": "RELATED EVENTS",
+      "graphHint": "Hover a node to read it · click to open"
     },
     "timeRange": {
       "6h": "6h",
