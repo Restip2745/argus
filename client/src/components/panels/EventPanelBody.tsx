@@ -214,17 +214,9 @@ export function EventPanelBody({
           </div>
         )}
 
-        {/* News thumbnail */}
-        {event.image_url && (
-          <div style={{ borderRadius: '3px', overflow: 'hidden', border: `1px solid ${accentColor}18` }}>
-            <img
-              src={event.image_url}
-              alt=""
-              onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
-              style={{ width: '100%', maxHeight: '130px', objectFit: 'cover', display: 'block', opacity: 0.85 }}
-            />
-          </div>
-        )}
+        {/* The lead image is the 16:9 banner at the top of the panel. A second
+            copy used to sit here, so every article with artwork showed it
+            twice. */}
 
         {/* Substance, not chrome — must not be dimmer or smaller than the
             labels around it. */}
