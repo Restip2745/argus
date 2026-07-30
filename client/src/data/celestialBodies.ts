@@ -608,6 +608,45 @@ export const TIER_TO_ORBITAL = 80
 export const TIER_TO_SURFACE = 12
 
 /**
+ * North-up alignment band.
+ *
+ * Close in, the camera rolls so the focused body's pole points at the top of
+ * the screen — reading a map is much harder when the graticule is lying at an
+ * angle. Far out the real axial tilt is restored, because at system scale the
+ * tilt is the point: it is what makes the orrery honest.
+ *
+ * Two thresholds, not one. With a single boundary, hovering near it would flip
+ * the camera back and forth on sub-pixel changes in distance, and a rolling
+ * view is exactly the motion that makes people queasy. Between these values the
+ * current state simply holds.
+ */
+export const NORTH_ALIGN_ENTER = 12   // closer than this → align to the pole
+export const NORTH_ALIGN_EXIT  = 16   // farther than this → back to world up
+
+/**
+ * Whether the camera should be pole-aligned, given how far it is and what it is
+ * doing now. Pure so the hysteresis can be tested without a scene.
+ */
+export function shouldAlignNorth(distance: number, currentlyAligned: boolean): boolean {
+  if (distance < NORTH_ALIGN_ENTER) return true
+  if (distance > NORTH_ALIGN_EXIT)  return false
+  return currentlyAligned              // inside the band, hold
+}
+
+/**
+ * A body's north pole direction in world space.
+ *
+ * Axial tilt is applied in the scene as a rotation about Z (see the tilt group
+ * in CelestialBody and focusOnEarthSurface), so the pole is +Y rotated by the
+ * same angle. Returned as a tuple to keep this module free of three.js.
+ */
+export function bodyNorthAxis(id: CelestialBodyName): [number, number, number] {
+  const tiltDeg = BODY_MAP.get(id)?.axialTiltDeg ?? 0
+  const t = (tiltDeg * Math.PI) / 180
+  return [-Math.sin(t), Math.cos(t), 0]
+}
+
+/**
  * Camera distance for the Earth home view.
  *
  * Deliberately between the two thresholds above: you arrive to a globe with

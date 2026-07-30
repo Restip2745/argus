@@ -11,6 +11,7 @@ import { getGAST, gastToRotY } from '../../hooks/useGAST'
 import {
   BODIES, bodyMinDistance, bodyViewDistance,
   EARTH_DETAIL_THRESHOLD, EARTH_MARKER_THRESHOLD, EARTH_HOME_DISTANCE,
+  shouldAlignNorth, bodyNorthAxis,
 } from '../../data/celestialBodies'
 import { determineNavLevel } from '../../config/navLevels'
 import { CelestialBody } from './CelestialBody'
@@ -88,6 +89,55 @@ export function SolarSystem() {
     useAppStore.getState().setNavCandidates(level.candidates('earth'))
     // Deliberately not setSelectedBody() — arriving somewhere should not also
     // throw a panel over the view.
+  })
+
+  // ── North-up alignment ──────────────────────────────────────────────────────
+  // Close to a body, roll the camera so its pole is at the top of the screen;
+  // pull back and the real axial tilt returns. OrbitControls re-derives its
+  // orbit frame from `object.up` on every update(), so animating that vector is
+  // all this takes — the camera position is untouched, only the roll changes.
+  const alignedRef = useRef(false)
+  const wantUpRef  = useRef(new THREE.Vector3(0, 1, 0))
+  const _worldUp   = useRef(new THREE.Vector3(0, 1, 0))
+
+  useFrame((_, delta) => {
+    const controls = controlsRef.current
+    if (!controls) return
+
+    const focused = useAppStore.getState().focusedBody
+    const bodyPos = focused ? positionsRef.current.get(focused) : null
+
+    if (focused && bodyPos) {
+      const dist = camera.position.distanceTo(bodyPos)
+      alignedRef.current = shouldAlignNorth(dist, alignedRef.current)
+      if (alignedRef.current) {
+        const [x, y, z] = bodyNorthAxis(focused)
+        wantUpRef.current.set(x, y, z)
+      } else {
+        wantUpRef.current.copy(_worldUp.current)
+      }
+    } else {
+      // Nothing focused — the system view has no "up" but the world's.
+      alignedRef.current = false
+      wantUpRef.current.copy(_worldUp.current)
+    }
+
+    const target = wantUpRef.current
+    if (camera.up.angleTo(target) < 0.0005) {
+      if (!camera.up.equals(target)) { camera.up.copy(target); controls.update() }
+      return
+    }
+
+    // A rolling view is precisely the motion that makes people queasy, so the
+    // reduced-motion preference switches it to an instant change rather than
+    // just a faster one.
+    if (!useAppStore.getState().decorativeFx) {
+      camera.up.copy(target)
+    } else {
+      // Frame-rate independent ease; converges in roughly half a second.
+      camera.up.lerp(target, 1 - Math.pow(0.004, delta)).normalize()
+    }
+    controls.update()
   })
 
   // ── Simulation clock ────────────────────────────────────────────────────────
