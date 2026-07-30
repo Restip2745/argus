@@ -15,7 +15,6 @@ import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import { useAppStore } from '../../store'
 import type { AgentEntry } from '../../hooks/useAgentQuery'
-import { EventRelationGraph } from './EventRelationGraph'
 import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
 import { highlightText } from '../../utils/highlightText'
@@ -370,8 +369,11 @@ export function EventPanelBody({
           </div>
         )}
 
-        {/* Relationship graph */}
-        <EventRelationGraph eventId={event.id} accentColor={accentColor} />
+        {/* The related-events radial graph used to sit here. It read the same
+            useRelatedEvents(id) fetch as the timeline strip on the left, so the
+            panel requested the endpoint twice and drew one result set twice. A
+            star topology — every node joined only to the centre — also carries
+            no relationship the timeline's ordering does not already show. */}
 
         {/* Meta row: source · location */}
         <div className="flex items-center justify-between text-[11px] text-[#2a4060] pt-2 border-t border-[rgba(0,180,255,0.07)]">

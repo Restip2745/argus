@@ -1,13 +1,19 @@
 /**
  * EventTimeline — left-strip timeline for EventPanel.
  *
- * Shows ALL events in chronological order (newest first): the currently
- * displayed event is included and marked with a bookmark indicator (▶).
- * Clicking a row fires onSelect(id) which drives the slide animation in
- * EventPanel.  Clicking the already-active row is a no-op.
+ * Shows the events related to the open one, plus the open one itself, newest
+ * first. The current event is the anchor of the whole strip, so it is marked
+ * hard: accent fill, accent rail, brighter bold title and a ▶.
+ *
+ * (The header used to claim this showed ALL events. It never did — EventPanel
+ * passes related + current — and the mismatch made the strip look broken.)
+ *
+ * Clicking a row fires onSelect(id), which drives the slide animation in
+ * EventPanel. Clicking the already-active row is a no-op.
  */
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { eventSymbol, severityColor } from '../../data/symbology'
+import { useAppStore } from '../../store'
 import type { ArgusEvent } from '../../types'
 
 function relativeTime(iso: string | null): string {
@@ -43,6 +49,7 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
   const prevNudgeGen = useRef(nudgeGen)
   const [nudging, setNudging] = useState(false)
   const rowRef = useRef<HTMLButtonElement>(null)
+  const decorativeFx = useAppStore((st) => st.decorativeFx)
 
   useEffect(() => {
     if (nudgeGen !== prevNudgeGen.current) {
@@ -53,12 +60,23 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
     }
   }, [nudgeGen])
 
-  // Scroll active row into view when it becomes active
+  // Bring the selection into view and flash it.
+  //
+  // 'nearest' scrolled the minimum possible amount, so a row just off the edge
+  // would stop flush against it and stay hard to spot. 'center' puts the
+  // selection in the middle of the strip every time, which also reveals its
+  // neighbours in both directions — the point of a timeline.
+  const [flash, setFlash] = useState(false)
   useEffect(() => {
-    if (isActive && rowRef.current) {
-      rowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    }
-  }, [isActive])
+    if (!isActive || !rowRef.current) return
+    rowRef.current.scrollIntoView({
+      block: 'center',
+      behavior: decorativeFx ? 'smooth' : 'auto',
+    })
+    setFlash(true)
+    const t = setTimeout(() => setFlash(false), 620)
+    return () => clearTimeout(t)
+  }, [isActive, decorativeFx])
 
   const animation = isNew
     ? 'timelineSlideIn 0.4s cubic-bezier(0.22,1,0.36,1) both'
@@ -69,16 +87,20 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
   return (
     <button
       ref={rowRef}
+      data-timeline-row
+      data-active={isActive}
       onClick={() => { if (!isActive) onSelect(ev.id) }}
       style={{
         display:     'block',
         width:       '100%',
         textAlign:   'left',
-        background:  isActive ? `${accentColor}0f` : 'none',
+        // The active row is the operator's "you are here". At 6% alpha it was
+        // effectively invisible, so the strip read as an undifferentiated list.
+        background:  isActive ? `${accentColor}24` : 'none',
         border:      'none',
         borderBottom: isLast ? 'none' : `1px solid ${color}0e`,
-        borderLeft:  isActive ? `2px solid ${accentColor}` : '2px solid transparent',
-        padding:     '8px 8px 8px 12px',
+        borderLeft:  isActive ? `3px solid ${accentColor}` : '3px solid transparent',
+        padding:     '8px 8px 8px 11px',
         cursor:      isActive ? 'default' : 'pointer',
         position:    'relative',
         fontFamily:  'JetBrains Mono, monospace',
@@ -88,6 +110,22 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
       onMouseEnter={e => { if (!isActive) (e.currentTarget.style.background = `${color}0a`) }}
       onMouseLeave={e => { if (!isActive) (e.currentTarget.style.background = 'none') }}
     >
+      {/* Selection flash. An overlay rather than an animated background, so the
+          keyframe only touches opacity and the accent colour can stay inline.
+          Opacity-only also makes it the least motion-sensitive cue available —
+          it says "the selection moved here" without anything sliding. */}
+      {flash && (
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute', inset: 0,
+            background: accentColor,
+            pointerEvents: 'none',
+            animation: 'timelineSelectFlash 0.62s ease-out both',
+          }}
+        />
+      )}
+
       {/* Timeline spine line */}
       <div style={{
         position: 'absolute', left: -1, top: 0,
@@ -111,7 +149,10 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
       {/* Header row: icon · time · intensity dot · bookmark */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
         <span style={{ fontSize: 11, color, lineHeight: 1 }}>{icon}</span>
-        <span style={{ fontSize: 10, color: '#2a4060', letterSpacing: '0.06em' }}>
+        <span style={{
+          fontSize: 10, letterSpacing: '0.06em',
+          color: isActive ? accentColor : '#2a4060',
+        }}>
           {relativeTime(ev.published_at)}
         </span>
         <span style={{
@@ -134,8 +175,8 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
       {/* Title */}
       <p style={{
         margin: 0, fontSize: 11, lineHeight: 1.35,
-        color: isActive ? '#a8c4d8' : '#7a9ab0',
-        fontWeight: isActive ? 600 : 400,
+        color: isActive ? '#dce9f2' : '#7a9ab0',
+        fontWeight: isActive ? 700 : 400,
         display: '-webkit-box', WebkitLineClamp: 2,
         WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
         overflow: 'hidden',
@@ -262,7 +303,9 @@ export function EventTimeline({
       </div>
 
       {/* Scrollable list */}
-      <div style={{
+      <div
+        data-timeline-scroll
+        style={{
         overflowY: 'auto', flex: 1, minHeight: 0,
         scrollbarWidth: 'thin', scrollbarColor: `${accentColor}50 transparent`,
       }}>

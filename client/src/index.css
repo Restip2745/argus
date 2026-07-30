@@ -261,6 +261,14 @@ canvas {
   100% { opacity: 1; transform: translateY(0); max-height: 120px; }
 }
 
+/* Timeline: the selection landed here. Opacity only — the row must not move,
+   because it is the thing the operator is trying to read. */
+@keyframes timelineSelectFlash {
+  0%   { opacity: 0.38; }
+  60%  { opacity: 0.14; }
+  100% { opacity: 0;    }
+}
+
 /* Timeline row: existing items nudge down */
 @keyframes timelineNudgeDown {
   0%   { transform: translateY(0); }
