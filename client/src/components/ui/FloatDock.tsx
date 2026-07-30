@@ -25,10 +25,11 @@ interface DockBtnProps {
   loading?: boolean
   color?: string
   active?: boolean
+  dim?: boolean
   onClick: () => void
 }
 
-function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active, onClick }: DockBtnProps) {
+function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active, dim, onClick }: DockBtnProps) {
   const [hovered, setHovered] = useState(false)
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -55,6 +56,7 @@ function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active
           border: active ? `1px solid ${color}50` : '1px solid transparent',
           borderRadius: '3px', cursor: 'pointer',
           color: hovered || active ? color : '#3a5060',
+          opacity: dim ? 0.45 : 1,
           fontSize: '12px', transition: loading ? 'none' : 'all 0.15s',
           position: 'relative',
           animation: loading ? 'loadingRing 0.9s ease-in-out infinite' : undefined,
@@ -129,7 +131,7 @@ export function FloatDock() {
 
   const serviceHealth      = useServiceHealth()
   const socketConnected    = useAppStore((s) => s.socketConnected)
-  const { now: sceneNow }  = useSceneTime()
+  const { now: sceneNow, isLive } = useSceneTime()
 
   // 12-bar hourly sparkline for event arrival rate
   const sparklineBars = useMemo(() => {
@@ -438,27 +440,30 @@ export function FloatDock() {
 
       <DockBtn
         icon="✈"
-        label="AIRCRAFT (ADS-B)"
+        label={isLive ? 'AIRCRAFT (ADS-B)' : 'AIRCRAFT (ADS-B) — LIVE ONLY, HIDDEN WHILE REVIEWING'}
         color="#a0c4ff"
         active={showAircraftLayer}
+        dim={!isLive}
         error={showAircraftLayer && layerErrors.aircraft}
         loading={showAircraftLayer && layerLoading.aircraft}
         onClick={() => setShowAircraftLayer(!showAircraftLayer)}
       />
       <DockBtn
         icon="🛰"
-        label="SATELLITES (TLE)"
+        label={isLive ? 'SATELLITES (TLE)' : 'SATELLITES (TLE) — LIVE ONLY, HIDDEN WHILE REVIEWING'}
         color="#00d4ff"
         active={showSatellitesLayer}
+        dim={!isLive}
         error={showSatellitesLayer && layerErrors.satellites}
         loading={showSatellitesLayer && layerLoading.satellites}
         onClick={() => setShowSatellitesLayer(!showSatellitesLayer)}
       />
       <DockBtn
         icon="🚢"
-        label="VESSELS (AIS)"
+        label={isLive ? 'VESSELS (AIS)' : 'VESSELS (AIS) — LIVE ONLY, HIDDEN WHILE REVIEWING'}
         color="#39ff8a"
         active={showShipsLayer}
+        dim={!isLive}
         error={showShipsLayer && layerErrors.ships}
         loading={showShipsLayer && layerLoading.ships}
         onClick={() => setShowShipsLayer(!showShipsLayer)}

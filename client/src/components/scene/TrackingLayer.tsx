@@ -10,6 +10,11 @@
  *   lat/lng → local sphere vector → GAST Y-rotation → axial-tilt Z-rotation → world pos
  *
  * Satellites use satellite.js TLE propagation, so their icons orbit in real-time.
+ *
+ * Live-only: the whole layer is suppressed while scrubbing the timeline
+ * (scene time not live). These feeds carry a single current snapshot with no
+ * history, so a rewound view can only ever show *now's* positions — showing
+ * them anyway would misrepresent them as belonging to the viewed instant.
  */
 
 import { useRef, useEffect } from 'react'
@@ -20,6 +25,7 @@ import * as sat from 'satellite.js'
 
 import { useAppStore } from '../../store'
 import { useAircraftLayer, useSatelliteLayer, useShipsLayer } from '../../hooks/useTrackingLayers'
+import { useSceneTime } from '../../hooks/useSceneTime'
 import { latLngToWorld } from '../../lib/coordinates'
 import { EARTH_DETAIL_THRESHOLD } from '../../data/celestialBodies'
 import type { CelestialBodyName } from '../../types'
@@ -263,6 +269,12 @@ export function TrackingLayer({ positionsRef }: Props) {
   const { data: ships,     error: shipsErr,     loading: shipsLoad     } = useShipsLayer(showShipsLayer)
   const { data: tleData,   error: satelliteErr, loading: satelliteLoad } = useSatelliteLayer(showSatellitesLayer)
 
+  // These feeds are a single live snapshot, not a history — there is no
+  // "where was this plane at 14:00 yesterday" to show while scrubbing.
+  // Rather than freeze stale current positions on the rewound globe and
+  // imply they are what was there, hide the layer while reviewing.
+  const { isLive } = useSceneTime()
+
   useEffect(() => {
     setLayerError('aircraft', aircraftErr); setLayerLoading('aircraft', aircraftLoad)
   }, [aircraftErr, aircraftLoad, setLayerError, setLayerLoading])
@@ -289,7 +301,7 @@ export function TrackingLayer({ positionsRef }: Props) {
   }
 
   const anyLayerOn = showAircraftLayer || showSatellitesLayer || showShipsLayer
-  if (!anyLayerOn) return null
+  if (!anyLayerOn || !isLive) return null
 
   return (
     <>
