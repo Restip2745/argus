@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../../store'
+import { useAppStore, DEFAULT_TIME_RANGE } from '../../store'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import {
   eventSymbol, SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER,
@@ -62,13 +62,13 @@ export function Sidebar() {
   const toggleHiddenCategory = useAppStore((s) => s.toggleHiddenCategory)
 
   const hiddenCount  = hiddenCategories.length
-  const isNarrowed   = showWatchlistOnly || timeRangeFilter !== 'all'
+  const isNarrowed   = showWatchlistOnly || timeRangeFilter !== DEFAULT_TIME_RANGE
                      || searchQuery.trim() !== '' || hiddenCount > 0
   const isReordered  = eventSortOrder !== 'newest'
 
   function clearAll() {
     setShowWatchlistOnly(false)
-    setTimeRangeFilter('all')
+    setTimeRangeFilter(DEFAULT_TIME_RANGE)
     setSearchQuery('')
     hiddenCategories.forEach(toggleHiddenCategory)
   }

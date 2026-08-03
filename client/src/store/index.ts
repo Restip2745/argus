@@ -18,6 +18,18 @@ const CONTEXT_ENTITY_LIMIT = 8
  */
 export type MapMode = 'none' | 'political' | 'posture' | 'activity'
 
+export type TimeRangeFilter = '6h' | '12h' | '24h' | 'all'
+
+/**
+ * Time window the feed opens on. 6h rather than 'all' so a first load reads as
+ * "what is happening now" instead of a backlog to wade through.
+ *
+ * Exported because "is the feed filtered?" is asked in several places, and each
+ * of them has to mean *this* value — comparing against a hard-coded 'all' would
+ * make the default state advertise itself as an active filter.
+ */
+export const DEFAULT_TIME_RANGE: TimeRangeFilter = '6h'
+
 export interface FilterPreset {
   id: string
   name: string
@@ -474,8 +486,7 @@ export const useAppStore = create<AppState>((set) => ({
       : [...s.hiddenCategories, cat],
   })),
 
-  // Time-range filter
-  timeRangeFilter: 'all',
+  timeRangeFilter: DEFAULT_TIME_RANGE,
   setTimeRangeFilter: (timeRangeFilter) => set({ timeRangeFilter }),
 
   // Full-text search

@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../../store'
+import { useAppStore, DEFAULT_TIME_RANGE } from '../../store'
 import type { FilterPreset } from '../../store'
 import { CATEGORY_GLYPH, CATEGORY_TINT, CATEGORY_LABEL, ALL_CATEGORIES } from '../../data/symbology'
 import { STATUS_BAR_H } from './StatusBar'
@@ -187,7 +187,9 @@ export function CategoryFilterBar() {
     return counts
   }, [events])
 
-  const isNonDefault = hiddenCategories.length > 0 || timeRangeFilter !== 'all' || searchQuery !== ''
+  const isNonDefault = hiddenCategories.length > 0
+    || timeRangeFilter !== DEFAULT_TIME_RANGE
+    || searchQuery !== ''
 
   function handleSavePreset() {
     if (!presetName.trim()) return
