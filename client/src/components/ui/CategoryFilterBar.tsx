@@ -16,6 +16,17 @@ const TIME_RANGES: { value: TimeRange; label: string }[] = [
   { value: 'all', label: 'All' },
 ]
 
+/**
+ * Opaque plate under every control in this bar.
+ *
+ * The bar floats over the globe, and the daylit side of the globe is close to
+ * white. Tinting the chip at 8% alpha left it 92% cloud top, so a category's
+ * label was legible over the night side and gone over the day side. An opaque
+ * plate makes legibility independent of whatever happens to be behind the bar;
+ * the category tint then rides on top of the plate instead of on the map.
+ */
+const BAR_PLATE = 'rgba(6,12,26,0.93)'
+
 // ── Single filter button with mouse-tracking sheen ──────────────────────────
 
 interface FilterButtonProps {
@@ -53,6 +64,12 @@ function FilterButton({ cat, count, hidden, color, icon, label, fx, onToggle }: 
   const rotY  = hovered && fx ?  mouse.nx * MAX_TILT : 0
   const scale = hovered ? (fx ? 1.08 : 1.03) : 1
 
+  // "No events in this category" is signalled by dimming the tint, not by
+  // fading the whole chip. Element opacity took the plate down with it, which
+  // is what made empty categories disappear over bright terrain.
+  const empty = count === 0
+  const fg    = hidden ? '#3d5875' : empty ? color + '99' : color
+
   return (
     <button
       ref={btnRef}
@@ -69,10 +86,12 @@ function FilterButton({ cat, count, hidden, color, icon, label, fx, onToggle }: 
       style={{
         padding:      '3px 7px',
         fontSize:     '10px',
-        color:        hidden ? '#2a4060' : color,
-        borderColor:  hidden ? 'rgba(0,180,255,0.1)' : color + '44',
-        background:   hidden ? 'rgba(4,9,22,0.7)'    : color + '14',
-        opacity:      count === 0 ? 0.35 : 1,
+        color:        fg,
+        borderColor:  hidden ? 'rgba(0,180,255,0.14)' : color + (empty ? '3a' : '66'),
+        // Tint layer over an opaque plate — never the map showing through. The
+        // wash stays light: it sits *above* the plate, so every point of alpha
+        // pulls the chip body toward the label's own colour and costs contrast.
+        background:   hidden ? BAR_PLATE : `linear-gradient(${color}1a, ${color}1a), ${BAR_PLATE}`,
         backdropFilter: 'blur(4px)',
         transform:    `perspective(300px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`,
         transition:   hovered
@@ -107,7 +126,7 @@ function FilterButton({ cat, count, hidden, color, icon, label, fx, onToggle }: 
           position:      'relative',
           letterSpacing: '0.08em',
           fontWeight:    600,
-          color:         hidden ? '#2a4060' : color + 'dd',
+          color:         fg,
         }}
       >
         {label}
@@ -121,8 +140,8 @@ function FilterButton({ cat, count, hidden, color, icon, label, fx, onToggle }: 
             fontSize:      '11px',
             padding:       '0 3px',
             borderRadius:  '2px',
-            background:    hidden ? 'rgba(0,180,255,0.05)' : color + '22',
-            color:         hidden ? '#2a4060' : color + 'cc',
+            background:    hidden ? 'rgba(0,180,255,0.07)' : color + '2e',
+            color:         hidden ? '#3d5875' : color,
             letterSpacing: '0.04em',
           }}
         >
@@ -221,7 +240,7 @@ export function CategoryFilterBar() {
           padding: '3px 7px',
           fontSize: '11px',
           borderColor: showWatchlistOnly ? 'rgba(255,215,0,0.45)' : 'rgba(0,180,255,0.15)',
-          background:  showWatchlistOnly ? 'rgba(255,215,0,0.10)' : 'rgba(4,9,22,0.75)',
+          background:  showWatchlistOnly ? 'rgba(255,215,0,0.10)' : BAR_PLATE,
           color:       showWatchlistOnly ? '#ffd700' : '#2a5070',
           backdropFilter: 'blur(4px)',
           cursor: 'pointer',
@@ -240,7 +259,7 @@ export function CategoryFilterBar() {
         className="flex items-center rounded border overflow-hidden"
         style={{
           borderColor: 'rgba(0,180,255,0.15)',
-          background: 'rgba(4,9,22,0.75)',
+          background: BAR_PLATE,
           backdropFilter: 'blur(4px)',
           marginRight: '4px',
         }}
@@ -278,7 +297,7 @@ export function CategoryFilterBar() {
         className="font-mono"
         style={{
           fontSize: '10px', color: '#2a5070',
-          background: 'rgba(4,9,22,0.75)',
+          background: BAR_PLATE,
           border: '1px solid rgba(0,180,255,0.15)',
           borderRadius: '3px',
           padding: '3px 16px 3px 6px',
@@ -305,7 +324,7 @@ export function CategoryFilterBar() {
         className="flex items-center rounded border overflow-hidden"
         style={{
           borderColor: searchQuery ? 'rgba(0,212,255,0.35)' : 'rgba(0,180,255,0.15)',
-          background: 'rgba(4,9,22,0.75)',
+          background: BAR_PLATE,
           backdropFilter: 'blur(4px)',
           marginRight: '4px',
           transition: 'border-color 0.15s',
