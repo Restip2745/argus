@@ -9,6 +9,28 @@ import type { MapMode } from '../../store'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useSceneTime } from '../../hooks/useSceneTime'
+import { SCRUBBER_TOP } from './TimeScrubber'
+
+/** Gap between the bottom of the screen and the dock. */
+const DOCK_BOTTOM = 12
+/** Breathing room between a dock popover and whatever it opens over. */
+const POPOVER_GAP = 8
+
+/**
+ * Bottom offset, in the dock's own coordinates, for a popover that opens
+ * upwards and must clear the time scrubber.
+ *
+ * The scrubber is a sibling fixed to the bottom of the screen, so a popover
+ * anchored to the dock has to be pushed past it explicitly — the legend was
+ * previously at a hand-picked 44px and landed straight across the histogram.
+ * Derived from the scrubber's own exported geometry so it tracks any change
+ * there. In immersive mode the scrubber is not rendered at all, so the popover
+ * drops back down rather than floating over a gap.
+ */
+function popoverBottom(immersive: boolean, restingOffset: number): number {
+  if (immersive) return restingOffset
+  return Math.max(restingOffset, SCRUBBER_TOP - DOCK_BOTTOM + POPOVER_GAP)
+}
 
 const MAP_MODES: { id: MapMode; icon: string; label: string }[] = [
   { id: 'none',      icon: '○', label: 'NONE'      },
@@ -172,7 +194,7 @@ export function FloatDock() {
   }, [showBrief])
 
   return (
-    <div ref={briefRef} style={{ position: 'fixed', bottom: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}>
+    <div ref={briefRef} style={{ position: 'fixed', bottom: `${DOCK_BOTTOM}px`, left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}>
 
       {/* Intel Brief modal */}
       {showBrief && intelBrief && (
@@ -182,7 +204,8 @@ export function FloatDock() {
           aria-modal="true"
           aria-label="Intel Brief"
           style={{
-          position: 'absolute', bottom: '52px', left: '50%', transform: 'translateX(-50%)',
+          position: 'absolute', bottom: `${popoverBottom(immersiveMode, 52)}px`,
+          left: '50%', transform: 'translateX(-50%)',
           width: '340px',
           background: 'rgba(4,9,22,0.97)',
           border: '1px solid rgba(255,215,0,0.3)',
@@ -237,7 +260,8 @@ export function FloatDock() {
         mode needs none: its colours deliberately mean nothing. */}
     {(mapMode === 'posture' || mapMode === 'activity') && (
       <div style={{
-        position: 'absolute', bottom: '44px', left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute', bottom: `${popoverBottom(immersiveMode, 44)}px`,
+        left: '50%', transform: 'translateX(-50%)',
         display: 'flex', alignItems: 'center', gap: '10px',
         padding: '4px 9px', whiteSpace: 'nowrap',
         background: 'rgba(4,9,22,0.92)',

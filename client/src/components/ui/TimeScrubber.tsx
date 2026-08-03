@@ -22,6 +22,26 @@ const HOUR = 3_600_000
 const WINDOW_H = 24
 const BUCKETS  = 48
 
+// ── Layout contract ──────────────────────────────────────────────────────────
+// The scrubber is centred and fixed to the bottom of the screen, and the dock
+// sits below it with popovers that open upwards into this space. Those
+// popovers have to know where the scrubber's top edge is; exported here so the
+// answer is derived from the styles below rather than guessed, which is how the
+// map-mode legend ended up drawn straight across the track.
+
+const SCRUBBER_PAD_Y  = 5
+const SCRUBBER_BORDER = 1
+/** Track height — also the visual height of the arrival histogram. */
+const TRACK_H = 30
+
+/** Gap between the bottom of the screen and the scrubber. */
+export const SCRUBBER_BOTTOM = 48
+/** Total outer height, borders included. */
+export const SCRUBBER_H = TRACK_H + SCRUBBER_PAD_Y * 2 + SCRUBBER_BORDER * 2
+/** Offset from the bottom of the screen to the scrubber's TOP edge. Anything
+ *  that must not collide with the scrubber sits at or above this. */
+export const SCRUBBER_TOP = SCRUBBER_BOTTOM + SCRUBBER_H
+
 export function TimeScrubber() {
   const { t } = useTranslation()
   const events       = useAppStore((s) => s.events)
@@ -117,11 +137,11 @@ export function TimeScrubber() {
   return (
     <div
       style={{
-        position: 'fixed', bottom: '48px', left: '50%', transform: 'translateX(-50%)',
+        position: 'fixed', bottom: `${SCRUBBER_BOTTOM}px`, left: '50%', transform: 'translateX(-50%)',
         zIndex: 45, display: 'flex', alignItems: 'center', gap: '10px',
-        padding: '5px 10px', width: 'min(660px, calc(100vw - 32px))',
+        padding: `${SCRUBBER_PAD_Y}px 10px`, width: 'min(660px, calc(100vw - 32px))',
         background: 'rgba(4,9,22,0.9)',
-        border: `1px solid ${isLive ? 'rgba(0,180,255,0.15)' : 'rgba(255,149,0,0.35)'}`,
+        border: `${SCRUBBER_BORDER}px solid ${isLive ? 'rgba(0,180,255,0.15)' : 'rgba(255,149,0,0.35)'}`,
         borderRadius: '5px', backdropFilter: 'blur(8px)',
         fontFamily: 'JetBrains Mono, monospace',
         transition: 'border-color 0.2s',
@@ -161,7 +181,7 @@ export function TimeScrubber() {
         onPointerUp={onPointerUp}
         onKeyDown={onKeyDown}
         style={{
-          position: 'relative', flex: 1, height: '30px',
+          position: 'relative', flex: 1, height: `${TRACK_H}px`,
           cursor: 'ew-resize', touchAction: 'none',
           display: 'flex', alignItems: 'flex-end', gap: '1px',
         }}
