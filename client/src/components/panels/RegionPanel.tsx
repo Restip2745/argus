@@ -8,7 +8,8 @@ import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { useWikiSummary } from '../../hooks/useWikiSummary'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
-import { RegionPanelOverview } from './RegionPanelOverview'
+import { RegionPanelIdentity, RegionPanelTabContent } from './RegionPanelOverview'
+import type { RegionTab } from './RegionPanelOverview'
 import { RegionPanelAgent } from './RegionPanelAgent'
 import { Panel } from './Panel'
 import { PanelTail } from './PanelTail'
@@ -31,6 +32,9 @@ export function RegionPanel() {
   const events                = useAppStore((s) => s.events)
   const addContextEntity      = useAppStore((s) => s.addContextEntity)
   const contextEntities       = useAppStore((s) => s.contextEntities)
+  const setActivePanelId      = useAppStore((s) => s.setActivePanelId)
+
+  const [tab, setTab] = useState<RegionTab>('overview')
 
   // ── Drag / position ──────────────────────────────────────────────────────────
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
@@ -110,17 +114,25 @@ export function RegionPanel() {
   const info        = displayedCountry ? getCountryInfo(displayedCountry.name) : null
   const dynamicTags = displayedCountry ? getDynamicTags(displayedCountry.name, events) : []
 
-  const recentEvents = useMemo(() => {
+  // Every event held for this region at or before the viewed instant, newest
+  // first. Uncapped: when globe markers pile up on one country this list is
+  // what the operator falls back to, so truncating it would defeat the point.
+  const regionEvents = useMemo(() => {
     if (!displayedCountry) return []
-    const cutoff = sceneNow - 24 * 3600 * 1000
-    return events.filter(e => {
-      const ts = e.published_at ? new Date(e.published_at).getTime() : 0
-      if (ts < cutoff) return false
-      const loc   = (e.location_label ?? '').toLowerCase()
-      const cname = displayedCountry.name.toLowerCase()
-      return loc.includes(cname) || cname.includes(loc.replace(/[()]/g, '').trim())
-    }).slice(0, 6)
-  }, [events, displayedCountry?.name])
+    const cname = displayedCountry.name.toLowerCase()
+    return events
+      .filter(e => {
+        const ts = e.published_at ? new Date(e.published_at).getTime() : 0
+        if (ts > sceneNow) return false           // hasn't happened at this instant
+        const loc = (e.location_label ?? '').toLowerCase()
+        return loc.includes(cname) || cname.includes(loc.replace(/[()]/g, '').trim())
+      })
+      .sort((a, b) =>
+        new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
+  }, [events, displayedCountry?.name, sceneNow])
+
+  // Bounded slice for the prompt — the model does not need the whole backlog.
+  const recentEvents = useMemo(() => regionEvents.slice(0, 8), [regionEvents])
 
   const agentContext = useMemo(() => {
     if (!displayedCountry) return ''
@@ -137,7 +149,7 @@ export function RegionPanel() {
     }
     if (dynamicTags.length) lines.push(`Status: ${dynamicTags.join(', ')}`)
     if (recentEvents.length) {
-      lines.push(`\nRecent events (24h):`)
+      lines.push(`\nRecent events:`)
       recentEvents.forEach(e => lines.push(`- [${e.category}] ${e.title}`))
     }
     return lines.join('\n')
@@ -181,6 +193,7 @@ export function RegionPanel() {
       setPanelEntered(true)
     } else if (e.animationName === 'cardFlipOut') {
       setDisplayedCountry(pendingCountryRef.current)
+      setTab('overview')          // a new country starts at its overview
       setFlipPhase('in')
     } else if (e.animationName === 'cardFlipIn') {
       setFlipPhase('idle')
@@ -266,7 +279,7 @@ export function RegionPanel() {
           left:       pos.x,
           top:        pos.y,
           zIndex,
-          width:      '310px',
+          width:      '430px',
           maxHeight:  `calc(${100 / uiScale}vh - 100px)`,
           ...(flipPhase !== 'idle' && {
             animation:       flipPhase === 'out'
@@ -276,21 +289,40 @@ export function RegionPanel() {
           }),
         }}
       >
-        {/* ── Scrollable content area ── */}
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.2) transparent' }}>
-
-          {displayedCountry && (
-            <RegionPanelOverview
+        {displayedCountry && (
+          <>
+            {/* ── Identity + tab bar (pinned) ── */}
+            <RegionPanelIdentity
               country={displayedCountry}
               info={info}
-              allTags={allTags}
-              recentEvents={recentEvents}
+              tab={tab}
+              setTab={setTab}
+              eventCount={regionEvents.length}
               focusOnEarthSurface={focusOnEarthSurface}
-              wikiData={wikiData ?? null}
-              wikiLoading={wikiLoading}
             />
-          )}
-        </div>
+
+            {/* ── Scrollable tab content ──
+                 `0 1 auto` + minHeight 0: fit the content when it is short, and
+                 shrink-and-scroll once the panel reaches its maxHeight. Growing
+                 to fill (flex: 1) padded sparse regions out with dead space. */}
+            <div style={{
+              flex: '0 1 auto', overflowY: 'auto', minHeight: 0,
+              scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.2) transparent',
+            }}>
+              <RegionPanelTabContent
+                tab={tab}
+                country={displayedCountry}
+                info={info}
+                allTags={allTags}
+                regionEvents={regionEvents}
+                sceneNow={sceneNow}
+                onOpenEvent={setActivePanelId}
+                wikiData={wikiData ?? null}
+                wikiLoading={wikiLoading}
+              />
+            </div>
+          </>
+        )}
 
         {/* ── Agent section (fixed at bottom) ── */}
         <RegionPanelAgent

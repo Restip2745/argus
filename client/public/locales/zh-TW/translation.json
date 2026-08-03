@@ -78,6 +78,11 @@
     "events": "近期事件",
     "agent": "◈ 地區情報分析",
     "noEvents": "目前無近期事件",
+    "tab": {
+      "overview": "概況",
+      "events": "事件",
+      "profile": "背景"
+    },
     "extraQ": {
       "conflict": "目前衝突態勢分析",
       "economic": "經濟風險評估",

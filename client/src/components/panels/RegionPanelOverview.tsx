@@ -1,7 +1,16 @@
 /**
- * RegionPanelOverview — single-country content block:
- *   flag · name · coords · gov tags · stats grid · stability bar
- *   industries · recent events (24h) · focus button · Wikipedia summary
+ * RegionPanelOverview — the body of RegionPanel, split into a pinned identity
+ * block and three tabbed content pages.
+ *
+ * Tabs rather than one long column: nine stacked sections made the panel far
+ * taller than it was wide. Tabs hold the height at roughly the tallest single
+ * page, and give the event list room to be a real, complete list — which is
+ * what makes the panel useful when globe markers overlap and the map itself
+ * can no longer separate them.
+ *
+ *   OVERVIEW  tags · stats grid · stability bar
+ *   EVENTS    full region event list · key figures
+ *   PROFILE   economic structure · Wikipedia summary
  */
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +20,8 @@ import { useAppStore } from '../../store'
 import type { SelectedCountry } from '../../store'
 import type { ArgusEvent } from '../../types'
 import { extractPersonNames } from '../../utils/entityLinker'
+
+export type RegionTab = 'overview' | 'events' | 'profile'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -50,6 +61,19 @@ function formatPop(m: number): string {
   return `${m.toFixed(1)}M`
 }
 
+/** Age against scene time, not the wall clock — the panel follows the scrubber. */
+function ageFrom(sceneNow: number, iso: string | null | undefined): string {
+  if (!iso) return ''
+  const t = new Date(iso).getTime()
+  if (isNaN(t)) return ''
+  const m = Math.max(0, Math.floor((sceneNow - t) / 60_000))
+  if (m < 1)  return 'now'
+  if (m < 60) return `${m}m`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h`
+  return `${Math.floor(h / 24)}d`
+}
+
 const BAR_COLORS = ['#00d4ff', '#4a6fa5', '#9b6dff', '#ff9c2a', '#39ff8a']
 
 function IndustryBar({ label, pct, color }: { label: string; pct: number; color: string }) {
@@ -66,29 +90,37 @@ function IndustryBar({ label, pct, color }: { label: string; pct: number; color:
   )
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '6px' }}>
+      {children}
+    </div>
+  )
+}
+
 // ── Key Figures section ───────────────────────────────────────────────────────
 
-function RegionKeyFigures({ recentEvents, addSelectedEntity }: {
-  recentEvents: ArgusEvent[]
+function RegionKeyFigures({ regionEvents, addSelectedEntity }: {
+  regionEvents: ArgusEvent[]
   addSelectedEntity: (p: import('../../store').SelectedEntity) => void
 }) {
   const entities = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const ev of recentEvents) {
+    for (const ev of regionEvents) {
       for (const name of extractPersonNames(ev.actors ?? [])) {
         counts.set(name, (counts.get(name) ?? 0) + 1)
       }
     }
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-  }, [recentEvents])
+      .slice(0, 8)
+  }, [regionEvents])
 
   if (entities.length === 0) return null
 
   return (
     <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 6px' }}>
-      <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '5px' }}>KEY FIGURES</div>
+      <SectionLabel>KEY FIGURES</SectionLabel>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
         {entities.map(([name, count]) => (
           <button
@@ -115,15 +147,122 @@ function RegionKeyFigures({ recentEvents, addSelectedEntity }: {
   )
 }
 
-// ── Props ─────────────────────────────────────────────────────────────────────
+// ── Identity block + tab bar (pinned above the scroll area) ───────────────────
 
-interface Props {
+interface IdentityProps {
+  country: SelectedCountry
+  info: CountryInfo | null
+  tab: RegionTab
+  setTab: (t: RegionTab) => void
+  eventCount: number
+  focusOnEarthSurface: ((lat: number, lng: number) => void) | null | undefined
+}
+
+export function RegionPanelIdentity({
+  country, info, tab, setTab, eventCount, focusOnEarthSurface,
+}: IdentityProps) {
+  const { t } = useTranslation()
+
+  const TABS: { id: RegionTab; label: string; badge?: number }[] = [
+    { id: 'overview', label: t('region.tab.overview', 'OVERVIEW') },
+    { id: 'events',   label: t('region.tab.events',   'EVENTS'), badge: eventCount },
+    { id: 'profile',  label: t('region.tab.profile',  'PROFILE') },
+  ]
+
+  return (
+    <div style={{ flexShrink: 0, padding: '10px 12px 0' }}>
+      {/* Flag · name · capital · coords · focus */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '9px' }}>
+        {info && (
+          <img
+            src={`https://flagcdn.com/40x30/${info.code.toLowerCase()}.png`}
+            srcSet={`https://flagcdn.com/80x60/${info.code.toLowerCase()}.png 2x`}
+            width="40" height="30"
+            alt={country.name}
+            style={{ flexShrink: 0, borderRadius: '2px', objectFit: 'cover', border: '1px solid rgba(0,180,255,0.12)' }}
+          />
+        )}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ color: '#c8dde8', fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em' }}>
+            {country.name.toUpperCase()}
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '2px' }}>
+            {info && (
+              <span style={{ color: '#4a6070', fontSize: '10px', letterSpacing: '0.1em' }}>
+                ⊙ {info.capital}
+              </span>
+            )}
+            <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>
+              {country.lat.toFixed(2)}° {country.lat >= 0 ? 'N' : 'S'}&nbsp;&nbsp;
+              {Math.abs(country.lng).toFixed(2)}° {country.lng >= 0 ? 'E' : 'W'}
+            </span>
+          </div>
+        </div>
+        {focusOnEarthSurface && (
+          <button
+            onClick={() => focusOnEarthSurface(country.lat, country.lng)}
+            title={t('panel.focus_region', 'FOCUS REGION')}
+            style={{
+              flexShrink: 0, padding: '3px 8px', background: 'rgba(0,212,255,0.04)',
+              border: '1px solid rgba(0,212,255,0.15)', borderRadius: '3px',
+              color: '#2a5070', fontSize: '10px', letterSpacing: '0.12em',
+              cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#00d4ff'; e.currentTarget.style.borderColor = 'rgba(0,212,255,0.3)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#2a5070'; e.currentTarget.style.borderColor = 'rgba(0,212,255,0.15)' }}
+          >⊙</button>
+        )}
+      </div>
+
+      {/* Tab bar — same segmented-control language as the dock's map-mode group */}
+      <div style={{
+        display: 'flex', gap: '1px', padding: '1px',
+        border: '1px solid rgba(0,180,255,0.15)', borderRadius: '4px',
+        background: 'rgba(0,20,40,0.35)',
+      }}>
+        {TABS.map(({ id, label, badge }) => {
+          const active = tab === id
+          return (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              aria-pressed={active}
+              style={{
+                flex: 1, padding: '4px 2px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                fontSize: '10px', letterSpacing: '0.1em', borderRadius: '3px', border: 'none',
+                fontFamily: 'JetBrains Mono, monospace',
+                background: active ? 'rgba(0,212,255,0.18)' : 'transparent',
+                color: active ? '#00d4ff' : '#3a5060',
+                cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              {label}
+              {badge != null && badge > 0 && (
+                <span style={{
+                  fontSize: '10px', padding: '0 3px', borderRadius: '2px',
+                  background: active ? 'rgba(0,212,255,0.2)' : 'rgba(0,180,255,0.1)',
+                  color: active ? '#00d4ff' : '#3a5060',
+                }}>{badge}</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Tab content ───────────────────────────────────────────────────────────────
+
+interface ContentProps {
+  tab: RegionTab
   country: SelectedCountry
   info: CountryInfo | null
   allTags: string[]
-  recentEvents: ArgusEvent[]
-  focusOnEarthSurface: ((lat: number, lng: number) => void) | null | undefined
-  // Wikipedia
+  regionEvents: ArgusEvent[]
+  sceneNow: number
+  onOpenEvent: (id: string) => void
   wikiData: {
     extract: string
     thumbnail?: { source: string }
@@ -132,12 +271,10 @@ interface Props {
   wikiLoading: boolean
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
-export function RegionPanelOverview({
-  country, info, allTags, recentEvents, focusOnEarthSurface,
+export function RegionPanelTabContent({
+  tab, country, info, allTags, regionEvents, sceneNow, onOpenEvent,
   wikiData, wikiLoading,
-}: Props) {
+}: ContentProps) {
   const { t } = useTranslation()
   const addSelectedEntity = useAppStore(s => s.addSelectedEntity)
 
@@ -149,39 +286,12 @@ export function RegionPanelOverview({
     ? `$${Math.round((info.gdpB * 1e9) / (info.populationM * 1e6) / 1000)}k`
     : '—'
 
-  return (
-    <>
-      {/* ── Flag + Name ─────────────────────────────────────────────────────── */}
-      <div style={{ padding: '10px 12px 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
-          {info && (
-            <img
-              src={`https://flagcdn.com/40x30/${info.code.toLowerCase()}.png`}
-              srcSet={`https://flagcdn.com/80x60/${info.code.toLowerCase()}.png 2x`}
-              width="40" height="30"
-              alt={country.name}
-              style={{ flexShrink: 0, borderRadius: '2px', objectFit: 'cover', border: '1px solid rgba(0,180,255,0.12)' }}
-            />
-          )}
-          <div>
-            <div style={{ color: '#c8dde8', fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em' }}>
-              {country.name.toUpperCase()}
-            </div>
-            {info && (
-              <div style={{ color: '#4a6070', fontSize: '10px', letterSpacing: '0.1em', marginTop: '2px' }}>
-                ⊙ {info.capital}
-              </div>
-            )}
-            <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em', marginTop: '1px' }}>
-              {country.lat.toFixed(2)}° {country.lat >= 0 ? 'N' : 'S'} &nbsp;
-              {Math.abs(country.lng).toFixed(2)}° {country.lng >= 0 ? 'E' : 'W'}
-            </div>
-          </div>
-        </div>
-
-        {/* Gov type + dynamic tags */}
+  // ── OVERVIEW ───────────────────────────────────────────────────────────────
+  if (tab === 'overview') {
+    return (
+      <div style={{ padding: '10px 12px 12px' }}>
         {allTags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '10px' }}>
             {allTags.map(tag => (
               <span key={tag} style={{
                 fontSize: '10px', letterSpacing: '0.1em', padding: '2px 5px',
@@ -193,13 +303,13 @@ export function RegionPanelOverview({
           </div>
         )}
 
-        {/* Stats grid */}
+        {/* Stats — one row of four now that the panel is wide enough for it */}
         {info && (
           <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr',
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '1px', background: 'rgba(0,180,255,0.06)',
             border: '1px solid rgba(0,180,255,0.08)', borderRadius: '3px',
-            marginBottom: '10px', overflow: 'hidden',
+            marginBottom: '12px', overflow: 'hidden',
           }}>
             {[
               { label: 'POPULATION', val: formatPop(info.populationM) },
@@ -207,17 +317,16 @@ export function RegionPanelOverview({
               { label: 'GDP/CAPITA', val: gdpPerCapita },
               { label: 'STABILITY',  val: `${info.stability}/100` },
             ].map(({ label, val }) => (
-              <div key={label} style={{ padding: '5px 8px', background: 'rgba(4,9,22,0.6)' }}>
-                <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em', marginBottom: '2px' }}>{label}</div>
-                <div style={{ color: '#a8c4d8', fontSize: '10px', fontWeight: 600 }}>{val}</div>
+              <div key={label} style={{ padding: '6px 8px', background: 'rgba(4,9,22,0.6)' }}>
+                <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px' }}>{label}</div>
+                <div style={{ color: '#a8c4d8', fontSize: '11px', fontWeight: 600 }}>{val}</div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Stability bar */}
         {info && (
-          <div style={{ marginBottom: '10px' }}>
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
               <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>STABILITY INDEX</span>
               <span style={{ color: '#4a6fa5', fontSize: '10px' }}>{info.stability}/100</span>
@@ -230,79 +339,89 @@ export function RegionPanelOverview({
             </div>
           </div>
         )}
-      </div>
 
-      {/* ── Industries ──────────────────────────────────────────────────────── */}
+        {!info && (
+          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em' }}>
+            — {t('panel.noData', 'No intelligence data available')} —
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── EVENTS ─────────────────────────────────────────────────────────────────
+  if (tab === 'events') {
+    return (
+      <>
+        <div style={{ padding: '10px 12px 6px' }}>
+          {regionEvents.length === 0 ? (
+            <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', padding: '4px 0' }}>
+              — {t('region.noEvents', 'No recent events')} —
+            </div>
+          ) : (
+            regionEvents.map(e => {
+              const sym = eventSymbol(e)
+              return (
+                <button
+                  key={e.id}
+                  onClick={() => onOpenEvent(e.id)}
+                  title={e.title}
+                  style={{
+                    display: 'flex', gap: '7px', alignItems: 'flex-start',
+                    width: '100%', textAlign: 'left', marginBottom: '2px',
+                    padding: '4px 5px', borderRadius: '3px',
+                    background: 'transparent', border: '1px solid transparent',
+                    cursor: 'pointer', transition: 'background 0.15s, border-color 0.15s',
+                    fontFamily: 'JetBrains Mono, monospace',
+                  }}
+                  onMouseEnter={ev => {
+                    ev.currentTarget.style.background = 'rgba(0,180,255,0.06)'
+                    ev.currentTarget.style.borderColor = 'rgba(0,180,255,0.18)'
+                  }}
+                  onMouseLeave={ev => {
+                    ev.currentTarget.style.background = 'transparent'
+                    ev.currentTarget.style.borderColor = 'transparent'
+                  }}
+                >
+                  <span style={{
+                    flexShrink: 0, fontSize: '10px', letterSpacing: '0.06em',
+                    padding: '1px 4px', marginTop: '1px',
+                    display: 'inline-flex', alignItems: 'center', gap: '3px',
+                    border: `1px ${sym.borderStyle} ${sym.borderColor}`,
+                    background: sym.background, color: sym.color, borderRadius: '2px',
+                  }}>
+                    {sym.glyph} {sym.label}
+                  </span>
+                  <span style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.4, flex: 1, minWidth: 0 }}>
+                    {e.title}
+                  </span>
+                  <span style={{ flexShrink: 0, color: '#2a4060', fontSize: '10px', marginTop: '2px' }}>
+                    {ageFrom(sceneNow, e.published_at)}
+                  </span>
+                </button>
+              )
+            })
+          )}
+        </div>
+        <RegionKeyFigures regionEvents={regionEvents} addSelectedEntity={addSelectedEntity} />
+      </>
+    )
+  }
+
+  // ── PROFILE ────────────────────────────────────────────────────────────────
+  return (
+    <>
       {info && info.industries.length > 0 && (
-        <div style={{ padding: '0 12px 10px', borderTop: '1px solid rgba(0,180,255,0.07)', paddingTop: '8px' }}>
-          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '6px' }}>ECONOMIC STRUCTURE</div>
+        <div style={{ padding: '10px 12px 10px' }}>
+          <SectionLabel>ECONOMIC STRUCTURE</SectionLabel>
           {info.industries.map((ind, i) => (
             <IndustryBar key={ind.label} label={ind.label} pct={ind.pct} color={BAR_COLORS[i % BAR_COLORS.length]} />
           ))}
         </div>
       )}
 
-      {/* ── Recent Events (24h) ─────────────────────────────────────────────── */}
-      <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>RECENT EVENTS (24H)</span>
-          {recentEvents.length > 0 && (
-            <span style={{
-              color: '#ff9c2a', fontSize: '10px',
-              background: 'rgba(255,156,42,0.12)', padding: '1px 5px',
-              borderRadius: '2px', border: '1px solid rgba(255,156,42,0.3)',
-            }}>
-              {recentEvents.length}
-            </span>
-          )}
-        </div>
-        {recentEvents.length === 0 ? (
-          <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em', padding: '4px 0' }}>— {t('region.noEvents', 'No recent events')} —</div>
-        ) : (
-          recentEvents.map(e => (
-            <div key={e.id} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', marginBottom: '5px' }}>
-              <span style={{
-                flexShrink: 0, fontSize: '10px', letterSpacing: '0.06em', padding: '1px 4px', marginTop: '1px',
-                display: 'inline-flex', alignItems: 'center', gap: '3px',
-                border: `1px ${eventSymbol(e).borderStyle} ${eventSymbol(e).borderColor}`,
-                background: eventSymbol(e).background,
-                color: eventSymbol(e).color, borderRadius: '2px',
-              }}>
-                {eventSymbol(e).glyph} {eventSymbol(e).label}
-              </span>
-              <span style={{ color: '#6a8090', fontSize: '10px', lineHeight: 1.4 }}>
-                {e.title.slice(0, 40)}{e.title.length > 40 ? '…' : ''}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* ── Key Figures ──────────────────────────────────────────────────────── */}
-      <RegionKeyFigures recentEvents={recentEvents} addSelectedEntity={addSelectedEntity} />
-
-      {/* ── Focus button ────────────────────────────────────────────────────── */}
-      {focusOnEarthSurface && (
-        <div style={{ padding: '0 12px 10px' }}>
-          <button
-            onClick={() => focusOnEarthSurface(country.lat, country.lng)}
-            style={{
-              width: '100%', padding: '5px', background: 'rgba(0,212,255,0.04)',
-              border: '1px solid rgba(0,212,255,0.15)', borderRadius: '3px',
-              color: '#2a5070', fontSize: '10px', letterSpacing: '0.12em',
-              cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.color = '#00d4ff'; (e.target as HTMLElement).style.borderColor = 'rgba(0,212,255,0.3)' }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.color = '#2a5070'; (e.target as HTMLElement).style.borderColor = 'rgba(0,212,255,0.15)' }}
-          >
-            ⊙ {t('panel.focus_region', 'FOCUS REGION')}
-          </button>
-        </div>
-      )}
-
-      {/* ── Wikipedia Summary ───────────────────────────────────────────────── */}
-      <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+      <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '9px 12px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
           <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>WIKIPEDIA</span>
           {wikiData?.content_urls?.desktop?.page && (
             <a
@@ -319,29 +438,25 @@ export function RegionPanelOverview({
         {wikiLoading && (
           <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.08em' }}>↻ Loading…</div>
         )}
-        {wikiData && !wikiLoading && (() => {
-          const extract = wikiData.extract.length > 300
-            ? wikiData.extract.slice(0, 300).replace(/\s+\S*$/, '') + '…'
-            : wikiData.extract
-          return (
-            <>
-              {wikiData.thumbnail && (
-                <img
-                  src={wikiData.thumbnail.source}
-                  alt={country.name}
-                  style={{
-                    width: '100%', maxHeight: '80px', objectFit: 'cover',
-                    borderRadius: '3px', marginBottom: '5px',
-                    border: '1px solid rgba(0,180,255,0.1)',
-                  }}
-                />
-              )}
-              <p style={{ color: '#7a9ab0', fontSize: '11px', lineHeight: 1.55, margin: 0 }}>
-                {extract}
-              </p>
-            </>
-          )
-        })()}
+        {wikiData && !wikiLoading && (
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+            {wikiData.thumbnail && (
+              <img
+                src={wikiData.thumbnail.source}
+                alt={country.name}
+                style={{
+                  flexShrink: 0, width: '110px', height: '80px', objectFit: 'cover',
+                  borderRadius: '3px', border: '1px solid rgba(0,180,255,0.1)',
+                }}
+              />
+            )}
+            <p style={{ color: '#7a9ab0', fontSize: '11px', lineHeight: 1.55, margin: 0, minWidth: 0 }}>
+              {wikiData.extract.length > 420
+                ? wikiData.extract.slice(0, 420).replace(/\s+\S*$/, '') + '…'
+                : wikiData.extract}
+            </p>
+          </div>
+        )}
       </div>
     </>
   )

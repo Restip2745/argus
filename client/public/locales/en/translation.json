@@ -78,6 +78,11 @@
     "events": "RECENT EVENTS",
     "agent": "◈ REGION INTELLIGENCE",
     "noEvents": "No recent events",
+    "tab": {
+      "overview": "OVERVIEW",
+      "events": "EVENTS",
+      "profile": "PROFILE"
+    },
     "extraQ": {
       "conflict": "Current conflict posture",
       "economic": "Economic risk assessment",

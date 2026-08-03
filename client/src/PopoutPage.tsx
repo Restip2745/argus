@@ -8,7 +8,7 @@
  *
  * State is synced from the main window via BroadcastChannel.
  */
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation }     from 'react-i18next'
 import { useSceneTime }       from './hooks/useSceneTime'
 import { useAppStore }        from './store'
@@ -21,7 +21,8 @@ import './i18n'
 
 // Lazy imports for panel content components (avoids loading 3-D scene code)
 import { EventPanelBody }      from './components/panels/EventPanelBody'
-import { RegionPanelOverview } from './components/panels/RegionPanelOverview'
+import { RegionPanelIdentity, RegionPanelTabContent } from './components/panels/RegionPanelOverview'
+import type { RegionTab }      from './components/panels/RegionPanelOverview'
 import { WikiPanelBody }     from './components/panels/WikiPanelBody'
 import { EntityCard }          from './components/panels/MultiEntityContextPanel'
 import { useWikiSummary }      from './hooks/useWikiSummary'
@@ -93,23 +94,29 @@ function RegionPopoutContent() {
   const selectedCountry  = useAppStore((s) => s.selectedCountry)
   const focusOnEarthSurface = useAppStore((s) => s.focusOnEarthSurface)
   const events           = useAppStore((s) => s.events)
+  const setActivePanelId = useAppStore((s) => s.setActivePanelId)
+  const [tab, setTab]    = useState<RegionTab>('overview')
   const { data: wikiData, loading: wikiLoading } = useWikiSummary(selectedCountry?.name ?? null)
 
   const info        = selectedCountry ? getCountryInfo(selectedCountry.name)       : null
   const dynamicTags = selectedCountry ? getDynamicTags(selectedCountry.name, events) : []
   const allTags     = [...(info?.govType ?? []), ...dynamicTags]
 
-  const recentEvents = useMemo<ArgusEvent[]>(() => {
+  // Same rule as the docked panel: everything for this region at or before the
+  // viewed instant, newest first, uncapped.
+  const regionEvents = useMemo<ArgusEvent[]>(() => {
     if (!selectedCountry) return []
-    const cutoff = sceneNow - 24 * 3600 * 1000
-    return events.filter((e) => {
-      const ts = e.published_at ? new Date(e.published_at).getTime() : 0
-      if (ts < cutoff) return false
-      const loc   = (e.location_label ?? '').toLowerCase()
-      const cname = selectedCountry.name.toLowerCase()
-      return loc.includes(cname) || cname.includes(loc.replace(/[()]/g, '').trim())
-    }).slice(0, 6)
-  }, [events, selectedCountry?.name]) // eslint-disable-line react-hooks/exhaustive-deps
+    const cname = selectedCountry.name.toLowerCase()
+    return events
+      .filter((e) => {
+        const ts = e.published_at ? new Date(e.published_at).getTime() : 0
+        if (ts > sceneNow) return false
+        const loc = (e.location_label ?? '').toLowerCase()
+        return loc.includes(cname) || cname.includes(loc.replace(/[()]/g, '').trim())
+      })
+      .sort((a, b) =>
+        new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
+  }, [events, selectedCountry?.name, sceneNow]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!selectedCountry) {
     return (
@@ -120,17 +127,29 @@ function RegionPopoutContent() {
   }
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
-      <RegionPanelOverview
+    <>
+      <RegionPanelIdentity
         country={selectedCountry}
         info={info}
-        allTags={allTags}
-        recentEvents={recentEvents}
+        tab={tab}
+        setTab={setTab}
+        eventCount={regionEvents.length}
         focusOnEarthSurface={focusOnEarthSurface}
-        wikiData={wikiData ?? null}
-        wikiLoading={wikiLoading}
       />
-    </div>
+      <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
+        <RegionPanelTabContent
+          tab={tab}
+          country={selectedCountry}
+          info={info}
+          allTags={allTags}
+          regionEvents={regionEvents}
+          sceneNow={sceneNow}
+          onOpenEvent={setActivePanelId}
+          wikiData={wikiData ?? null}
+          wikiLoading={wikiLoading}
+        />
+      </div>
+    </>
   )
 }
 
