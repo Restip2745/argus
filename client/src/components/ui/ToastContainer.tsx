@@ -4,6 +4,7 @@ import { useAppStore } from '../../store'
 import { eventSymbol, severityRank } from '../../data/symbology'
 import { tick } from '../../lib/sound'
 import { isCategoryVisible } from '../../lib/eventFilter'
+import { eventTitle } from '../../lib/eventText'
 import type { ArgusEvent } from '../../types'
 
 const TOAST_DURATION_MS = 3000
@@ -24,7 +25,7 @@ interface ToastItemProps {
 }
 
 function ToastItem({ toast, onDismiss, onOpen, onHoldStart, onHoldEnd }: ToastItemProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const sym   = eventSymbol(toast.event)
   const color = sym.color
   const icon  = sym.glyph
@@ -34,7 +35,7 @@ function ToastItem({ toast, onDismiss, onOpen, onHoldStart, onHoldEnd }: ToastIt
     <div
       role="button"
       tabIndex={0}
-      aria-label={`${intensityLabel} — ${toast.event.title}`}
+      aria-label={`${intensityLabel} — ${eventTitle(toast.event, i18n.language)}`}
       title={t('toast.openHint', 'Open this event')}
       onClick={() => onOpen(toast)}
       onKeyDown={(e) => {
@@ -103,7 +104,9 @@ function ToastItem({ toast, onDismiss, onOpen, onHoldStart, onHoldEnd }: ToastIt
             WebkitBoxOrient: 'vertical',
           }}
         >
-          {toast.count > 1 ? `${toast.event.category.replace(/_/g, ' ')} EVENTS` : toast.event.title}
+          {toast.count > 1
+            ? `${toast.event.category.replace(/_/g, ' ')} EVENTS`
+            : eventTitle(toast.event, i18n.language)}
         </div>
       </div>
 

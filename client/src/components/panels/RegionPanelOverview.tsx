@@ -20,6 +20,7 @@ import { useAppStore } from '../../store'
 import type { SelectedCountry } from '../../store'
 import type { ArgusEvent } from '../../types'
 import { extractPersonNames } from '../../utils/entityLinker'
+import { eventTitle } from '../../lib/eventText'
 
 export type RegionTab = 'overview' | 'events' | 'profile'
 
@@ -275,7 +276,7 @@ export function RegionPanelTabContent({
   tab, country, info, allTags, regionEvents, sceneNow, onOpenEvent,
   wikiData, wikiLoading,
 }: ContentProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const addSelectedEntity = useAppStore(s => s.addSelectedEntity)
 
   const stabilityColor = !info ? '#4a6070'
@@ -365,7 +366,7 @@ export function RegionPanelTabContent({
                 <button
                   key={e.id}
                   onClick={() => onOpenEvent(e.id)}
-                  title={e.title}
+                  title={eventTitle(e, i18n.language)}
                   style={{
                     display: 'flex', gap: '7px', alignItems: 'flex-start',
                     width: '100%', textAlign: 'left', marginBottom: '2px',
@@ -393,7 +394,7 @@ export function RegionPanelTabContent({
                     {sym.glyph} {sym.label}
                   </span>
                   <span style={{ color: '#8aabbf', fontSize: '11px', lineHeight: 1.4, flex: 1, minWidth: 0 }}>
-                    {e.title}
+                    {eventTitle(e, i18n.language)}
                   </span>
                   <span style={{ flexShrink: 0, color: '#2a4060', fontSize: '10px', marginTop: '2px' }}>
                     {ageFrom(sceneNow, e.published_at)}

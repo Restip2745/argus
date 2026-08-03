@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useAppStore, DEFAULT_TIME_RANGE } from '../../store'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
+import { eventTitle } from '../../lib/eventText'
 import {
   eventSymbol, SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER,
 } from '../../data/symbology'
@@ -39,7 +40,7 @@ function FilterChip({ label, onClear, color = '#00d4ff' }: {
 }
 
 export function Sidebar() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const events           = useAppStore((s) => s.events)
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
   const focusedBody      = useAppStore((s) => s.focusedBody)
@@ -123,10 +124,10 @@ export function Sidebar() {
                 onClear={() => setShowWatchlistOnly(false)}
               />
             )}
-            {timeRangeFilter !== 'all' && (
+            {timeRangeFilter !== DEFAULT_TIME_RANGE && (
               <FilterChip
                 label={timeRangeFilter.toUpperCase()}
-                onClear={() => setTimeRangeFilter('all')}
+                onClear={() => setTimeRangeFilter(DEFAULT_TIME_RANGE)}
               />
             )}
             {searchQuery.trim() !== '' && (
@@ -218,7 +219,7 @@ export function Sidebar() {
                     <span className="text-[10px] text-[#2a4060] uppercase ml-auto">{event.body}</span>
                   )}
                 </div>
-                <p className="text-[#a8c4d8] text-[11px] leading-snug line-clamp-2">{event.title}</p>
+                <p className="text-[#a8c4d8] text-[11px] leading-snug line-clamp-2">{eventTitle(event, i18n.language)}</p>
                 <p className="text-[#2a4060] text-[10px] mt-0.5">{event.source}</p>
               </button>
             )

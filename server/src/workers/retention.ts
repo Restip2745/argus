@@ -20,6 +20,7 @@ function baseHeatScore(a: Article): number {
     // Unused by calculateHeatScore but required by the interface:
     title_zh:    '',
     summary_zh:  '',
+    summary_en:  '',
     location:    { type: 'geo', label: '', lat: null, lng: null, body: null },
     actors:      [],
     tags:        [],

@@ -17,6 +17,7 @@ import { useAppStore } from '../../store'
 import type { AgentEntry } from '../../hooks/useAgentQuery'
 import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
+import { eventTitle, eventSummary } from '../../lib/eventText'
 import { highlightText } from '../../utils/highlightText'
 import { useSceneTime } from '../../hooks/useSceneTime'
 
@@ -70,7 +71,7 @@ export function EventPanelBody({
   agentScrollRef,
   hideAgent = false,
 }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { now: sceneNow } = useSceneTime()
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const searchQuery    = useAppStore((s) => s.searchQuery)
@@ -94,10 +95,10 @@ export function EventPanelBody({
   const addSelectedEntity = useAppStore((s) => s.addSelectedEntity)
   const personNames = extractPersonNames(event.actors ?? [])
 
-  const title = event.title
-  // In EN mode: prefer original English content; fall back to title as last resort.
-  // In zh-TW mode: prefer the Chinese summary, fall back to content.
-  const summary = event.content || null
+  const title = eventTitle(event, i18n.language)
+  // The generated summary in the reader's language; the raw RSS snippet is the
+  // fallback for anything ingested before summaries existed, or not translated.
+  const summary = eventSummary(event, i18n.language) || event.content || null
 
   function resolveCountry() {
     const label = event.location_label

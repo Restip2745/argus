@@ -44,6 +44,7 @@ export interface Article {
   category: EventCategory | null
   title_zh: string | null
   summary_zh: string | null
+  summary_en: string | null
   intensity: EventIntensity | null
   location_type: 'geo' | 'orbital' | null
   location_label: string | null
@@ -70,6 +71,11 @@ export interface Article {
 export interface OllamaClassification {
   category: EventCategory
   intensity: EventIntensity
+  /** Chinese title. Empty string when the model did not return a usable one —
+   *  callers fall back to the source's own title rather than showing nothing. */
+  title_zh: string
+  summary_zh: string
+  summary_en: string
   location: {
     type: 'geo' | 'orbital'
     label: string
@@ -93,6 +99,7 @@ export interface ClientEvent {
   title_zh: string
   content: string | null       // Original RSS content snippet
   summary_zh: string
+  summary_en: string
   source: string
   url: string
   published_at: string | null

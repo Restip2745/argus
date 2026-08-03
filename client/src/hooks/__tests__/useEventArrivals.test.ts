@@ -6,7 +6,7 @@ import type { ArgusEvent } from '../../types'
 
 function makeEvent(id: string, intensity: ArgusEvent['intensity'] = 'LOW'): ArgusEvent {
   return {
-    id, title: `Event ${id}`, title_zh: null, content: null, summary_zh: null,
+    id, title: `Event ${id}`, title_zh: null, content: null, summary_zh: null, summary_en: null,
     source: 'test', url: 'https://example.com',
     published_at: new Date().toISOString(), fetched_at: new Date().toISOString(),
     category: 'POLITICAL', intensity,

@@ -11,6 +11,7 @@ function makeEvent(overrides: Partial<ArgusEvent> & Pick<ArgusEvent, 'id'>): Arg
     title_zh:       null,
     content:        overrides.content ?? null,
     summary_zh:     null,
+    summary_en:     null,
     source:         'test',
     url:            'https://example.com',
     published_at:   overrides.published_at ?? new Date().toISOString(),

@@ -32,6 +32,9 @@ Follow this schema exactly:
 {
   "category": string,         // One of: ARMED_CONFLICT | POLITICAL | ECONOMIC | SOCIAL | SCIENCE_TECH | ENVIRONMENT | HEALTH | CRIME_SECURITY | SPACE
   "intensity": string,        // One of: LOW | MODERATE | HIGH | CRITICAL
+  "title_zh": string,         // Traditional Chinese (zh-TW) translation of the title, max 40 characters. Use Taiwanese conventions, not Simplified.
+  "summary_en": string,       // One-sentence English summary of what happened, max 200 characters
+  "summary_zh": string,       // The same summary in Traditional Chinese (zh-TW), max 120 characters
   "location": {
     "type": string,           // "geo" for Earth surface events | "orbital" for space events
     "label": string,          // Human-readable location name, e.g. "Ukraine" or "Inner Solar System"
@@ -103,7 +106,30 @@ async function callOllama(title: string, content: string | null): Promise<Ollama
   return validateClassification(parsed)
 }
 
-function validateClassification(raw: Record<string, unknown>): OllamaClassification {
+/**
+ * Free text from the model, clamped and sanity-checked.
+ *
+ * The model now does three jobs in one call (classify, translate, summarise),
+ * and the translation half is the fragile one — a small model will sometimes
+ * echo the prompt, answer in the wrong language, or run past the length limit.
+ * None of that may be allowed to cost us the classification, so every text
+ * field degrades to '' and the caller falls back to the original title.
+ */
+function cleanText(raw: unknown, maxLen: number): string {
+  if (typeof raw !== 'string') return ''
+  const s = raw.replace(/\s+/g, ' ').trim()
+  if (!s || s.length > maxLen * 2) return ''   // absurdly long → model rambled
+  return s.length > maxLen ? s.slice(0, maxLen) : s
+}
+
+/** True if the string carries any Han characters — used to catch the model
+ *  returning English where Chinese was asked for, which would silently give
+ *  both languages the same text. */
+function hasHan(s: string): boolean {
+  return /[一-鿿㐀-䶿]/.test(s)
+}
+
+export function validateClassification(raw: Record<string, unknown>): OllamaClassification {
   // Validate category
   let category = raw.category as string
   if (!VALID_CATEGORIES.includes(category as EventCategory)) {
@@ -120,9 +146,17 @@ function validateClassification(raw: Record<string, unknown>): OllamaClassificat
   const loc = (raw.location ?? {}) as Record<string, unknown>
   const locType = loc.type === 'orbital' ? 'orbital' : 'geo'
 
+  // Chinese fields must actually be Chinese; otherwise drop them so the UI
+  // falls back to the original rather than showing English twice.
+  const titleZh   = cleanText(raw.title_zh, 40)
+  const summaryZh = cleanText(raw.summary_zh, 120)
+
   return {
     category: category as EventCategory,
     intensity: intensity as EventIntensity,
+    title_zh:   hasHan(titleZh)   ? titleZh   : '',
+    summary_zh: hasHan(summaryZh) ? summaryZh : '',
+    summary_en: cleanText(raw.summary_en, 200),
     location: {
       type:  locType,
       label: String(loc.label ?? ''),

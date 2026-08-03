@@ -10,7 +10,7 @@ const HOUR = 3_600_000
 
 function evt(id: string, over: Partial<ArgusEvent> = {}): ArgusEvent {
   return {
-    id, title: `Title ${id}`, title_zh: null, content: null, summary_zh: null,
+    id, title: `Title ${id}`, title_zh: null, content: null, summary_zh: null, summary_en: null,
     source: 'test', url: 'https://example.com',
     published_at: new Date(NOW - HOUR).toISOString(),
     fetched_at: new Date(NOW - HOUR).toISOString(),

@@ -12,8 +12,10 @@
  * EventPanel. Clicking the already-active row is a no-op.
  */
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { eventSymbol, severityColor } from '../../data/symbology'
 import { useAppStore } from '../../store'
+import { eventTitle } from '../../lib/eventText'
 import type { ArgusEvent } from '../../types'
 
 function relativeTime(iso: string | null): string {
@@ -42,6 +44,7 @@ interface RowProps {
 }
 
 function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSelect }: RowProps) {
+  const { i18n } = useTranslation()
   const sym   = eventSymbol(ev)
   const color = sym.color
   const icon  = sym.glyph
@@ -181,7 +184,7 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
         WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
         overflow: 'hidden',
       }}>
-        {ev.title}
+        {eventTitle(ev, i18n.language)}
       </p>
     </button>
   )

@@ -16,7 +16,7 @@ const IMG = 'https://example.com/lead.jpg'
 function makeEvent(over: Partial<ArgusEvent> = {}): ArgusEvent {
   return {
     id: 'e1', title: 'Hundreds of thousands rally in Taipei',
-    title_zh: null, content: 'Body copy.', summary_zh: null,
+    title_zh: null, content: 'Body copy.', summary_zh: null, summary_en: null,
     source: 'CNA Asia', url: 'https://example.com/article',
     published_at: new Date().toISOString(), fetched_at: new Date().toISOString(),
     category: 'SOCIAL', intensity: 'HIGH',

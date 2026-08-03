@@ -112,8 +112,12 @@ app.post('/api/events/webhook', (req, res) => {
       url: event.url, published_at: event.published_at, fetched_at: now,
       is_analyzed: 1 as 0 | 1 | -1,
       category:      event.category as EventCategory,
-      title_zh:      event.title,
+      // Webhook events arrive pre-classified and are never sent to the model,
+      // so there is nothing to translate — '' lets the usual fallback show the
+      // caller's own title rather than inventing a translation.
+      title_zh:      '',
       summary_zh:    '',
+      summary_en:    '',
       intensity:     event.intensity as EventIntensity,
       location_type: (event.location_type ?? null) as 'geo' | 'orbital' | null,
       location_label: event.location_label,

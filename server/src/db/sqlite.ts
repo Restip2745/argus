@@ -34,6 +34,10 @@ export function initDb(): void {
     db.exec("ALTER TABLE articles ADD COLUMN image_url TEXT")
     logger.info('[DB]', 'Migration: added image_url column')
   }
+  if (!cols.some(c => c.name === 'summary_en')) {
+    db.exec("ALTER TABLE articles ADD COLUMN summary_en TEXT")
+    logger.info('[DB]', 'Migration: added summary_en column')
+  }
 
   logger.info('[DB]', 'SQLite initialised (articles schema)')
 }
@@ -145,6 +149,7 @@ export function markAnalyzed(
        category       = @category,
        title_zh       = @title_zh,
        summary_zh     = @summary_zh,
+       summary_en     = @summary_en,
        intensity      = @intensity,
        location_type  = @location_type,
        location_label = @location_label,
@@ -161,8 +166,9 @@ export function markAnalyzed(
   ).run({
     id,
     category:       data.category,
-    title_zh:       '',
-    summary_zh:     '',
+    title_zh:       data.title_zh,
+    summary_zh:     data.summary_zh,
+    summary_en:     data.summary_en,
     intensity:      data.intensity,
     location_type:  data.location.type,
     location_label: data.location.label,
@@ -238,9 +244,13 @@ export function articleToClientEvent(row: Article): ClientEvent {
   return {
     id:              row.id,
     title:           row.title,
-    title_zh:        row.title_zh ?? row.title,
+    // `||` not `??`: an article the model could not translate stores '' here,
+    // and an empty string is exactly the case that must fall back to the
+    // original title. `??` only catches null and let '' through.
+    title_zh:        row.title_zh || row.title,
     content:         row.content,
     summary_zh:      row.summary_zh ?? '',
+    summary_en:      row.summary_en ?? '',
     source:          row.source,
     url:             row.url,
     published_at:    row.published_at,

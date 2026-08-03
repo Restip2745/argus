@@ -16,8 +16,12 @@ CREATE TABLE IF NOT EXISTS articles (
 
   -- Ollama output fields (NULL before analysis)
   category       TEXT,                  -- Event classification
+  -- Bilingual display text. `title` above is the source's own (English) title
+  -- and is never regenerated; only the Chinese title is produced by the model.
+  -- Summaries have no original to fall back on, so both languages are produced.
   title_zh       TEXT,                  -- Chinese title (max 40 chars)
   summary_zh     TEXT,                  -- Chinese summary (max 120 chars)
+  summary_en     TEXT,                  -- English summary (max 200 chars)
   intensity      TEXT,                  -- LOW | MODERATE | HIGH | CRITICAL
   location_type  TEXT,                  -- "geo" | "orbital"
   location_label TEXT,                  -- Human-readable location name

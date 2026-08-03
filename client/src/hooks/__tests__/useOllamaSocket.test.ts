@@ -32,7 +32,7 @@ function makeEvent(id: string): ArgusEvent {
     title: `Event ${id}`,
     title_zh: null,
     content: null,
-    summary_zh: null,
+    summary_zh: null, summary_en: null,
     source: 'test',
     url: 'https://example.com',
     published_at: new Date().toISOString(),

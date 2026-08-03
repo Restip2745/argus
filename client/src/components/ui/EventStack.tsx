@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import type { ArgusEvent } from '../../types'
 
 import { eventSymbol, SEVERITY_LABEL } from '../../data/symbology'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
+import { eventTitle } from '../../lib/eventText'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { highlightText } from '../../utils/highlightText'
 import { STATUS_BAR_H } from './StatusBar'
@@ -31,10 +33,11 @@ const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, sea
     }
   }, [nudgeGen])
 
+  const { i18n } = useTranslation()
   const sym   = eventSymbol(event)
   const color = sym.color
   const icon  = sym.glyph
-  const title = event.title
+  const title = eventTitle(event, i18n.language)
 
   let animation: string
   if (isNew) {

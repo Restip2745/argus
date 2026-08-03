@@ -52,6 +52,7 @@ export interface ArgusEvent {
   title_zh: string | null
   content: string | null       // Original RSS content snippet
   summary_zh: string | null
+  summary_en: string | null
   source: string
   url: string
   published_at: string
