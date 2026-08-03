@@ -11,7 +11,7 @@ services:
       DB_PATH: /app/data/intelligence.db
       # Ollama — change host if Ollama runs on a different machine
       OLLAMA_HOST: http://host.docker.internal:11434
-      OLLAMA_MODEL: llama3.2
+      OLLAMA_MODEL: gemma4:e4b
       # Optional: set LOG_LEVEL to debug for verbose output
       LOG_LEVEL: info
       # Optional overrides (uncomment and set as needed):

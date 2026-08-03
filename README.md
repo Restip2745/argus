@@ -449,7 +449,7 @@ Verified sources: {sources_count}
 - **Astronomy**: [Astronomy Engine](https://github.com/cosinekitty/astronomy) 或 VSOP87 星曆表，用於計算各天體即時位置。
 - **Backend**: Node.js (TypeScript), Express, Socket.io.
 - **Database**: SQLite (better-sqlite3).
-- **AI Engine**: Ollama（本機執行，推薦模型：`llama3.2` 或 `phi3`）。
+- **AI Engine**: Ollama（本機執行，預設模型：`gemma4:e4b`）。
 - **Data sources**: RSS Feed（Reuters、BBC、AP、Al Jazeera 等，來源清單見下方）。
 
 ---
@@ -608,7 +608,7 @@ CREATE INDEX IF NOT EXISTS idx_heat_score    ON articles(heat_score, last_refere
 
 ## ⚙️ 快速開始 (Development)
 
-1. **啟動 Ollama**：確保本地 `ollama serve` 已開啟並 pull 指定模型（如 `ollama pull llama3.2`）。
+1. **啟動 Ollama**：確保本地 `ollama serve` 已開啟並 pull 指定模型（`ollama pull gemma4:e4b`）。
 2. **後端設定**：
    - `cd server`
    - `npm install`（Windows 若 better-sqlite3 編譯失敗，需安裝 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) 含「使用 C++ 的桌面開發」）
