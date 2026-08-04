@@ -32,10 +32,20 @@ function popoverBottom(immersive: boolean, restingOffset: number): number {
   return Math.max(restingOffset, SCRUBBER_TOP - DOCK_BOTTOM + POPOVER_GAP)
 }
 
+/**
+ * Icons for the four surface fills. All four are abstract pattern marks rather
+ * than symbols borrowed from elsewhere: ◈ is the app's panel/section marker
+ * (every panel title and agent header carries it, and so does the EVENT PANEL
+ * button further along this same strip), so POSTURE using it put two identical
+ * glyphs in one dock and gave a map fill a meaning it does not have.
+ *
+ * ▨ is a hatched square against POLITICAL's solid ▦ — both are surface fills,
+ * one categorical and one graduated, which is exactly the difference.
+ */
 const MAP_MODES: { id: MapMode; icon: string; label: string }[] = [
   { id: 'none',      icon: '○', label: 'NONE'      },
   { id: 'political', icon: '▦', label: 'POLITICAL' },
-  { id: 'posture',   icon: '◈', label: 'POSTURE'   },
+  { id: 'posture',   icon: '▨', label: 'POSTURE'   },
   { id: 'activity',  icon: '≋', label: 'ACTIVITY'  },
 ]
 
@@ -341,7 +351,11 @@ export function FloatDock() {
       {/* Service health badge — only shows when degraded */}
       {!serviceHealth.healthy && (
         <DockBtn
-          icon="⚙"
+          // Not ⚙ — that is CONFIGURATION further along this strip, and this
+          // badge only appears when something is broken, so the two gears
+          // showed up together exactly when the alarm needed to be legible.
+          // ⏻ reads as a service being down rather than a setting to open.
+          icon="⏻"
           label={serviceHealth.ollamaOnline ? 'SCRAPER STALLED' : 'OLLAMA OFFLINE'}
           badge="!"
           color="#ff8c00"
@@ -496,7 +510,12 @@ export function FloatDock() {
         onClick={() => setShowShipsLayer(!showShipsLayer)}
       />
       <DockBtn
-        icon="⚔"
+        // Not ⚔ — that is the ARMED_CONFLICT category glyph, and the category
+        // quick-filters a few buttons to the left are generated from the same
+        // table. Two ⚔ in one strip meant "filter the feed to conflict" and
+        // "draw front lines on the globe" looked identical. ▰ reads as a band
+        // of held ground, which is what the layer actually draws.
+        icon="▰"
         label={t('conflictLayer.toggle', 'CONFLICT FRONTS')}
         color="#ff6600"
         active={showConflictLayer}
@@ -524,10 +543,9 @@ export function FloatDock() {
           it there is nothing on screen saying you are holding anything. */}
       {contextEntities.length > 0 && (
         <DockBtn
-          // Not ◈ — that is already the POSTURE map mode two groups to the
-          // left, and two identical glyphs in one strip is the collision the
-          // symbology rules exist to prevent. ⧉ reads as several things held
-          // together, which is what the collection is.
+          // ⧉ reads as several things held together, which is what the
+          // collection is. Deliberately not ◈: that marks a panel/section
+          // throughout the app, and this button is a collection, not a panel.
           icon="⧉"
           label={`${t('context.title', 'MULTI-ENTITY CONTEXT')} (${contextEntities.length})`}
           badge={contextEntities.length}
