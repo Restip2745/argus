@@ -25,6 +25,7 @@ import { EventTimeline }      from './EventTimeline'
 import { EventPanelBody }     from './EventPanelBody'
 import { Panel }              from './Panel'
 import { PanelTail }          from './PanelTail'
+import { eventTitle, eventSummary } from '../../lib/eventText'
 import type { ArgusEvent }    from '../../types'
 
 
@@ -42,7 +43,7 @@ function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function EventPanel() {
-  const { t }               = useTranslation()
+  const { t, i18n }         = useTranslation()
   const activePanelId       = useAppStore((s) => s.activePanelId)
   const events              = useAppStore((s) => s.events)
   const setActivePanelId    = useAppStore((s) => s.setActivePanelId)
@@ -133,11 +134,14 @@ export function EventPanel() {
       `Intensity: ${displayedEvent.intensity}`,
       `Location: ${displayedEvent.location_label ?? 'Unknown'}`,
       `Source: ${displayedEvent.source}`,
-      displayedEvent.content ? `Summary: ${displayedEvent.content.slice(0, 300)}` : '',
+      (() => {
+        const s = eventSummary(displayedEvent, i18n.language) || displayedEvent.content
+        return s ? `Summary: ${s.slice(0, 300)}` : ''
+      })(),
       displayedEvent.actors?.length ? `Actors: ${displayedEvent.actors.join(', ')}` : '',
       displayedEvent.lat !== null ? `Coordinates: ${displayedEvent.lat?.toFixed(3)}, ${displayedEvent.lng?.toFixed(3)}` : '',
     ].filter(Boolean).join('\n')
-  }, [displayedEvent])
+  }, [displayedEvent, i18n.language])
 
   const suggestedQueries = useMemo(
     () => displayedEvent ? categoryQueries(t, displayedEvent.category) : [],
@@ -285,11 +289,16 @@ export function EventPanel() {
                 return (
                   <button
                     onClick={() => {
+                      // The generated summary in the reader's language, with
+                      // the raw RSS snippet only as a fallback for rows
+                      // ingested before summaries existed.
                       const ce: ContextEntity = {
                         id: displayedEvent.id,
                         type: 'event',
-                        name: displayedEvent.title,
-                        summary: displayedEvent.content || displayedEvent.title,
+                        name: eventTitle(displayedEvent, i18n.language),
+                        summary: eventSummary(displayedEvent, i18n.language)
+                          || displayedEvent.content
+                          || displayedEvent.title,
                       }
                       addContextEntity(ce)
                     }}

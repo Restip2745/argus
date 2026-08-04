@@ -5,6 +5,7 @@ import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
+import { getCachedWikiSummary, useWikiCacheVersion } from '../../hooks/useWikiSummary'
 import { Panel } from './Panel'
 import { WikiPanelBody } from './WikiPanelBody'
 import type { ContextEntity } from '../../types'
@@ -15,6 +16,13 @@ interface WikiSearchResult {
   title: string
   description?: string
   thumbnail?: { source: string }
+}
+
+/** Encyclopedia text for an entity, trimmed to something a prompt can carry. */
+function wikiExtract(title: string | null | undefined): string | null {
+  const extract = getCachedWikiSummary(title)?.extract?.trim()
+  if (!extract) return null
+  return extract.length > 400 ? extract.slice(0, 400).replace(/\s+\S*$/, '') + '…' : extract
 }
 
 function useWikiSearch(query: string) {
@@ -72,6 +80,9 @@ export function WikiPanel() {
   const [searchInput, setSearchInput] = useState('')
   const [showSearch, setShowSearch] = useState(true)
   const { results: searchResults, loading: searchLoading } = useWikiSearch(searchInput)
+  // Extracts are fetched by the body components below; this re-renders us when
+  // they arrive so the prompt text is built from the real thing.
+  const wikiFetchGen = useWikiCacheVersion()
 
   const { history, loading: agentLoading, error: agentError, ask } = useAgentQuery()
   const { open: popoutOpen, isPopped } = usePopoutWindow('wiki')
@@ -95,10 +106,13 @@ export function WikiPanel() {
 
   const agentContext = useMemo(() => {
     if (selectedEntities.length === 0) return ''
-    return selectedEntities.map(p =>
-      `Entity: ${p.name}${p.wikiTitle && p.wikiTitle !== p.name ? ` (Wikipedia: ${p.wikiTitle})` : ''}`
-    ).join('\n')
-  }, [selectedEntities])
+    return selectedEntities.map(p => {
+      const extract = wikiExtract(p.wikiTitle ?? p.name)
+      return `Entity: ${p.name}${extract ? `\n${extract}` : ''}`
+    }).join('\n\n')
+    // The extracts arrive asynchronously, so recompute once they land rather
+    // than freezing the name-only version captured on first render.
+  }, [selectedEntities, wikiFetchGen])
 
   const suggestedQueries = useMemo(
     () => entityQueries(t, selectedEntities.map((p) => p.name)),
@@ -134,11 +148,14 @@ export function WikiPanel() {
               <button
                 onClick={() => {
                   for (const p of selectedEntities) {
+                    // The actual encyclopedia text, not a label. This used to
+                    // send `Wikipedia: <name>`, so the cross-entity agent was
+                    // asked to relate people it had been told nothing about.
                     const ce: ContextEntity = {
                       id: `wiki-${p.name}`,
                       type: 'wiki',
                       name: p.name,
-                      summary: p.wikiTitle ? `Wikipedia: ${p.wikiTitle}` : p.name,
+                      summary: wikiExtract(p.wikiTitle ?? p.name) ?? p.name,
                     }
                     addContextEntity(ce)
                   }

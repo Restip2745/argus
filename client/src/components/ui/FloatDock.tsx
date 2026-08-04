@@ -149,6 +149,9 @@ export function FloatDock() {
   const setMapMode           = useAppStore((s) => s.setMapMode)
   const layerErrors          = useAppStore((s) => s.layerErrors)
   const layerLoading         = useAppStore((s) => s.layerLoading)
+  const contextEntities      = useAppStore((s) => s.contextEntities)
+  const showContextPanel     = useAppStore((s) => s.showContextPanel)
+  const setShowContextPanel  = useAppStore((s) => s.setShowContextPanel)
 
 
   const serviceHealth      = useServiceHealth()
@@ -513,6 +516,26 @@ export function FloatDock() {
         active={showAnnotationCanvas}
         onClick={() => setShowAnnotationCanvas(!showAnnotationCanvas)}
       />
+
+      {/* Multi-entity context — the only durable way back to the panel.
+          Every other route in is a per-panel ⊕ that disables itself once the
+          entity is collected, so closing the panel used to strand whatever had
+          been gathered. The badge also makes the collection visible: without
+          it there is nothing on screen saying you are holding anything. */}
+      {contextEntities.length > 0 && (
+        <DockBtn
+          // Not ◈ — that is already the POSTURE map mode two groups to the
+          // left, and two identical glyphs in one strip is the collision the
+          // symbology rules exist to prevent. ⧉ reads as several things held
+          // together, which is what the collection is.
+          icon="⧉"
+          label={`${t('context.title', 'MULTI-ENTITY CONTEXT')} (${contextEntities.length})`}
+          badge={contextEntities.length}
+          color="#00ffcc"
+          active={showContextPanel}
+          onClick={() => setShowContextPanel(!showContextPanel)}
+        />
+      )}
 
       {/* Intel brief */}
       {intelBrief && (
