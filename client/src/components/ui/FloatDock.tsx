@@ -50,7 +50,8 @@ const MAP_MODES: { id: MapMode; icon: string; label: string }[] = [
 ]
 
 interface DockBtnProps {
-  icon: string
+  icon?: string
+  iconSrc?: string
   label: string
   badge?: number | string
   error?: boolean
@@ -61,7 +62,7 @@ interface DockBtnProps {
   onClick: () => void
 }
 
-function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active, dim, onClick }: DockBtnProps) {
+function DockBtn({ icon, iconSrc, label, badge, error, loading, color = '#4a6070', active, dim, onClick }: DockBtnProps) {
   const [hovered, setHovered] = useState(false)
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -94,7 +95,7 @@ function DockBtn({ icon, label, badge, error, loading, color = '#4a6070', active
           animation: loading ? 'loadingRing 0.9s ease-in-out infinite' : undefined,
         }}
       >
-        {icon}
+        {iconSrc ? <img src={iconSrc} alt="" style={{ width: 16, height: 16, display: 'block' }} /> : icon}
         {badge != null && (typeof badge === 'string' ? badge.length > 0 : Number(badge) > 0) && (
           <span style={{
             position: 'absolute', top: '2px', right: '2px',
@@ -480,7 +481,7 @@ export function FloatDock() {
       <div style={{ width: '1px', height: '16px', background: 'rgba(0,180,255,0.12)', margin: '0 2px' }} />
 
       <DockBtn
-        icon="✈"
+        iconSrc="/icons/aircraft.png"
         label={isLive ? 'AIRCRAFT (ADS-B)' : 'AIRCRAFT (ADS-B) — LIVE ONLY, HIDDEN WHILE REVIEWING'}
         color="#a0c4ff"
         active={showAircraftLayer}
@@ -490,7 +491,7 @@ export function FloatDock() {
         onClick={() => setShowAircraftLayer(!showAircraftLayer)}
       />
       <DockBtn
-        icon="🛰"
+        iconSrc="/icons/satellite.png"
         label={isLive ? 'SATELLITES (TLE)' : 'SATELLITES (TLE) — LIVE ONLY, HIDDEN WHILE REVIEWING'}
         color="#00d4ff"
         active={showSatellitesLayer}
@@ -500,7 +501,7 @@ export function FloatDock() {
         onClick={() => setShowSatellitesLayer(!showSatellitesLayer)}
       />
       <DockBtn
-        icon="🚢"
+        iconSrc="/icons/ship.png"
         label={isLive ? 'VESSELS (AIS)' : 'VESSELS (AIS) — LIVE ONLY, HIDDEN WHILE REVIEWING'}
         color="#39ff8a"
         active={showShipsLayer}
@@ -515,7 +516,7 @@ export function FloatDock() {
         // table. Two ⚔ in one strip meant "filter the feed to conflict" and
         // "draw front lines on the globe" looked identical. ▰ reads as a band
         // of held ground, which is what the layer actually draws.
-        icon="▰"
+        iconSrc="/icons/conflict.png"
         label={t('conflictLayer.toggle', 'CONFLICT FRONTS')}
         color="#ff6600"
         active={showConflictLayer}
@@ -529,7 +530,7 @@ export function FloatDock() {
 
       {/* Annotation system toggle */}
       <DockBtn
-        icon="📍"
+        iconSrc="/icons/pin.png"
         label={t('annotation.toggle', 'ANNOTATION')}
         color="#9b6dff"
         active={showAnnotationCanvas}

@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { useAppStore } from '../../store'
 import { latLngToWorld, latLngToLocal, isAboveHorizon, AXIAL_TILT_RAD } from '../../lib/coordinates'
 import { getGAST, gastToRotY } from '../../hooks/useGAST'
+import { MarkerGlyph } from '../ui/AnnotationToolbar'
 import type { AnnotationPin, AnnotationLink, CelestialBodyName } from '../../types'
 
 const MARKER_R   = 1.030  // just above EventMarkers (1.025)
@@ -113,7 +114,7 @@ function PinMarker({
               backdropFilter: 'blur(4px)',
               transition: 'box-shadow 0.15s',
             }}>
-              {pin.icon}
+              <MarkerGlyph icon={pin.icon} size={16} />
             </div>
 
             {/* Label */}

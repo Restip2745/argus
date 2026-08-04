@@ -5,9 +5,9 @@ import type { AnnotationPin, AnnotationLink } from '../../types'
 
 // ── Preset icons & colors ────────────────────────────────────────────────────
 const PRESET_ICONS = [
-  '📍', '⭐', '⚡', '🔴', '🟠', '🟡',
-  '🏴', '💥', '⚠️', '🎯', '🔵', '🟢',
-  '🛡️', '⚔️', '🚀', '✈️', '🚢', '🏔️',
+  '/icons/pin.png', '/icons/star.png', '/icons/lightning.png', '/icons/diamond.png', '/icons/hexagon.png', '/icons/square.png',
+  '/icons/flag.png', '/icons/impact.png', '/icons/warning.png', '/icons/target.png', '/icons/circle.png', '/icons/cross.png',
+  '/icons/shield.png', '/icons/eye.png', '/icons/rocket.png', '/icons/aircraft.png', '/icons/ship.png', '/icons/mountain.png',
 ]
 
 const PRESET_COLORS = [
@@ -15,12 +15,21 @@ const PRESET_COLORS = [
   '#44ff88', '#cc44ff', '#ff44cc', '#ffffff',
 ]
 
+// A marker icon is either a literal glyph (emoji/text) or an image path —
+// pins placed before an icon was reskinned as an image keep working either way.
+export function MarkerGlyph({ icon, size }: { icon: string; size: number }) {
+  return icon.startsWith('/')
+    ? <img src={icon} alt="" style={{ width: size, height: size, display: 'block' }} />
+    : <>{icon}</>
+}
+
 // ── Tool button ──────────────────────────────────────────────────────────────
 function ToolBtn({
-  label, icon, active, onClick, danger,
+  label, icon, iconSrc, active, onClick, danger,
 }: {
   label: string
-  icon: string
+  icon?: string
+  iconSrc?: string
   active: boolean
   onClick: () => void
   danger?: boolean
@@ -47,7 +56,7 @@ function ToolBtn({
         fontSize: 18,
       }}
     >
-      <span>{icon}</span>
+      <span>{iconSrc ? <img src={iconSrc} alt="" style={{ width: 18, height: 18, display: 'block' }} /> : icon}</span>
       <span style={{ fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.05em' }}>{label}</span>
     </button>
   )
@@ -59,7 +68,7 @@ function PinForm({ onConfirm, onCancel }: {
   onCancel: () => void
 }) {
   const { t } = useTranslation()
-  const [icon,  setIcon]  = useState('📍')
+  const [icon,  setIcon]  = useState('/icons/pin.png')
   const [color, setColor] = useState('#00c8ff')
   const [label, setLabel] = useState('')
 
@@ -82,7 +91,7 @@ function PinForm({ onConfirm, onCancel }: {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
-            {ic}
+            <MarkerGlyph icon={ic} size={18} />
           </button>
         ))}
       </div>
@@ -135,7 +144,7 @@ function PinForm({ onConfirm, onCancel }: {
           background: color + '28', border: `2px solid ${color}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 16,
-        }}>{icon}</div>
+        }}><MarkerGlyph icon={icon} size={16} /></div>
         {label && (
           <span style={{ fontSize: 11, color, fontFamily: 'monospace' }}>{label}</span>
         )}
@@ -320,7 +329,7 @@ export function AnnotationToolbar() {
           alignItems: 'center',
           gap: 6,
         }}>
-          <span>✏</span>
+          <img src="/icons/pencil.png" alt="" style={{ width: 14, height: 14, display: 'block' }} />
           <span>{t('annotation.title', 'MARKING TOOLS')}</span>
           {hasItems && (
             <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
@@ -332,7 +341,7 @@ export function AnnotationToolbar() {
         {/* Tool buttons */}
         <div style={{ display: 'flex', gap: 6 }}>
           <ToolBtn
-            icon="📍"
+            iconSrc="/icons/pin.png"
             label={t('annotation.tool.pin', 'PIN')}
             active={annotationTool === 'pin'}
             onClick={() => setAnnotationTool('pin')}
@@ -344,7 +353,7 @@ export function AnnotationToolbar() {
             onClick={() => setAnnotationTool('link')}
           />
           <ToolBtn
-            icon="🗑"
+            iconSrc="/icons/erase.png"
             label={t('annotation.tool.erase', 'ERASE')}
             active={annotationTool === 'erase'}
             onClick={() => setAnnotationTool('erase')}
