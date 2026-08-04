@@ -561,6 +561,45 @@ export function bodyMinDistance(id: CelestialBodyName): number {
   return r + SAFE_BUFFER
 }
 
+// ── Orbit rotation speed ─────────────────────────────────────────────────────
+
+/** Altitude, in body radii, at and above which rotation runs at full speed. */
+export const ROTATE_FULL_SPEED_ALT = 6
+/** Floor, so skimming the surface still allows movement rather than none. */
+export const ROTATE_MIN_SPEED = 0.08
+
+/**
+ * Multiplier on OrbitControls' rotate speed for orbiting a focused body.
+ *
+ * OrbitControls converts a drag into a fixed *angle* whatever the distance, so
+ * the closer you are the more of the visible surface that angle throws past
+ * you — right up against a planet, a nudge spins you across a continent.
+ *
+ * What should stay constant is how far the ground moves under the cursor, not
+ * the angle. Turning by θ moves the ground by about r·θ, and a surface feature
+ * appears larger as altitude falls (roughly ∝ 1/h close in), so screen-space
+ * motion goes as r·θ/h — which is held constant by making θ proportional to
+ * h/r. Hence a speed linear in altitude measured in radii.
+ *
+ * Far away the body no longer fills the view and the framing is set by the
+ * field of view instead, so the ramp is capped at 1 and distant orbiting keeps
+ * exactly the feel it has always had.
+ *
+ * @param camDist    camera distance from the body's centre, scene units
+ * @param bodyRadius rendered radius of that body, scene units
+ */
+export function orbitRotateSpeed(camDist: number, bodyRadius: number): number {
+  if (!(bodyRadius > 0) || !Number.isFinite(camDist)) return 1
+  const altitude = Math.max(0, camDist - bodyRadius)
+  const ramp = altitude / (bodyRadius * ROTATE_FULL_SPEED_ALT)
+  return Math.min(1, Math.max(ROTATE_MIN_SPEED, ramp))
+}
+
+/** Rendered radius for a body, falling back to 1 for anything unknown. */
+export function bodyRadius(id: CelestialBodyName): number {
+  return BODY_MAP.get(id)?.renderedRadius ?? 1.0
+}
+
 /** View distance when focusing: radius × factor (larger = pull further back) */
 export const VIEW_FACTOR: Partial<Record<CelestialBodyName, number>> = {
   sun: 6, jupiter: 5, saturn: 5, uranus: 5, neptune: 5, earth: 8,

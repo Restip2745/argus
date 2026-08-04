@@ -11,7 +11,7 @@ import { getGAST, gastToRotY } from '../../hooks/useGAST'
 import {
   BODIES, bodyMinDistance, bodyViewDistance,
   EARTH_DETAIL_THRESHOLD, EARTH_MARKER_THRESHOLD, EARTH_HOME_DISTANCE,
-  shouldAlignNorth, bodyNorthAxis,
+  shouldAlignNorth, bodyNorthAxis, orbitRotateSpeed, bodyRadius,
 } from '../../data/celestialBodies'
 import { determineNavLevel } from '../../config/navLevels'
 import { CelestialBody } from './CelestialBody'
@@ -109,6 +109,12 @@ export function SolarSystem() {
 
     if (focused && bodyPos) {
       const dist = camera.position.distanceTo(bodyPos)
+
+      // Ease rotation down as the surface comes up, so close work stays
+      // controllable. Only while a body is focused — with nothing focused
+      // there is no surface for "close" to mean anything against.
+      controls.rotateSpeed = orbitRotateSpeed(dist, bodyRadius(focused))
+
       alignedRef.current = shouldAlignNorth(dist, alignedRef.current)
       if (alignedRef.current) {
         const [x, y, z] = bodyNorthAxis(focused)
@@ -117,7 +123,9 @@ export function SolarSystem() {
         wantUpRef.current.copy(_worldUp.current)
       }
     } else {
-      // Nothing focused — the system view has no "up" but the world's.
+      // Nothing focused — the system view has no "up" but the world's, and no
+      // surface to slow down against.
+      controls.rotateSpeed = 1
       alignedRef.current = false
       wantUpRef.current.copy(_worldUp.current)
     }
