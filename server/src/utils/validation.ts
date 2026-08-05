@@ -26,6 +26,30 @@ export function validateExportParams(
   return null
 }
 
+/** Largest event page the server will hand out in one response. */
+export const MAX_EVENT_LIMIT = 2000
+/** Applied when the caller does not ask for a limit. */
+export const DEFAULT_EVENT_LIMIT = 2000
+
+/**
+ * Resolve `?limit=` for the event feed.
+ *
+ * This is a guard rail, not pagination. The client needs the whole set to
+ * compute its severity census, hourly histograms and per-country fills, so the
+ * default is deliberately high enough that nothing changes in normal use — it
+ * exists so that a database which has escaped its retention policy cannot
+ * hand the browser an unbounded response.
+ *
+ * Returns the limit to use, or an error string for a malformed request.
+ */
+export function resolveEventLimit(raw: string | undefined): number | string {
+  if (raw === undefined) return DEFAULT_EVENT_LIMIT
+  if (!/^\d+$/.test(raw)) return 'limit must be a positive integer'
+  const n = Number(raw)
+  if (n < 1) return 'limit must be at least 1'
+  return Math.min(n, MAX_EVENT_LIMIT)
+}
+
 export function validateEventId(id: string): string | null {
   if (!SAFE_ID_RE.test(id)) return 'invalid event id'
   return null

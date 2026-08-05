@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
+  resolveEventLimit,
+  MAX_EVENT_LIMIT,
+  DEFAULT_EVENT_LIMIT,
   validateExportParams,
   validateEventId,
   validateLlmConfigBody,
@@ -191,5 +194,42 @@ describe('validateConfigAuth', () => {
 
   it('rejects when header is empty string', () => {
     expect(validateConfigAuth('', 'my-secret')).toMatch(/X-Config-Key/)
+  })
+})
+
+/**
+ * A ceiling, not a page size. The client computes its severity census, hourly
+ * histograms and per-country fills from the whole set, so the default has to be
+ * high enough to change nothing in normal use; the cap exists only so a
+ * database that has outrun its retention policy cannot hand the browser an
+ * unbounded response.
+ */
+describe('resolveEventLimit', () => {
+  it('defaults high enough that ordinary requests are unaffected', () => {
+    expect(resolveEventLimit(undefined)).toBe(DEFAULT_EVENT_LIMIT)
+    expect(DEFAULT_EVENT_LIMIT).toBeGreaterThanOrEqual(2000)
+  })
+
+  it('honours a smaller explicit limit', () => {
+    expect(resolveEventLimit('10')).toBe(10)
+    expect(resolveEventLimit('1')).toBe(1)
+  })
+
+  it('clamps rather than rejecting an over-large limit', () => {
+    // Asking for too much is not an error — it is answered with the maximum.
+    expect(resolveEventLimit(String(MAX_EVENT_LIMIT + 1))).toBe(MAX_EVENT_LIMIT)
+    expect(resolveEventLimit('999999999')).toBe(MAX_EVENT_LIMIT)
+  })
+
+  it('rejects anything that is not a positive integer', () => {
+    for (const bad of ['0', '-5', 'abc', '1.5', '', ' 10', '10abc', '1e5']) {
+      expect(typeof resolveEventLimit(bad)).toBe('string')
+    }
+  })
+
+  it('does not accept a limit smuggled in as an array', () => {
+    // Express gives ?limit=1&limit=2 as an array; the route casts to string,
+    // so the validator must not silently coerce it into something usable.
+    expect(typeof resolveEventLimit(['1', '2'] as unknown as string)).toBe('string')
   })
 })

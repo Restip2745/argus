@@ -3,6 +3,7 @@ import express from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import cors from 'cors'
+import compression from 'compression'
 import helmet from 'helmet'
 import { Ollama } from 'ollama'
 import { readFileSync } from 'fs'
@@ -17,7 +18,7 @@ import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
-import { validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
+import { resolveEventLimit, validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
 import { logger } from './utils/logger'
 import type { EventCategory, EventIntensity } from './types'
 
@@ -32,6 +33,13 @@ const PORT = Number(process.env.PORT ?? 3001)
 
 app.use(cors({ origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173' }))
 app.use(helmet({ contentSecurityPolicy: false }))   // CSP disabled: client uses WebGL/Canvas
+// The event feed is a few hundred KB of highly repetitive JSON — the same
+// category, intensity and reliability strings over and over. It compresses
+// about 3x, which is a far better return than paginating it would be: the
+// client needs every event anyway to compute its severity census, hourly
+// histograms and per-country map fills, so splitting the response into pages
+// would move the same bytes in more round trips.
+app.use(compression())
 app.use(express.json())
 
 // ── REST routes ──────────────────────────────────────────
@@ -40,9 +48,11 @@ app.get('/api/health', (_req, res) => {
   res.json(getHealthSnapshot())
 })
 
-app.get('/api/events', (_req, res) => {
+app.get('/api/events', (req, res) => {
   try {
-    res.json(getAnalyzedArticles())
+    const limit = resolveEventLimit(req.query.limit as string | undefined)
+    if (typeof limit === 'string') return res.status(400).json({ error: limit })
+    res.json(getAnalyzedArticles(limit))
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
   }

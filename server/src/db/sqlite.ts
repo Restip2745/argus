@@ -127,10 +127,21 @@ export function getTopHeatEvents(limit = 5): ClientEvent[] {
   return rows.map(articleToClientEvent)
 }
 
-export function getAnalyzedArticles(): ClientEvent[] {
+/**
+ * Analysed events, hottest first.
+ *
+ * `limit` is a ceiling rather than a page size — the ordering puts the events
+ * most worth keeping at the front, so a truncated response still carries the
+ * ones that matter rather than an arbitrary slice.
+ */
+export function getAnalyzedArticles(limit?: number): ClientEvent[] {
   const rows = getDb()
-    .prepare('SELECT * FROM articles WHERE is_analyzed = 1 ORDER BY heat_score DESC, published_at DESC')
-    .all() as Article[]
+    .prepare(
+      'SELECT * FROM articles WHERE is_analyzed = 1' +
+      ' ORDER BY heat_score DESC, published_at DESC' +
+      (limit === undefined ? '' : ' LIMIT ?'),
+    )
+    .all(...(limit === undefined ? [] : [limit])) as Article[]
 
   return rows.map(articleToClientEvent)
 }
