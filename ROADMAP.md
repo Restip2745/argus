@@ -222,3 +222,24 @@ Strategic goals and milestone tracking for the ARGUS satellite/event tracker pro
 - [x] PersonPanel — Wikipedia biography, thumbnail, multi-person cards, AI chat, search via Wikipedia API
 - [x] Entity linking — extractPersonNames() + LinkedText in EventPanelBody / RegionPanelOverview / CelestialBodyPanel
 - [x] PersonPanel popout — ⊡ button; person popout renders in 2-column layout with dedicated AI agent
+
+---
+
+## Recurring — UI/UX Optimization
+
+> Standing task for every development cycle. Proactively identify and improve usability,
+> visual consistency, accessibility, performance feel, and interaction polish across the app.
+
+**Scope (non-exhaustive):**
+- Visual inconsistencies (spacing, color, font-size mismatches between panels)
+- Missing hover/focus/active states on interactive elements
+- Accessibility gaps (keyboard navigation, ARIA labels, contrast)
+- Scroll, animation, and transition jank
+- Redundant re-renders or layout thrash visible to users
+- Responsive layout issues at different viewport / uiScale values
+- Empty-state and error-state polish (blank areas, raw error strings)
+- i18n string gaps or untranslated labels
+- Tooltip / title consistency across buttons and chips
+
+**Process:** Each cycle, scan the current UI for low-hanging improvements, pick 1-3 items,
+implement, verify no regressions, and log what was done in TASKS.md.
