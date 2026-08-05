@@ -1,13 +1,20 @@
 /**
  * The dock is a single strip of icon-only buttons whose labels appear only on
- * hover, so the glyph is the entire identity of a control. Two buttons sharing
- * one glyph is therefore not a cosmetic issue — it makes them indistinguishable
- * until you hover each in turn.
+ * hover, so the icon is the entire identity of a control. Two buttons sharing
+ * one is therefore not a cosmetic issue — it makes them indistinguishable until
+ * you hover each in turn.
  *
  * This has happened twice: POSTURE borrowed ◈, which marks a panel/section
  * everywhere else in the app and was already on the EVENT PANEL button; and the
  * service-degraded badge used ⚙, the CONFIGURATION glyph, so an alarm and a
  * settings button became identical precisely when something was broken.
+ *
+ * A button's icon can be a glyph (`icon`) or an image (`iconSrc`). Both are
+ * checked, and each has already been the blind spot that let a duplicate
+ * through: the first version of this file scanned only written-out glyphs and
+ * reported the dock clean while ⚔ sat on two buttons, because the category
+ * filters are generated from CATEGORY_GLYPH; and image icons arrived later, so
+ * a glyph-only check would go quiet again as buttons migrate to artwork.
  *
  * Scans the source rather than importing, because the icons are JSX literals
  * spread across the component rather than a table that can be imported.
@@ -22,12 +29,17 @@ const source = readFileSync(
   'utf-8',
 )
 
-/** Icon literals written into the dock: `icon="X"` props and the MAP_MODES table. */
+/** Glyph literals written into the dock: `icon="X"` props and the MAP_MODES table. */
 function staticIcons(): string[] {
   const out: string[] = []
   for (const m of source.matchAll(/icon="([^"]+)"/g)) out.push(m[1])
   for (const m of source.matchAll(/icon:\s*'([^']+)'/g)) out.push(m[1])
   return out
+}
+
+/** Image icons: `iconSrc="/icons/x.png"`. */
+function imageIcons(): string[] {
+  return [...source.matchAll(/iconSrc="([^"]+)"/g)].map(m => m[1])
 }
 
 /**
@@ -39,23 +51,41 @@ function staticIcons(): string[] {
  * toggle while a source-only check reported the dock clean.
  */
 function dockIcons(): string[] {
-  return [...staticIcons(), ...Object.values(CATEGORY_GLYPH)]
+  return [...staticIcons(), ...imageIcons(), ...Object.values(CATEGORY_GLYPH)]
 }
 
-describe('dock icon glyphs', () => {
-  it('finds the icons at all, so the scan cannot silently pass on a rename', () => {
-    const icons = staticIcons()
-    expect(icons.length).toBeGreaterThan(10)
-    expect(icons).toContain('⚙')          // CONFIGURATION
-    expect(icons).toContain('⧉')          // multi-entity context
+describe('dock icons', () => {
+  it('finds both kinds at all, so the scan cannot silently pass on a rename', () => {
+    // Without this, migrating every button to artwork would leave the
+    // uniqueness checks below scanning an empty list and passing vacuously.
+    expect(staticIcons().length).toBeGreaterThan(8)
+    expect(staticIcons()).toContain('⚙')          // CONFIGURATION
+    expect(staticIcons()).toContain('⧉')          // multi-entity context
+    expect(imageIcons().length).toBeGreaterThan(0)
+    expect(imageIcons().every(p => p.startsWith('/'))).toBe(true)
   })
 
-  it('gives every dock control a unique glyph', () => {
+  it('gives every dock control a unique icon', () => {
     const icons = dockIcons()
     const seen = new Map<string, number>()
     for (const i of icons) seen.set(i, (seen.get(i) ?? 0) + 1)
     const duplicated = [...seen.entries()].filter(([, n]) => n > 1).map(([g]) => g)
     expect(duplicated).toEqual([])
+  })
+
+  it('never gives one button both a glyph and an image', () => {
+    // DockBtn renders iconSrc in preference to icon, so a button carrying both
+    // silently drops the glyph — which reads as an intentional choice in the
+    // source while being dead code.
+    // Identify the offender by its icons rather than its label: labels are
+    // sometimes `t(...)` calls or ternaries, and a half-parsed one turns the
+    // failure message into noise exactly when someone needs it to be useful.
+    const both = [...source.matchAll(/<DockBtn\b[\s\S]*?\/>/g)]
+      .map(m => m[0])
+      .filter(tag => /\bicon="/.test(tag) && /\biconSrc="/.test(tag))
+      .map(tag => `icon=${tag.match(/\bicon="([^"]*)"/)![1]}` +
+                  ` + iconSrc=${tag.match(/\biconSrc="([^"]*)"/)![1]}`)
+    expect(both).toEqual([])
   })
 
   it('does not reuse ◈, which marks a panel or agent section elsewhere', () => {
