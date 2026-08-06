@@ -368,6 +368,7 @@
       "place": "PLACE",
       "work": "EVENT / DOCUMENT",
       "unknown": "ENTITY"
-    }
+    },
+    "noArticle": "No Wikipedia article for this name"
   }
 }

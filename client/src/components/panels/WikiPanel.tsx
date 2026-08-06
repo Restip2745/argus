@@ -39,9 +39,8 @@ function useWikiSearch(query: string) {
     setLoading(true)
 
     const encoded = encodeURIComponent(query)
-    fetch(`https://en.wikipedia.org/api/rest_v1/page/related/${encoded}`, { signal: ctrl.signal })
-      .catch(() => null)
-
+    // A request to page/related used to go out alongside this one with nothing
+    // attached to read it — one wasted round trip per keystroke.
     fetch(
       `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encoded}&srnamespace=0&srlimit=8&format=json&origin=*`,
       { signal: ctrl.signal },

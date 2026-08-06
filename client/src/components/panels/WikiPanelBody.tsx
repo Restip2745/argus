@@ -84,9 +84,18 @@ export function WikiPanelBody({ entity, accentColor, onRemove }: Props) {
         </div>
       )}
 
-      {error && (
+      {/* "No article" is the expected outcome for a good share of these names —
+          the model names participants, and "Security Officials" is a fair
+          answer that no encyclopedia covers. Showing that in alarm red beside
+          a raw HTTP status framed a normal result as a malfunction. A genuine
+          failure (network, throttling) still gets the warning treatment. */}
+      {error === 'NO_ARTICLE' ? (
+        <div style={{ color: '#4a6070', fontSize: '10px', letterSpacing: '0.06em' }}>
+          {t('wiki.noArticle', 'No Wikipedia article for this name')}
+        </div>
+      ) : error ? (
         <div style={{ color: '#ff4d4d', fontSize: '10px', letterSpacing: '0.06em' }}>⚠ {error}</div>
-      )}
+      ) : null}
 
       {extract && (
         <div style={{ marginBottom: '10px' }}>
