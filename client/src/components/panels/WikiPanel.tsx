@@ -84,7 +84,11 @@ export function WikiPanel() {
   // they arrive so the prompt text is built from the real thing.
   const wikiFetchGen = useWikiCacheVersion()
 
-  const { history, loading: agentLoading, error: agentError, ask } = useAgentQuery()
+  // The subject here is the whole set, not one entity — the answers were
+  // reasoned over whichever entities were collected at the time, so adding or
+  // removing one makes the standing transcript describe a different question.
+  const { history, loading: agentLoading, error: agentError, ask } =
+    useAgentQuery(selectedEntities.map(p => p.name).join('|'))
   const { open: popoutOpen, isPopped } = usePopoutWindow('wiki')
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)

@@ -93,3 +93,78 @@ describe('useAgentQuery', () => {
     expect(result.current.history[0].html).toContain('stream-interrupted-notice')
   })
 })
+
+/**
+ * Subject isolation.
+ *
+ * Not about leakage — the server sends only a system prompt and one user
+ * message, so the model never sees earlier turns and answers each question in
+ * isolation regardless. It is about the transcript reading as a conversation:
+ * left standing across a switch, the second answer looks like it followed from
+ * the first when it was asked with only the new subject's context.
+ */
+describe('useAgentQuery — subject isolation', () => {
+  beforeEach(() => { vi.stubGlobal('fetch', vi.fn()) })
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  const answered = () => vi.mocked(fetch).mockResolvedValue({
+    ok: true, body: makeStream([sseChunk('answer'), sseDone()]),
+  } as unknown as Response)
+
+  it('keeps the transcript across re-renders with the same subject', async () => {
+    answered()
+    const { result, rerender } = renderHook(({ k }) => useAgentQuery(k), {
+      initialProps: { k: 'usa' },
+    })
+    await act(async () => { await result.current.ask('q', 'ctx') })
+    expect(result.current.history).toHaveLength(1)
+
+    rerender({ k: 'usa' })
+    expect(result.current.history).toHaveLength(1)
+  })
+
+  it('discards the transcript when the subject changes', async () => {
+    answered()
+    const { result, rerender } = renderHook(({ k }) => useAgentQuery(k), {
+      initialProps: { k: 'usa' },
+    })
+    await act(async () => { await result.current.ask('q', 'ctx') })
+    expect(result.current.history).toHaveLength(1)
+
+    act(() => { rerender({ k: 'russia' }) })
+    expect(result.current.history).toHaveLength(0)
+    expect(result.current.error).toBeNull()
+  })
+
+  it('does not clear on first mount', () => {
+    const { result } = renderHook(() => useAgentQuery('usa'))
+    expect(result.current.history).toHaveLength(0)
+    expect(result.current.loading).toBe(false)
+  })
+
+  it('still works when no subject is given', async () => {
+    answered()
+    const { result, rerender } = renderHook(() => useAgentQuery())
+    await act(async () => { await result.current.ask('q', 'ctx') })
+    rerender()
+    expect(result.current.history).toHaveLength(1)
+  })
+
+  it('does not leave loading stuck when the subject changes mid-request', async () => {
+    // A body that never closes, so the request is still in flight at the switch.
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true, body: new ReadableStream<Uint8Array>({ start() {} }),
+    } as unknown as Response)
+
+    const { result, rerender } = renderHook(({ k }) => useAgentQuery(k), {
+      initialProps: { k: 'a' },
+    })
+    act(() => { void result.current.ask('q', 'ctx') })
+    await act(async () => { await Promise.resolve() })
+
+    act(() => { rerender({ k: 'b' }) })
+    // Stuck loading would leave the send button disabled on the new subject.
+    expect(result.current.loading).toBe(false)
+    expect(result.current.history).toHaveLength(0)
+  })
+})

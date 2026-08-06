@@ -69,7 +69,12 @@ export function EventPanel() {
   const [hovered, setHovered] = useState(false)
 
   const { open: popoutOpen, isPopped } = usePopoutWindow('event')
-  const { history: agentHistory, loading: agentLoading, error: agentError, ask: agentAsk } = useAgentQuery()
+  // Keyed on the event being shown: stepping through the timeline is a change
+  // of subject, so the transcript starts fresh with each one. Keyed on the
+  // active id rather than the displayed one, which lags behind it for the
+  // length of the slide animation.
+  const { history: agentHistory, loading: agentLoading, error: agentError, ask: agentAsk } =
+    useAgentQuery(activePanelId ?? undefined)
   const { events: relatedEvents, loading: relatedLoading } = useRelatedEvents(activePanelId)
 
   // ── Timeline open/close ────────────────────────────────────────────────────

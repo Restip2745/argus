@@ -106,7 +106,9 @@ export function RegionPanel() {
     setFlipPhase('out')
   }, [selectedCountry?.name])
 
-  const { history, loading, error, ask } = useAgentQuery()
+  // Keyed on the country: this is the case the rule exists for — asking about
+  // the US, switching to Russia, and being shown both answers in one thread.
+  const { history, loading, error, ask } = useAgentQuery(selectedCountry?.name)
   const { open: popoutOpen, isPopped } = usePopoutWindow('region')
 
   // Derived values — computed before early return so hooks stay in a fixed order

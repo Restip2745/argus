@@ -15,6 +15,12 @@ interface Props {
   suggestedQueries?: string[]
   /** Panel title label (e.g. "EVENT AGENT" or "REGION AGENT"). */
   label?: string
+  /**
+   * What the conversation is about. The popout follows the main window, so its
+   * subject changes underneath it when the operator navigates there; without
+   * this the transcript would outlive the thing it was about.
+   */
+  subjectKey?: string
 }
 
 function AgentEntry({ entry }: { entry: AgentEntry }) {
@@ -39,8 +45,8 @@ function AgentEntry({ entry }: { entry: AgentEntry }) {
   )
 }
 
-export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'INTELLIGENCE AGENT' }: Props) {
-  const { history, loading, error, ask, clear } = useAgentQuery()
+export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'INTELLIGENCE AGENT', subjectKey }: Props) {
+  const { history, loading, error, ask, clear } = useAgentQuery(subjectKey)
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 

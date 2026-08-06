@@ -87,7 +87,9 @@ export function MultiEntityContextPanel() {
     usePanelDrag({ panelKey: 'context', defaultPos: { x: 100, y: 160 } })
 
   const { open: popoutOpen, isPopped } = usePopoutWindow('context')
-  const { history, loading: agentLoading, error: agentError, ask } = useAgentQuery()
+  // Same rule as the entity panel: the collection is the subject.
+  const { history, loading: agentLoading, error: agentError, ask } =
+    useAgentQuery(contextEntities.map(e => e.id).join('|'))
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)
 

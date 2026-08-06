@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
@@ -35,11 +35,38 @@ export interface AgentEntry {
 
 const MAX_CONTEXT_CHARS = 8000
 
-export function useAgentQuery() {
+/**
+ * @param subjectKey Identifies what the conversation is about — an event id, a
+ *   country name, the set of collected entities. When it changes, the
+ *   transcript is discarded.
+ *
+ *   The reason is not leakage: each request carries only a system prompt and
+ *   one user message, so the model never sees earlier turns and answers every
+ *   question in isolation already. The reason is that a transcript *looks*
+ *   like a conversation. Left standing across a switch it reads as though the
+ *   second answer built on the first, when the second question was in fact
+ *   asked with only the new subject's context — the UI would be claiming a
+ *   continuity that does not exist, and claiming it most loudly at the moment
+ *   the answers visibly concern different things.
+ */
+export function useAgentQuery(subjectKey?: string) {
   const [history, setHistory] = useState<AgentEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  const subjectRef = useRef(subjectKey)
+  useEffect(() => {
+    if (subjectRef.current === subjectKey) return
+    subjectRef.current = subjectKey
+    // Abort first: a stream still arriving for the previous subject would
+    // otherwise finish writing its answer into the new subject's transcript.
+    abortRef.current?.abort()
+    abortRef.current = null
+    setHistory([])
+    setError(null)
+    setLoading(false)
+  }, [subjectKey])
 
   const ask = useCallback(async (question: string, context: string) => {
     if (!question.trim() || loading) return

@@ -305,6 +305,14 @@ export default function PopoutPage() {
   const suggestedQueries = popoutType === 'context' ? contextQueriesList  : popoutType === 'region' ? regionQueries       : popoutType === 'wiki' ? entityQueriesList : eventQueries
   const agentLabel       = popoutType === 'context' ? 'CONTEXT AGENT'    : popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'wiki' ? 'ENTITY AGENT'    : 'EVENT AGENT'
 
+  // Whatever this window is currently following. The popout mirrors the main
+  // window over BroadcastChannel, so navigating there swaps the subject out
+  // from under a transcript that would otherwise stay on screen.
+  const agentSubject     = popoutType === 'context' ? contextEntities.map(e => e.id).join('|')
+                         : popoutType === 'region'  ? (selectedCountry?.name ?? '')
+                         : popoutType === 'wiki'    ? selectedEntities.map(p => p.name).join('|')
+                         : (activePanelId ?? '')
+
   return (
     <div style={{
       display:    'flex',
@@ -330,6 +338,7 @@ export default function PopoutPage() {
           agentContext={agentContext}
           suggestedQueries={suggestedQueries}
           label={agentLabel}
+          subjectKey={agentSubject}
         />
       </div>
     </div>
