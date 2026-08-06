@@ -18,15 +18,7 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ## Active Tasks
 
-[TODO][MEDIUM] Test: Server worker unit tests
-  Description: scraper.ts, ollama.ts, summary.ts, and retention.ts have no test coverage.
-    Add server/src/__tests__/scraper.test.ts (feed URL dedup via hash, malformed item skipping)
-    and server/src/__tests__/summary.test.ts (prompt building, truncation, Ollama-offline
-    no-op). Use vi.mock() for Ollama client and node-fetch.
-  Success Criteria: ≥8 new server tests pass; total server test count ≥27; TS clean.
-  Retry Count: 0
-  Source: ROADMAP
-
+_目前沒有進行中的項目。_
 
 ## Completed Tasks
 
