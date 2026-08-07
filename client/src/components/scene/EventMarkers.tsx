@@ -5,6 +5,8 @@ import * as THREE from 'three'
 import { useAppStore } from '../../store'
 import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { BODY_MAP, TIER_TO_ORBITAL, TIER_TO_SURFACE } from '../../data/celestialBodies'
+import { resolveOrbitalPlacement } from '../../data/orbitalPlacement'
+import type { OrbitalPlacement } from '../../data/orbitalPlacement'
 import { getCountryCentroid, resolveCountryName } from '../../data/countryData'
 import { eventSymbol, peakSeverity, severityColor, severityRank, withAlpha } from '../../data/symbology'
 import type { EventSymbol } from '../../data/symbology'
@@ -208,24 +210,44 @@ function ClusterMarker({
 }
 
 // ── Orbital billboard ─────────────────────────────────────────────────────────
+/** Distance beyond Neptune's orbit at which deep-space items are parked. */
+const DEEP_SPACE_RADIUS = 320
+/** Height above Earth for the orbital band — clear of the surface markers. */
+const EARTH_ORBIT_OFFSET = 2.6
+
 function OrbitalMarker({
-  bodyId, positionsRef, sym, onClick,
+  placement, positionsRef, sym, count, onClick,
 }: {
-  bodyId: CelestialBodyName
+  placement: OrbitalPlacement
   positionsRef: Props['positionsRef']
   sym: EventSymbol
+  count: number
   onClick: () => void
 }) {
   const { color, glyph, size, borderStyle, borderColor, background } = sym
   const groupRef = useRef<THREE.Group>(null)
-  const bodyDef  = BODY_MAP.get(bodyId)
-  const offset   = bodyDef ? bodyDef.renderedRadius * 1.8 : 1.0
+
+  const bodyId = placement.kind === 'body' ? placement.body : null
+  const offset = bodyId
+    ? (BODY_MAP.get(bodyId)?.renderedRadius ?? 1.0) * 1.8
+    : EARTH_ORBIT_OFFSET
 
   useFrame(() => {
-    const bodyPos = positionsRef.current.get(bodyId)
-    if (bodyPos && groupRef.current) {
-      groupRef.current.position.set(bodyPos.x, bodyPos.y + offset, bodyPos.z)
+    const g = groupRef.current
+    if (!g) return
+
+    if (placement.kind === 'deepSpace') {
+      // Fixed point out past the planets — these have no position in the
+      // ephemeris, so anchoring them to a body would be a fiction.
+      g.position.set(0, DEEP_SPACE_RADIUS * 0.35, -DEEP_SPACE_RADIUS)
+      return
     }
+
+    // Earth orbit rides above Earth rather than on it: these are satellites,
+    // stations and launches, and putting them on the surface would mix them
+    // in with the ground events they are deliberately distinct from.
+    const anchor = positionsRef.current.get(bodyId ?? 'earth')
+    if (anchor) g.position.set(anchor.x, anchor.y + offset, anchor.z)
   })
 
   return (
@@ -252,6 +274,19 @@ function OrbitalMarker({
             position: 'relative', fontSize: size * 0.62, lineHeight: 1,
             color, textShadow: `0 0 6px ${color}aa`, userSelect: 'none', fontFamily: 'monospace',
           }}>{glyph}</span>
+
+          {/* Several stories can share one anchor — the Moon carries eight.
+              Without the count the marker would speak for the worst of them
+              and give no sign the rest exist. */}
+          {count > 1 && (
+            <span style={{
+              position: 'absolute', top: -4, right: -6,
+              fontSize: 10, lineHeight: '12px', minWidth: 12, padding: '0 3px',
+              borderRadius: 2, textAlign: 'center',
+              background: 'rgba(4,9,22,0.92)', border: `1px solid ${color}66`,
+              color, fontFamily: 'JetBrains Mono, monospace', userSelect: 'none',
+            }}>{count}</span>
+          )}
         </div>
       </Html>
     </group>
@@ -283,23 +318,36 @@ export function EventMarkers({ positionsRef }: Props) {
     }
   })
 
-  const { clusters, orbitalByBody } = useMemo(() => {
+  const { clusters, orbitalGroups } = useMemo(() => {
     const geoItems: GeoItem[] = []
-    const orbital = new Map<CelestialBodyName, ArgusEvent>()
+    // Keyed by placement so several events can share one anchor. Previously a
+    // Map of body to a single event, which meant a body with five stories
+    // showed one marker and silently dropped the rest.
+    const orbital = new Map<string, { placement: OrbitalPlacement; events: ArgusEvent[] }>()
 
     for (const e of events) {
-      if (e.location_type === 'orbital' && e.body && e.body !== 'earth') {
-        const existing = orbital.get(e.body as CelestialBodyName)
-        if (!existing || severityRank(e.intensity) > severityRank(existing.intensity))
-          orbital.set(e.body as CelestialBodyName, e)
-      } else if (e.body === 'earth' || e.location_type === 'geo' || !e.body) {
+      if (e.location_type === 'orbital') {
+        // Resolved from body *and* label: the model fills the label far more
+        // often, and the raw body string never matched the position map.
+        const placement = resolveOrbitalPlacement(e.body, e.location_label)
+        if (!placement) continue          // names no location — stays in the feed only
+        const key = placement.kind === 'body' ? `body:${placement.body}` : placement.kind
+        const bucket = orbital.get(key)
+        if (bucket) bucket.events.push(e)
+        else orbital.set(key, { placement, events: [e] })
+      } else {
         const coords = resolveLatLng(e)
         if (coords) geoItems.push({ event: e, coords })
       }
     }
 
+    // Worst first, so a cluster is represented by the event that matters most.
+    for (const g of orbital.values()) {
+      g.events.sort((a, b) => severityRank(b.intensity) - severityRank(a.intensity))
+    }
+
     const radiusKm = CLUSTER_KM[zoomTier] ?? 0
-    return { clusters: clusterGeoEvents(geoItems, radiusKm), orbitalByBody: orbital }
+    return { clusters: clusterGeoEvents(geoItems, radiusKm), orbitalGroups: orbital }
   }, [events, zoomTier])
 
   return (
@@ -332,15 +380,19 @@ export function EventMarkers({ positionsRef }: Props) {
         )
       })}
 
-      {Array.from(orbitalByBody.entries()).map(([bodyId, event]) => {
-        if (!positionsRef.current.has(bodyId)) return null
+      {Array.from(orbitalGroups.entries()).map(([key, group]) => {
+        // Deep space has no ephemeris entry by design; the others must have a
+        // position before they can be drawn.
+        if (group.placement.kind === 'body' && !positionsRef.current.has(group.placement.body)) return null
+        const top = group.events[0]          // sorted worst-first above
         return (
           <OrbitalMarker
-            key={`orbital-${bodyId}`}
-            bodyId={bodyId}
+            key={`orbital-${key}`}
+            placement={group.placement}
             positionsRef={positionsRef}
-            sym={eventSymbol(event)}
-            onClick={() => setActivePanelId(event.id)}
+            sym={eventSymbol(top)}
+            count={group.events.length}
+            onClick={() => setActivePanelId(top.id)}
           />
         )
       })}
