@@ -29,11 +29,26 @@ const source = readFileSync(
   'utf-8',
 )
 
-/** Glyph literals written into the dock: `icon="X"` props and the MAP_MODES table. */
+/** The glyphs of one map-mode table, by its constant name. */
+function modeTable(name: 'MAP_MODES' | 'SPACE_MAP_MODES'): string[] {
+  const block = source.match(new RegExp(`const ${name}[\\s\\S]*?\\n\\]`))?.[0] ?? ''
+  return [...block.matchAll(/icon:\s*'([^']+)'/g)].map((m) => m[1])
+}
+
+/**
+ * Glyph literals written into the dock, excluding the map-mode tables.
+ *
+ * The two tables are alternatives — the selector occupies one slot and shows
+ * the Earth family or the space family depending on distance, never both. So
+ * "none" carrying the same ○ in each is shared vocabulary rather than a
+ * collision, and folding them into one flat list would report a clash that
+ * cannot occur on screen.
+ */
 function staticIcons(): string[] {
+  const inTables = new Set([...modeTable('MAP_MODES'), ...modeTable('SPACE_MAP_MODES')])
   const out: string[] = []
   for (const m of source.matchAll(/icon="([^"]+)"/g)) out.push(m[1])
-  for (const m of source.matchAll(/icon:\s*'([^']+)'/g)) out.push(m[1])
+  for (const m of source.matchAll(/icon:\s*'([^']+)'/g)) if (!inTables.has(m[1])) out.push(m[1])
   return out
 }
 
@@ -54,6 +69,11 @@ function dockIcons(): string[] {
   return [...staticIcons(), ...imageIcons(), ...Object.values(CATEGORY_GLYPH)]
 }
 
+/** Everything on screen at once for a given map-mode family. */
+function dockIconsWith(family: 'MAP_MODES' | 'SPACE_MAP_MODES'): string[] {
+  return [...dockIcons(), ...modeTable(family)]
+}
+
 describe('dock icons', () => {
   it('finds both kinds at all, so the scan cannot silently pass on a rename', () => {
     // Without this, migrating every button to artwork would leave the
@@ -65,12 +85,25 @@ describe('dock icons', () => {
     expect(imageIcons().every(p => p.startsWith('/'))).toBe(true)
   })
 
-  it('gives every dock control a unique icon', () => {
-    const icons = dockIcons()
-    const seen = new Map<string, number>()
-    for (const i of icons) seen.set(i, (seen.get(i) ?? 0) + 1)
-    const duplicated = [...seen.entries()].filter(([, n]) => n > 1).map(([g]) => g)
-    expect(duplicated).toEqual([])
+  // Checked once per map-mode family, since exactly one of them is on screen
+  // at a time. Doing it per family rather than over a flat list is what keeps
+  // the shared ○ for "none" from reading as a clash.
+  it.each(['MAP_MODES', 'SPACE_MAP_MODES'] as const)(
+    'gives every dock control a unique icon with %s showing',
+    (family) => {
+      const seen = new Map<string, number>()
+      for (const i of dockIconsWith(family)) seen.set(i, (seen.get(i) ?? 0) + 1)
+      const duplicated = [...seen.entries()].filter(([, n]) => n > 1).map(([g]) => g)
+      expect(duplicated).toEqual([])
+    },
+  )
+
+  it('keeps each map-mode family internally distinct', () => {
+    for (const family of ['MAP_MODES', 'SPACE_MAP_MODES'] as const) {
+      const icons = modeTable(family)
+      expect(icons.length, family).toBeGreaterThan(1)
+      expect(new Set(icons).size, family).toBe(icons.length)
+    }
   })
 
   it('never gives one button both a glyph and an image', () => {
@@ -94,10 +127,9 @@ describe('dock icons', () => {
     expect(uses.length).toBeLessThanOrEqual(1)
   })
 
-  it('keeps the map-mode glyphs distinct from one another', () => {
-    const table = source.match(/const MAP_MODES[\s\S]*?\n\]/)?.[0] ?? ''
-    const icons = [...table.matchAll(/icon:\s*'([^']+)'/g)].map(m => m[1])
-    expect(icons).toHaveLength(4)
-    expect(new Set(icons).size).toBe(4)
+  it('keeps the four Earth surface modes', () => {
+    // A count, not just uniqueness: losing one to a bad edit would otherwise
+    // pass every check above.
+    expect(modeTable('MAP_MODES')).toHaveLength(4)
   })
 })

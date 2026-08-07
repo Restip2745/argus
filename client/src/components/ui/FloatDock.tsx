@@ -5,7 +5,7 @@ import {
   CATEGORY_GLYPH, CATEGORY_TINT, severityRank,
   SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER,
 } from '../../data/symbology'
-import type { MapMode } from '../../store'
+import type { MapMode, SpaceMapMode } from '../../store'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useSceneTime } from '../../hooks/useSceneTime'
@@ -47,6 +47,19 @@ const MAP_MODES: { id: MapMode; icon: string; label: string }[] = [
   { id: 'political', icon: '▦', label: 'POLITICAL' },
   { id: 'posture',   icon: '▨', label: 'POSTURE'   },
   { id: 'activity',  icon: '≋', label: 'ACTIVITY'  },
+]
+
+/**
+ * Shown instead of the four above once the camera is clear of Earth.
+ *
+ * The Earth modes all paint the globe's surface through the GeoJSON layer,
+ * which is not drawn at that range — so offering them there was offering
+ * controls that could not act. Only two here because at system range there is
+ * one question worth answering: which bodies have anything happening.
+ */
+const SPACE_MAP_MODES: { id: SpaceMapMode; icon: string; label: string }[] = [
+  { id: 'none',    icon: '○', label: 'NONE'    },
+  { id: 'posture', icon: '▨', label: 'POSTURE' },
 ]
 
 interface DockBtnProps {
@@ -158,6 +171,9 @@ export function FloatDock() {
   const setShowConflictLayer = useAppStore((s) => s.setShowConflictLayer)
   const mapMode              = useAppStore((s) => s.mapMode)
   const setMapMode           = useAppStore((s) => s.setMapMode)
+  const spaceMapMode         = useAppStore((s) => s.spaceMapMode)
+  const setSpaceMapMode      = useAppStore((s) => s.setSpaceMapMode)
+  const nearEarth            = useAppStore((s) => s.nearEarth)
   const layerErrors          = useAppStore((s) => s.layerErrors)
   const layerLoading         = useAppStore((s) => s.layerLoading)
   const contextEntities      = useAppStore((s) => s.contextEntities)
@@ -271,8 +287,12 @@ export function FloatDock() {
       )}
 
     {/* Map-mode legend — a fill scheme with no key is decoration. Political
-        mode needs none: its colours deliberately mean nothing. */}
-    {(mapMode === 'posture' || mapMode === 'activity') && (
+        mode needs none: its colours deliberately mean nothing.
+        Follows the family in force, or it would key a mode that is neither
+        selected nor drawn. The severity band is shared between them, so the
+        same key reads for country fills and for body halos. */}
+    {((nearEarth && (mapMode === 'posture' || mapMode === 'activity'))
+      || (!nearEarth && spaceMapMode === 'posture')) && (
       <div style={{
         position: 'absolute', bottom: `${popoverBottom(immersiveMode, 44)}px`,
         left: '50%', transform: 'translateX(-50%)',
@@ -284,9 +304,11 @@ export function FloatDock() {
         fontFamily: 'JetBrains Mono, monospace',
       }}>
         <span style={{ fontSize: '10px', letterSpacing: '0.14em', color: '#2a4a63' }}>
-          {t(`mapMode.${mapMode}`, mapMode.toUpperCase())} · 24H
+          {nearEarth
+            ? `${t(`mapMode.${mapMode}`, mapMode.toUpperCase())} · 24H`
+            : `${t('mapMode.space', 'SPACE')} · ${t('mapMode.posture', 'POSTURE')}`}
         </span>
-        {mapMode === 'posture' ? (
+        {(nearEarth ? mapMode === 'posture' : true) ? (
           SEVERITY_ORDER.map((k) => (
             <span key={k} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{
@@ -456,12 +478,14 @@ export function FloatDock() {
         border: '1px solid rgba(0,180,255,0.15)', borderRadius: '4px',
         background: 'rgba(0,20,40,0.35)',
       }}>
-        {MAP_MODES.map(({ id, icon, label }) => {
-          const active = mapMode === id
+        {(nearEarth ? MAP_MODES : SPACE_MAP_MODES).map(({ id, icon, label }) => {
+          const active = nearEarth ? mapMode === id : spaceMapMode === id
           return (
             <button
               key={id}
-              onClick={() => setMapMode(id)}
+              onClick={() => (nearEarth
+                ? setMapMode(id as MapMode)
+                : setSpaceMapMode(id as SpaceMapMode))}
               title={`${t('mapMode.label', 'MAP MODE')} — ${t(`mapMode.${id}`, label)}`}
               aria-pressed={active}
               style={{

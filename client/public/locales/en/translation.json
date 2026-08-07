@@ -295,7 +295,8 @@
     "posture": "POSTURE",
     "activity": "ACTIVITY",
     "less": "LESS",
-    "more": "MORE"
+    "more": "MORE",
+    "space": "SPACE"
   },
   "annotation": {
     "title": "MARKING TOOLS",

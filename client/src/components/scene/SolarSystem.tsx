@@ -11,13 +11,14 @@ import { getGAST, gastToRotY } from '../../hooks/useGAST'
 import {
   BODIES, bodyMinDistance, bodyViewDistance,
   EARTH_DETAIL_THRESHOLD, EARTH_MARKER_THRESHOLD, EARTH_HOME_DISTANCE,
-  shouldAlignNorth, bodyNorthAxis, orbitRotateSpeed, bodyRadius,
+  shouldAlignNorth, bodyNorthAxis, orbitRotateSpeed, bodyRadius, shouldShowEarthModes,
 } from '../../data/celestialBodies'
 import { determineNavLevel } from '../../config/navLevels'
 import { CelestialBody } from './CelestialBody'
 import { OrbitLines } from './OrbitLines'
 import { EventMarkers } from './EventMarkers'
 import { GeoJsonLayer } from './GeoJsonLayer'
+import { SpacePostureLayer } from './SpacePostureLayer'
 import { TrackingLayer } from './TrackingLayer'
 import { ConflictLayer } from './ConflictLayer'
 import { AnnotationLayer } from './AnnotationLayer'
@@ -180,6 +181,11 @@ export function SolarSystem() {
       const distToEarth = camera.position.distanceTo(earthPos)
       store.setShowGeoJsonLayer(distToEarth < EARTH_DETAIL_THRESHOLD)
       store.setShowEventMarkers(distToEarth < EARTH_MARKER_THRESHOLD)
+
+      // Which family of map modes the dock offers. Hysteretic, because this is
+      // a distance the camera drifts across rather than crosses decisively,
+      // and a bare threshold would re-shuffle the selector while it hovers.
+      store.setNearEarth(shouldShowEarthModes(distToEarth, store.nearEarth))
 
       // Celestial nav level — only recalculate on level or focus change
       const camDist = camera.position.distanceTo(controls.target)
@@ -433,6 +439,9 @@ export function SolarSystem() {
 
       {/* Intelligence event markers (visible when close to Earth) */}
       <EventMarkers positionsRef={positionsRef} />
+
+      {/* Severity halo per body — system view only */}
+      <SpacePostureLayer positionsRef={positionsRef} />
 
       {/* Political GeoJSON border layer (visible when close to Earth) */}
       <GeoJsonLayer positionsRef={positionsRef} />

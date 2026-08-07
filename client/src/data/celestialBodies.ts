@@ -673,6 +673,27 @@ export function shouldAlignNorth(distance: number, currentlyAligned: boolean): b
 }
 
 /**
+ * Which family of map modes applies, given how far the camera is from Earth.
+ *
+ * The surface fills are drawn by the GeoJSON layer, which itself only appears
+ * inside EARTH_DETAIL_THRESHOLD — so past that distance choosing POSTURE or
+ * ACTIVITY changed nothing at all. The selector was offering controls that
+ * could not act, which is the same failure as a button that does nothing.
+ *
+ * A band rather than a line, because the boundary is somewhere the camera
+ * lingers: a hard cutoff makes the whole selector re-shuffle while the
+ * operator eases in and out of orbit.
+ */
+export const EARTH_MODES_ENTER = EARTH_DETAIL_THRESHOLD        // 20 — fills are live
+export const EARTH_MODES_EXIT  = EARTH_DETAIL_THRESHOLD * 1.4  // 28 — well clear
+
+export function shouldShowEarthModes(distance: number, currentlyNear: boolean): boolean {
+  if (distance < EARTH_MODES_ENTER) return true
+  if (distance > EARTH_MODES_EXIT)  return false
+  return currentlyNear                 // inside the band, hold
+}
+
+/**
  * A body's north pole direction in world space.
  *
  * Axial tilt is applied in the scene as a rotation about Z (see the tilt group

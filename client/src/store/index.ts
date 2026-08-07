@@ -37,6 +37,15 @@ function persistContextEntities(list: ContextEntity[]): void {
  */
 export type MapMode = 'none' | 'political' | 'posture' | 'activity'
 
+/**
+ * Surface fill for the solar-system view.
+ *
+ * Only two, because at that range there is one question worth answering —
+ * which bodies have anything happening — and the Earth modes are all painting
+ * a globe that is a few pixels across.
+ */
+export type SpaceMapMode = 'none' | 'posture'
+
 export type TimeRangeFilter = '6h' | '12h' | '24h' | 'all'
 
 /**
@@ -130,6 +139,15 @@ interface AppState {
    *  line data, not a surface fill, so they do not compete. */
   mapMode: MapMode
   setMapMode: (v: MapMode) => void
+  /** Surface fill for the solar-system view. Remembered separately from the
+   *  Earth mode so flying out and back restores what the operator had, rather
+   *  than one list overwriting the other's choice. */
+  spaceMapMode: SpaceMapMode
+  setSpaceMapMode: (v: SpaceMapMode) => void
+  /** Whether the Earth surface modes can act at the current distance. Set from
+   *  the scene with hysteresis; the selector shows one family or the other. */
+  nearEarth: boolean
+  setNearEarth: (v: boolean) => void
   layerErrors: { aircraft: boolean; satellites: boolean; ships: boolean; conflict: boolean }
   setLayerError: (layer: 'aircraft' | 'satellites' | 'ships' | 'conflict', error: boolean) => void
   layerLoading: { aircraft: boolean; satellites: boolean; ships: boolean; conflict: boolean }
@@ -370,6 +388,19 @@ export const useAppStore = create<AppState>((set) => ({
     localStorage.setItem('argus-map-mode', mapMode)
     set({ mapMode })
   },
+  spaceMapMode: ((): SpaceMapMode => {
+    const saved = localStorage.getItem('argus-space-map-mode')
+    // Posture by default for the same reason as the Earth view: arriving at a
+    // system-wide shot with nothing marked says less than arriving at one that
+    // shows which bodies have traffic.
+    return saved === 'none' || saved === 'posture' ? saved : 'posture'
+  })(),
+  setSpaceMapMode: (spaceMapMode) => {
+    localStorage.setItem('argus-space-map-mode', spaceMapMode)
+    set({ spaceMapMode })
+  },
+  nearEarth: true,
+  setNearEarth: (nearEarth) => set((s) => (s.nearEarth === nearEarth ? s : { nearEarth })),
   layerErrors: { aircraft: false, satellites: false, ships: false, conflict: false },
   setLayerError: (layer, error) => set((s) => ({ layerErrors: { ...s.layerErrors, [layer]: error } })),
   layerLoading: { aircraft: false, satellites: false, ships: false, conflict: false },
