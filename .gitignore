@@ -5,4 +5,6 @@ intelligence.db
 client/dist/
 *.db-shm
 *.db-wal
-.claude/worktrees/
+# Local agent/editor state: personal settings, scratch worktrees, and the
+# temp files the settings writer leaves behind.
+.claude/
