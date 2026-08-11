@@ -37,13 +37,24 @@ const TTL = 5 * 60 * 1000
  * Symbols the upstream cannot price are simply absent from the result, so a
  * company with three listings and two resolvable quotes renders two rows. The
  * caller is expected to render nothing at all when the result is empty.
+ *
+ * `refreshMs` re-reads on an interval. A panel does not need it — it is opened,
+ * read and closed — but the status bar is mounted for as long as the app is,
+ * and without this its numbers would be whatever they were at page load.
  */
-export function useQuotes(symbols: string[]): State {
+export function useQuotes(symbols: string[], refreshMs?: number): State {
   const [state, setState] = useState<State>(EMPTY)
+  const [tick, setTick] = useState(0)
   const abortRef = useRef<AbortController | null>(null)
 
   // Effects cannot depend on an array identity that changes every render.
   const key = symbols.join(',')
+
+  useEffect(() => {
+    if (!refreshMs) return
+    const id = setInterval(() => setTick((t) => t + 1), refreshMs)
+    return () => clearInterval(id)
+  }, [refreshMs])
 
   useEffect(() => {
     if (!key) {
@@ -52,6 +63,10 @@ export function useQuotes(symbols: string[]): State {
     }
 
     const wanted = key.split(',')
+    // A tick is a request for current numbers, so the cached ones do not count
+    // as fresh however recently they arrived.
+    if (tick > 0) for (const s of wanted) quoteCache.delete(s)
+
     const now = Date.now()
     const fresh = (s: string) => {
       const hit = quoteCache.get(s)
@@ -92,7 +107,7 @@ export function useQuotes(symbols: string[]): State {
       })
 
     return () => ctrl.abort()
-  }, [key])
+  }, [key, tick])
 
   return state
 }

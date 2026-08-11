@@ -24,7 +24,14 @@
     "inLast6h": "in last 6h",
     "tempoAria": "Hourly event arrival, last 24 hours",
     "sourcesTitle": "Distinct sources represented in the current feed",
-    "ingestTitle": "Age of the most recent ingested item"
+    "ingestTitle": "Age of the most recent ingested item",
+    "markets": "MARKETS",
+    "commodity": {
+      "brent": "BRENT",
+      "wti": "WTI",
+      "gold": "GOLD",
+      "copper": "COPPER"
+    }
   },
   "panel": {
     "close": "Close",

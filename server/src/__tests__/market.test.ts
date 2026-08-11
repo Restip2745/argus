@@ -128,6 +128,15 @@ describe('isValidSymbol', () => {
     expect(isValidSymbol('0700.HK')).toBe(true)
   })
 
+  it('accepts the continuous front-month futures form', () => {
+    // Dropped silently before `=` was allowed, which looked identical to the
+    // upstream not knowing the symbol.
+    expect(isValidSymbol('CL=F')).toBe(true)
+    expect(isValidSymbol('BZ=F')).toBe(true)
+    expect(isValidSymbol('GC=F')).toBe(true)
+    expect(isValidSymbol('HG=F')).toBe(true)
+  })
+
   it('rejects anything that could steer the outbound URL', () => {
     expect(isValidSymbol('../../quote')).toBe(false)
     expect(isValidSymbol('TSM?foo=1')).toBe(false)

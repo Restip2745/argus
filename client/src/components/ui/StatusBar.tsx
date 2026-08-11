@@ -2,12 +2,13 @@
  * StatusBar — always-on global situational readout.
  *
  * The one HUD element that answers "what is the state of the world right now?"
- * without the operator clicking anything. Four modules, left to right:
+ * without the operator clicking anything. Five modules, left to right:
  *
  *   POSTURE   severity census across every event currently held
  *   TREND     which categories are moving, last 6h vs the 6h before it
  *   TEMPO     24-bar hourly arrival histogram, tinted by severity share
  *   COVERAGE  are we actually seeing the world — sources, model, ingest age
+ *   MARKETS   front-month crude and metals, as a reading of the world's mood
  *
  * Deliberately reads from the *unfiltered* event set: this is a world-state
  * readout, not a view of the operator's current filter. The GLOBAL label in
@@ -18,6 +19,9 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { useEventArrivals } from '../../hooks/useEventArrivals'
+import { useQuotes } from '../../hooks/useQuotes'
+import { COMMODITIES, COMMODITY_SYMBOLS, COMMODITY_REFRESH_MS } from '../../data/commodities'
+import { quoteColor, formatChange, formatPrice, formatAsOf } from '../../utils/quote'
 import { useSceneTime } from '../../hooks/useSceneTime'
 import { tick } from '../../lib/sound'
 import {
@@ -457,6 +461,8 @@ export function StatusBar({
         </div>
       </Module>
 
+      <Markets />
+
       {/* ── Right control cluster ────────────────────────────────────────── */}
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
         {languageSwitcher}
@@ -475,6 +481,64 @@ export function StatusBar({
 }
 
 // ── Small parts ──────────────────────────────────────────────────────────────
+
+/**
+ * Front-month commodity moves, as a reading of the world rather than of a market.
+ *
+ * Oil and the metals answer the bar's question — what is happening right now —
+ * without anyone having to click an entity first, which is what separates them
+ * from a share price. The shape of the set carries more than any single number:
+ * crude and gold rising together while copper does not is a supply or
+ * geopolitical shock rather than a growth story, and that is legible at a
+ * glance without reading a single headline.
+ *
+ * The change is shown and the level is not. A situational display is asking
+ * "what moved", and the absolute price is reference material — it is on the
+ * tooltip, with the currency and the time it was priced.
+ *
+ * Renders nothing, module and divider both, when no quote comes back. The bar
+ * must not carry a labelled empty space.
+ */
+function Markets() {
+  const { t } = useTranslation()
+  const upColor = useAppStore((s) => s.upColor)
+  const { quotes } = useQuotes(COMMODITY_SYMBOLS, COMMODITY_REFRESH_MS)
+
+  if (quotes.length === 0) return null
+
+  const bySymbol = new Map(quotes.map((q) => [q.symbol, q]))
+
+  return (
+    <>
+      <Divider className="sb-hide-xl" />
+      <Module label={t('statusBar.markets', 'MARKETS')} className="sb-hide-xl">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap' }}>
+          {COMMODITIES.map((c) => {
+            const q = bySymbol.get(c.symbol)
+            if (!q) return null
+            return (
+              <span
+                key={c.symbol}
+                title={`${formatPrice(q.price)} ${q.currency} · ${formatAsOf(q.asOf)}`}
+                style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}
+              >
+                <span style={{ fontSize: '10px', letterSpacing: '0.06em', color: '#5d7c92' }}>
+                  {t(`statusBar.commodity.${c.key}`, c.label)}
+                </span>
+                <span style={{
+                  fontSize: '11px', color: quoteColor(q.changePct, upColor),
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {formatChange(q.changePct)}
+                </span>
+              </span>
+            )
+          })}
+        </div>
+      </Module>
+    </>
+  )
+}
 
 function Pip({ color, text, title }: { color: string; text: string; title: string }) {
   return (

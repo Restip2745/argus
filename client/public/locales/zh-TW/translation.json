@@ -24,7 +24,14 @@
     "inLast6h": "過去 6 小時",
     "tempoAria": "過去 24 小時每小時情報進件量",
     "sourcesTitle": "目前情報流中的不重複來源數",
-    "ingestTitle": "最近一則情報進件的時間距今多久"
+    "ingestTitle": "最近一則情報進件的時間距今多久",
+    "markets": "商品",
+    "commodity": {
+      "brent": "布蘭特",
+      "wti": "西德州",
+      "gold": "黃金",
+      "copper": "銅"
+    }
   },
   "panel": {
     "close": "關閉",

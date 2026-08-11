@@ -135,12 +135,18 @@ export function parseChart(body: unknown, symbol: string, now: number = Date.now
 /**
  * Symbols this proxy is willing to forward.
  *
- * The symbol arrives from the client, which derived it from Wikidata, so it is
- * not attacker-controlled in any interesting way — but it is still interpolated
- * into an outbound URL, and a whitelist is cheaper than reasoning about that.
+ * The symbol arrives from the client, which derived it from Wikidata or from
+ * the fixed commodity table, so it is not attacker-controlled in any
+ * interesting way — but it is still interpolated into an outbound URL, and a
+ * whitelist is cheaper than reasoning about that.
+ *
+ * `=` is here for futures: the continuous front-month contracts are written
+ * `CL=F`, `GC=F`. Without it every commodity request was dropped silently, the
+ * proxy being unable to tell a malformed symbol from one it simply had no rule
+ * for.
  */
 export function isValidSymbol(s: string): boolean {
-  return /^[A-Z0-9][A-Z0-9.\-]{0,11}$/.test(s)
+  return /^[A-Z0-9][A-Z0-9.\-=]{0,11}$/.test(s)
 }
 
 // ── Fetching ─────────────────────────────────────────────────────────────────

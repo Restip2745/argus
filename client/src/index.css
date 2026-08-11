@@ -294,7 +294,17 @@ canvas {
 
 /* Progressive disclosure — narrow viewports drop the lower-priority modules
    before anything is allowed to overflow or wrap. Priority order, last to go:
-   POSTURE > COVERAGE > TREND > TEMPO. */
+   POSTURE > COVERAGE > TREND > TEMPO > MARKETS.
+   MARKETS goes first as the newest and least proven module, and because its
+   numbers are reachable elsewhere; it keeps its own class so that ordering can
+   be changed without touching TEMPO's. Its threshold is measured rather than
+   chosen: the module is ~295px and the other four plus the control cluster
+   already fill 1574px, so below ~1900 the bar would overflow — and this bar
+   drops a module rather than overflow. To favour it over the 24h histogram
+   instead, swap this rule's class with .sb-hide-lg. */
+@media (max-width: 1900px) {
+  .sb-hide-xl { display: none !important; }   /* MARKETS */
+}
 @media (max-width: 1500px) {
   .sb-hide-lg { display: none !important; }   /* TEMPO */
 }
