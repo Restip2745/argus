@@ -38,6 +38,19 @@ Managed by the autonomous development agent. Follow strict format below.
     Gulf implies crude without any inference about which company is involved — so an event's
     commodity link is far more tractable than its company link, and getting the prompt shape
     right on the easy case first de-risks the hard one.
+    NOTE: freight belongs in this task rather than in the status bar, decided after checking
+    what is obtainable. The indices themselves are not: BDI is licensed by the Baltic Exchange
+    and absent from the quote upstream, while SCFI and Drewry's WCI are weekly and published
+    only as web pages. More to the point, a weekly series in a bar whose unit is the daily
+    change would read 0.00% six days in seven — freight moves on a scale of weeks and ARGUS's
+    windows are 6h and 24h. What freight is actually good for is confirmation rather than
+    alarm: crude and shipping equities react to a strait closing within hours, freight takes
+    two or three weeks and answers the more valuable question of whether the disruption held.
+    That form needs a series, not a spot quote — a `/api/market/history` endpoint and a
+    multi-week window on the event panel — which is new infrastructure, not a table entry.
+    `BDRY`, a dry bulk freight ETF, does quote daily through the existing path and is the only
+    free daily proxy found; if it is ever used it must be labelled as the ETF it is, since fund
+    roll and tracking error drift it away from the index it stands in for.
   Success Criteria: `market_link` present on newly analysed articles; false-positive rate
     measured on a replay of ≥200 stored articles and recorded here; existing analysis fields
     unchanged; no UI work in this task.
