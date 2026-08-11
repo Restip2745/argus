@@ -19,6 +19,7 @@ import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
 import { eventTitle, eventSummary } from '../../lib/eventText'
 import { highlightText } from '../../utils/highlightText'
+import { youtubeVideoId, youtubeEmbedUrl } from '../../utils/videoEmbed'
 import { useSceneTime } from '../../hooks/useSceneTime'
 
 function expiryLabel(expiresAt: string | null, heatScore: number, sceneNow: number): string {
@@ -82,6 +83,14 @@ export function EventPanelBody({
   const [noteDraft, setNoteDraft] = useState('')
   const noteRef = useRef<HTMLTextAreaElement>(null)
 
+  // Video events show a play facade over the thumbnail; the iframe is mounted
+  // only once the user asks for it, so an unwatched panel makes no request to
+  // Google. Keyed off event.id so navigating the timeline resets to the facade
+  // rather than leaving the previous video playing under a new headline.
+  const videoId = youtubeVideoId(event.url)
+  const [playingId, setPlayingId] = useState<string | null>(null)
+  const isPlaying = playingId === event.id
+
   function openNote() {
     setNoteDraft(existingNote)
     setNoteOpen(true)
@@ -132,27 +141,61 @@ export function EventPanelBody({
   return (
     <div style={{ overflowY: 'auto', height: '100%', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
 
-      {/* ── Thumbnail image ─────────────────────────────────────────────────── */}
-      {event.image_url && (
+      {/* ── Thumbnail image · doubles as the video player for video events ──── */}
+      {(event.image_url || (videoId && isPlaying)) && (
         <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderBottom: `1px solid ${accentColor}18` }}>
-          <img
-            src={event.image_url}
-            alt=""
-            referrerPolicy="no-referrer"
-            loading="lazy"
-            onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
-            style={{
-              width: '100%', height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              filter: 'brightness(0.82) saturate(0.85)',
-            }}
-          />
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: `linear-gradient(to bottom, transparent 50%, rgba(10,18,26,0.85) 100%)`,
-            pointerEvents: 'none',
-          }} />
+          {videoId && isPlaying ? (
+            <iframe
+              src={youtubeEmbedUrl(videoId)}
+              title={title}
+              allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+            />
+          ) : (
+            <>
+              <img
+                src={event.image_url ?? undefined}
+                alt=""
+                referrerPolicy="no-referrer"
+                loading="lazy"
+                onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
+                style={{
+                  width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                  filter: 'brightness(0.82) saturate(0.85)',
+                }}
+              />
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: `linear-gradient(to bottom, transparent 50%, rgba(10,18,26,0.85) 100%)`,
+                pointerEvents: 'none',
+              }} />
+              {videoId && (
+                <button
+                  onClick={() => setPlayingId(event.id)}
+                  aria-label={t('event.playVideo', 'Play video')}
+                  style={{
+                    // Deliberately only the dial, not a full-bleed overlay: a
+                    // click that opens the panel can land where the thumbnail
+                    // appears, and a cover-everything target would start the
+                    // video — the one thing the facade exists to prevent.
+                    position: 'absolute', top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '44px', height: '44px', borderRadius: '50%',
+                    background: 'rgba(10,18,26,0.72)',
+                    border: `1px solid ${accentColor}`,
+                    color: accentColor,
+                    fontSize: '15px', lineHeight: 1, paddingLeft: '3px',
+                    cursor: 'pointer',
+                  }}
+                >▶</button>
+              )}
+            </>
+          )}
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, cleanup } from '@testing-library/react'
+import { render, cleanup, fireEvent } from '@testing-library/react'
 import { createRef } from 'react'
 import { EventPanelBody } from '../EventPanelBody'
 import type { ArgusEvent } from '../../../types'
@@ -73,5 +73,47 @@ describe('EventPanelBody lead image', () => {
   it('renders no image at all when the event has none', () => {
     const { container } = renderBody(makeEvent({ image_url: null }))
     expect(container.querySelectorAll('img')).toHaveLength(0)
+  })
+})
+
+describe('EventPanelBody video embed', () => {
+  beforeEach(() => cleanup())
+
+  const video = () => makeEvent({
+    source: 'Reuters',
+    url: 'https://www.youtube.com/watch?v=ihHVOFqL_ew',
+    image_url: 'https://i2.ytimg.com/vi/ihHVOFqL_ew/hqdefault.jpg',
+  })
+
+  it('shows a play control on a video event', () => {
+    const { getByLabelText } = renderBody(video())
+    expect(getByLabelText('Play video')).toBeTruthy()
+  })
+
+  it('contacts nobody until the user asks to play', () => {
+    // The whole point of the facade: ARGUS promises nothing leaves the machine,
+    // so merely opening a panel must not mount a Google-hosted iframe.
+    const { container } = renderBody(video())
+    expect(container.querySelector('iframe')).toBeNull()
+  })
+
+  it('mounts the nocookie player once play is clicked', () => {
+    const { getByLabelText, container } = renderBody(video())
+    fireEvent.click(getByLabelText('Play video'))
+    const frame = container.querySelector('iframe')
+    expect(frame?.getAttribute('src')).toContain('youtube-nocookie.com/embed/ihHVOFqL_ew')
+  })
+
+  it('replaces the thumbnail rather than stacking below it', () => {
+    const { getByLabelText, container } = renderBody(video())
+    fireEvent.click(getByLabelText('Play video'))
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+  })
+
+  it('leaves ordinary article events untouched', () => {
+    const { queryByLabelText, container } = renderBody(makeEvent())
+    expect(queryByLabelText('Play video')).toBeNull()
+    expect(container.querySelector('iframe')).toBeNull()
+    expect(container.querySelectorAll('img')).toHaveLength(1)
   })
 })
