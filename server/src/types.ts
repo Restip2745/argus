@@ -134,4 +134,10 @@ export interface RawFeedItem {
   enclosure?: { url?: string; type?: string; length?: string }
   mediaContent?: { $?: { url?: string } } | { $?: { url?: string } }[]
   mediaThumbnail?: { $?: { url?: string } }
+  /** YouTube Atom feeds nest everything under <media:group>; the top-level
+   *  media:* fields above are absent there. Values arrive as single-item arrays. */
+  mediaGroup?: {
+    'media:description'?: string[]
+    'media:thumbnail'?: { $?: { url?: string } }[]
+  }
 }

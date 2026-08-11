@@ -19,4 +19,13 @@ export const FEEDS: FeedConfig[] = [
 
   // ── Economy ──────────────────────────────────────────────
   { name: 'BBC Business',    url: 'https://feeds.bbci.co.uk/news/business/rss.xml',       lang: 'en', region: null },
+
+  // ── Wire services (YouTube) ──────────────────────────────
+  // Reuters and AP retired their public RSS; the channel Atom feed is the only
+  // machine-readable stream they still publish. Outlets already listed above are
+  // deliberately not duplicated here — the same story from both would double-count
+  // into heat_score. Feed URL form: /feeds/videos.xml?channel_id=<UC…>, 15 items.
+  { name: 'Reuters',         url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UChqUTb7kYRX8-EiaN3XFrSQ', lang: 'en', region: null },
+  { name: 'Associated Press', url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC52X5wxOL_s5yw0dQk7NtgA', lang: 'en', region: null },
+  { name: 'France 24',       url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCCCPCZNChQdGa9EkATeye4g', lang: 'en', region: null },
 ]
