@@ -33,6 +33,11 @@ Managed by the autonomous development agent. Follow strict format below.
     a false positive costs far more than a miss here. Nullable column; a failure to parse the
     field must not affect the fields that already work. Validate by replaying the modified
     prompt over existing DB articles and counting false positives BEFORE building any UI.
+    NOTE: do commodities first. Since the status-bar strip landed there is a fixed set of four
+    instruments with strong geographic and categorical cues — an ARMED_CONFLICT event in the
+    Gulf implies crude without any inference about which company is involved — so an event's
+    commodity link is far more tractable than its company link, and getting the prompt shape
+    right on the easy case first de-risks the hard one.
   Success Criteria: `market_link` present on newly analysed articles; false-positive rate
     measured on a replay of ≥200 stored articles and recorded here; existing analysis fields
     unchanged; no UI work in this task.
@@ -71,6 +76,35 @@ Managed by the autonomous development agent. Follow strict format below.
   Source: USER REQUEST
 
 ## Completed Tasks
+
+---
+
+[DONE][MEDIUM] Feature: Commodity strip in the global status bar
+  Description: Brent, WTI, gold and copper now render as a fifth status bar module, beside
+    posture / trend / tempo / coverage. These sit in the global bar rather than in a panel
+    because unlike a share price they belong to nobody — "Brent +10%" is a statement about the
+    world, and the events that move it are already tracked under ARMED_CONFLICT, POLITICAL and
+    ENVIRONMENT. Both crude benchmarks are carried on purpose: the spread between them
+    separates a regional supply problem from a global one. Fixed table in
+    `client/src/data/commodities.ts`; reuses `/api/market/quote` and `useQuotes`, which gained
+    an optional `refreshMs` because the bar never unmounts and would otherwise hold whatever
+    numbers it loaded with. No Wikidata resolution and no model involvement — the entire hard
+    half of the equity work is absent here.
+    Two things surfaced only on the running app. The proxy's `isValidSymbol` rejected `=`, so
+    every front-month future (`CL=F`) was dropped with nothing logged, the proxy being unable
+    to distinguish a malformed symbol from one it had no rule for; `commodities.test.ts` now
+    checks each table entry against a copy of that pattern so a future addition cannot fail the
+    same silent way. And the module is ~295px against 1574px already spent, so the bar
+    overflowed at 1680 — it now hides below 1900 instead, honouring the bar's own rule that a
+    module is dropped rather than squeezed.
+    Change is shown, level is not: the bar asks what moved, and the price sits on the tooltip
+    with its currency and the time it was priced.
+  Success Criteria: Met — verified in the running app at 1920 (module visible, no overflow, in
+    both locales) and at 1680 (hidden, no overflow); live values rendered with copper red
+    against the others green under the default green-up convention. client 340 tests /
+    server 103 tests pass; both typecheck clean.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ---
 
