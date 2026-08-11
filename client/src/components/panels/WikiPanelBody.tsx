@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useWikiSummary } from '../../hooks/useWikiSummary'
+import { useListing } from '../../hooks/useListing'
+import { ListingChip } from './ListingChip'
 import { classifyEntity, ENTITY_GLYPH, ENTITY_KIND_LABEL } from '../../data/entityKind'
 import type { SelectedEntity } from '../../store'
 
@@ -24,6 +26,11 @@ export function WikiPanelBody({ entity, accentColor, onRemove }: Props) {
   // The panel used to assert PERSON regardless; entities pulled out of news
   // copy are just as often organisations, places or events.
   const kind = classifyEntity(data?.description)
+
+  // Listed companies get their closing prices. The lookup answers "none" for
+  // almost every entity that reaches this panel, and the section simply does
+  // not render — no placeholder, no empty state.
+  const { listings } = useListing(data?.wikibase_item ?? null, kind)
 
   return (
     <div style={{ padding: '10px 12px 14px', borderBottom: '1px solid rgba(0,180,255,0.07)' }}>
@@ -96,6 +103,8 @@ export function WikiPanelBody({ entity, accentColor, onRemove }: Props) {
       ) : error ? (
         <div style={{ color: '#ff4d4d', fontSize: '10px', letterSpacing: '0.06em' }}>⚠ {error}</div>
       ) : null}
+
+      {listings.length > 0 && <ListingChip listings={listings} accentColor={accentColor} />}
 
       {extract && (
         <div style={{ marginBottom: '10px' }}>

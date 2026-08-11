@@ -220,7 +220,10 @@
       "homeViewSolar": "SOLAR SYSTEM",
       "homeViewHint": "Applies on next load. Earth lands at working altitude with the political layer and markers live.",
       "nebula": "BACKDROP NEBULA",
-      "nebulaOff": "OFF"
+      "nebulaOff": "OFF",
+      "upColor": "PRICE COLOURS",
+      "upColorGreen": "GREEN UP (US / EU)",
+      "upColorRed": "RED UP (TW / JP)"
     },
     "title": "⚙ Configuration",
     "sections": {
@@ -370,6 +373,10 @@
       "work": "EVENT / DOCUMENT",
       "unknown": "ENTITY"
     },
-    "noArticle": "No Wikipedia article for this name"
+    "noArticle": "No Wikipedia article for this name",
+    "market": {
+      "title": "MARKET",
+      "hint": "Last close at each exchange, with the time it was priced."
+    }
   }
 }

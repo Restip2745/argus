@@ -18,6 +18,7 @@ import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
+import { fetchQuotes, MAX_SYMBOLS } from './services/market'
 import { resolveEventLimit, validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
 import { logger } from './utils/logger'
 import type { EventCategory, EventIntensity } from './types'
@@ -492,6 +493,32 @@ app.get('/api/tracking/ships', async (_req, res) => {
     res.json(ships)
   } catch (err) {
     logger.warn('[tracking]', 'ships fetch failed:', (err as Error).message)
+    res.json([])
+  }
+})
+
+// ── Market Quotes ─────────────────────────────────────────
+// Closing price and daily change for symbols the client resolved from
+// Wikidata. Symbols not recognised upstream are omitted from the reply rather
+// than reported: on the panel, an unresolvable listing and an entity with no
+// listing are the same thing — nothing shown.
+
+app.get('/api/market/quote', async (req, res) => {
+  const symbols = String(req.query.symbols ?? '')
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean)
+    .slice(0, MAX_SYMBOLS)
+
+  if (symbols.length === 0) {
+    res.json([])
+    return
+  }
+
+  try {
+    res.json(await fetchQuotes(symbols))
+  } catch (err) {
+    logger.warn('[market]', 'quote fetch failed:', (err as Error).message)
     res.json([])
   }
 })

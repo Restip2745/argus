@@ -220,7 +220,10 @@
       "homeViewSolar": "太陽系",
       "homeViewHint": "下次載入時生效。地球視角直接落在工作高度，政治圖層與事件標記已就緒。",
       "nebula": "背景星雲",
-      "nebulaOff": "關閉"
+      "nebulaOff": "關閉",
+      "upColor": "漲跌顏色",
+      "upColorGreen": "綠漲紅跌（美／歐）",
+      "upColorRed": "紅漲綠跌（台／日）"
     },
     "title": "⚙ 設定",
     "sections": {
@@ -370,6 +373,10 @@
       "work": "事件／文件",
       "unknown": "實體"
     },
-    "noArticle": "維基百科沒有這個名稱的條目"
+    "noArticle": "維基百科沒有這個名稱的條目",
+    "market": {
+      "title": "行情",
+      "hint": "各交易所最新收盤價，並標註定價時間。"
+    }
   }
 }

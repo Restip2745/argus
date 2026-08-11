@@ -230,6 +230,18 @@ interface AppState {
   nebulaIntensity: number
   setNebulaIntensity: (v: number) => void
 
+  /**
+   * Which colour a rising price gets.
+   *
+   * There is no global answer: New York and London draw a gain green, Taipei
+   * and Tokyo draw it red, and a reader from either convention misreads the
+   * other's chart instantly. Stored as the colour rather than as a region name
+   * because that is the actual decision — the region is only how the setting is
+   * labelled.
+   */
+  upColor: 'green' | 'red'
+  setUpColor: (v: 'green' | 'red') => void
+
   /** Decorative motion (hover tilt, sheen, staggered reveals). Off collapses
    *  the HUD to functional motion only — arrivals and state changes. */
   decorativeFx: boolean
@@ -483,6 +495,13 @@ export const useAppStore = create<AppState>((set) => ({
   setHomeView: (homeView) => {
     localStorage.setItem('argus-home-view', homeView)
     set({ homeView })
+  },
+  // Defaults to the green-up convention, which is what the two largest
+  // markets and every chart library assume.
+  upColor: localStorage.getItem('argus-up-color') === 'red' ? 'red' : 'green',
+  setUpColor: (upColor) => {
+    localStorage.setItem('argus-up-color', upColor)
+    set({ upColor })
   },
   decorativeFx: (() => {
     const saved = localStorage.getItem('argus-decorative-fx')

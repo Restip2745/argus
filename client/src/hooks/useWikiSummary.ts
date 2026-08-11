@@ -7,6 +7,9 @@ export interface WikiSummary {
   extract:      string
   thumbnail?:   { source: string; width: number; height: number }
   content_urls?: { desktop: { page: string } }
+  /** Wikidata QID. Already in the payload, and the way into structured data
+   *  the summary itself does not carry — company stock listings, for one. */
+  wikibase_item?: string
 }
 
 interface State {

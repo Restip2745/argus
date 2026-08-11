@@ -18,9 +18,96 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ## Active Tasks
 
-_目前沒有進行中的項目。_
+---
+
+[TODO][HIGH] Feature: Market context on ECONOMIC events
+  Description: The entity panel now prices listed companies (see the DONE entry below), but the
+    event panel does not. Relevance there is a content judgement — "is this article about a
+    company" cannot be derived from category, coordinates or actors — so it needs the Ollama
+    pass. Add a `market_link` field to the analysis prompt in `server/src/services/ollama.ts`
+    alongside the existing category/intensity/actors/reliability output:
+    `{ entities: string[], relation: "SUBJECT" | "AFFECTED" | "NONE" }`. The model names
+    companies only; symbol resolution stays with the deterministic Wikidata path in
+    `client/src/utils/listing.ts`, because a hallucinated ticker renders as a perfectly normal
+    price for the wrong company. Cap at 3 entities. Prompt must say "return NONE when unsure" —
+    a false positive costs far more than a miss here. Nullable column; a failure to parse the
+    field must not affect the fields that already work. Validate by replaying the modified
+    prompt over existing DB articles and counting false positives BEFORE building any UI.
+  Success Criteria: `market_link` present on newly analysed articles; false-positive rate
+    measured on a replay of ≥200 stored articles and recorded here; existing analysis fields
+    unchanged; no UI work in this task.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[TODO][LOW] Data: Thin foreign lines survive the one-per-country rule
+  Description: Toyota resolves to `TYT.L`, a London line quoted in JPY whose daily change
+    disagrees with Tokyo's (-2.80% against +2.14% on the same day). It is a real listing in a
+    country no other listing occupies, so neither the one-per-country cap nor the
+    `foreignSecondary` flag in `client/src/data/stockExchanges.ts` removes it. Frankfurt was
+    handled with that flag because it lists foreign receipts in bulk; London cannot be, since
+    it is the primary market for a great many companies. Possible approach: drop a listing
+    whose currency is not one the exchange normally trades in. Low frequency — one row in a
+    twelve-company sample — so weigh the added rule against leaving it.
+  Success Criteria: Either `TYT.L` no longer appears for Toyota with no regression to the
+    HSBC / TSMC / Shell / AstraZeneca cases, or a decision recorded here to accept it.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[TODO][LOW] Data: Missing exchanges in the QID table
+  Description: `EXCHANGE_BY_QID` in `client/src/data/stockExchanges.ts` has no entry for
+    Tadawul, so Saudi Aramco resolves to no listing at all. The QID was not captured during the
+    original build because Wikidata's search API rate-limited the lookup loop. Same gap likely
+    applies to other venues never sampled. Resolve the QIDs with a throttled
+    `wbsearchentities` call (the earlier attempt failed at ~1 req/s; use 4s spacing) and add
+    the rows. Each entry needs code, Yahoo suffix, country QID, and `pad` where the venue uses
+    fixed-width numeric codes.
+  Success Criteria: `npx tsx ../scripts/check-listings.ts "Saudi Aramco"` returns a quote;
+    existing listing tests still pass.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ## Completed Tasks
+
+---
+
+[DONE][HIGH] Feature: Stock listings and closing prices on the entity panel
+  Description: The entity panel now shows where a company's shares last closed, one row per
+    market, and nothing at all for the entities that are not listed companies — which is almost
+    all of them. Three parts. (1) Resolution: `client/src/utils/listing.ts` +
+    `client/src/hooks/useListing.ts` read Wikidata `P414`/`P249` into quote symbols via the
+    exchange table in `client/src/data/stockExchanges.ts` (38 venues). The QID comes free from
+    `wikibase_item`, already in the Wikipedia summary the panel fetches. Uses `wbgetclaims` per
+    property rather than a whole-entity fetch — TSMC's full claim set is 71 KB, its P414 alone
+    is 2.6 KB, and a non-company answers with an empty object. No model is ever asked for a
+    ticker. (2) Proxy: `server/src/services/market.ts` + `GET /api/market/quote?symbols=`,
+    keyless via Yahoo's chart endpoint, 10-minute cache, ≤8 symbols, unresolvable symbols
+    omitted rather than reported. (3) UI: `ListingChip` in the entity panel, plus an `upColor`
+    setting ('green' | 'red', default green) so a reader can pick the US/EU or TW/JP colour
+    convention.
+    Four guards came out of running the real pipeline over sample entities rather than from
+    design: a staleness cut (Samsung's dormant London GDR answered with a July 2022 close and
+    a -71% change that rendered exactly like a live quote); one listing per country (Samsung's
+    preferred share prices differently from its common, and Unilever's fourth listing is PT
+    Unilever Indonesia, a different company); a `foreignSecondary` flag for Frankfurt, which
+    lists foreign receipts in bulk whose daily change disagrees with the home market by six
+    points; and zero-padding for fixed-width venues (Wikidata records Tencent as "700", which
+    resolves nowhere — the exchange writes 0700).
+    Rows carry the date, not the clock time. Time was tried first and the row overflowed the
+    panel at three listings, clipping the date column — the one part that had to be legible.
+    Full timestamp moved to hover. The date is the point: AstraZeneca showed +3.5% in London
+    and -4.9% in New York simultaneously, both correct, one today and one the previous session.
+  Success Criteria: Met — verified in the running app: HSBC renders LSE/NYSE/HKEX in three
+    currencies with two different dates and no clipping (row scrollWidth 271 = clientWidth);
+    a person entity renders no market section; the settings toggle flips fall colours from
+    rgb(239,90,90) to rgb(47,207,143) live and persists. `scripts/check-listings.ts` reports
+    2–3 listings per company with no dead or wrong-company rows across a 12-company sample.
+    client 334 tests / server 102 tests pass; both typecheck clean.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ---
 

@@ -106,6 +106,8 @@ export function ConfigModal() {
   const setHomeView     = useAppStore((s) => s.setHomeView)
   const nebulaIntensity    = useAppStore((s) => s.nebulaIntensity)
   const setNebulaIntensity = useAppStore((s) => s.setNebulaIntensity)
+  const upColor         = useAppStore((s) => s.upColor)
+  const setUpColor      = useAppStore((s) => s.setUpColor)
   const decorativeFx    = useAppStore((s) => s.decorativeFx)
   const setDecorativeFx = useAppStore((s) => s.setDecorativeFx)
   const soundEnabled    = useAppStore((s) => s.soundEnabled)
@@ -446,6 +448,32 @@ export function ConfigModal() {
                   <p className="text-[10px] mt-1 leading-snug" style={{ color: '#2a4a63' }}>
                     {t('config.fields.homeViewHint', 'Applies on next load. Earth lands at working altitude with the political layer and markers live.')}
                   </p>
+                </div>
+
+                {/* Price colours. Labelled by region rather than by colour,
+                    because "green means up" is not a preference anyone holds
+                    in the abstract — it is the convention of the markets they
+                    read. */}
+                <div className="mt-3 pt-3 border-t border-[rgba(0,180,255,0.08)]">
+                  <FieldLabel text={t('config.fields.upColor', 'PRICE COLOURS')} />
+                  <div className="flex rounded overflow-hidden" style={{ border: '1px solid rgba(0,180,255,0.15)' }}>
+                    {([
+                      { v: 'green', label: t('config.fields.upColorGreen', 'GREEN UP (US / EU)') },
+                      { v: 'red',   label: t('config.fields.upColorRed',   'RED UP (TW / JP)') },
+                    ] as const).map(({ v, label }, i) => (
+                      <button
+                        key={v}
+                        onClick={() => setUpColor(v)}
+                        className="flex-1 text-[11px] tracking-[0.08em] py-1"
+                        style={{
+                          color: upColor === v ? '#00d4ff' : '#2a5070',
+                          background: upColor === v ? 'rgba(0,212,255,0.12)' : 'transparent',
+                          borderLeft: i > 0 ? '1px solid rgba(0,180,255,0.12)' : 'none',
+                          cursor: 'pointer',
+                        }}
+                      >{label}</button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Motion + audio — applied immediately, not on Apply, so the
