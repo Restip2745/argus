@@ -7,22 +7,22 @@ import { useFilteredEvents } from '../../hooks/useFilteredEvents'
 import { BODY_MAP, TIER_TO_ORBITAL, TIER_TO_SURFACE } from '../../data/celestialBodies'
 import { resolveOrbitalPlacement } from '../../data/orbitalPlacement'
 import type { OrbitalPlacement } from '../../data/orbitalPlacement'
-import { getCountryCentroid, resolveCountryName } from '../../data/countryData'
 import { eventSymbol, peakSeverity, severityColor, severityRank, withAlpha } from '../../data/symbology'
 import type { EventSymbol } from '../../data/symbology'
 import { latLngToWorld, isAboveHorizon } from '../../lib/coordinates'
 import type { ArgusEvent, CelestialBodyName } from '../../types'
 
-/** Resolve lat/lng for an event — explicit coords first, centroid fallback. */
-function resolveLatLng(e: { lat: number | null; lng: number | null; location_label?: string | null }): { lat: number; lng: number } | null {
+/**
+ * Where to draw an event.
+ *
+ * Coordinates are resolved once on the server — from the model's own point
+ * when it gave one, otherwise from the location label via the gazetteer — so
+ * there is nothing left to work out here. An event with no coordinates either
+ * names an area rather than a point (`region`) or could not be resolved at
+ * all (`none`); neither belongs on the globe as a marker.
+ */
+function resolveLatLng(e: { lat: number | null; lng: number | null }): { lat: number; lng: number } | null {
   if (e.lat !== null && e.lng !== null) return { lat: e.lat, lng: e.lng }
-  if (e.location_label) {
-    const key = resolveCountryName(e.location_label)
-    if (key) {
-      const c = getCountryCentroid(key)
-      if (c) return c
-    }
-  }
   return null
 }
 

@@ -385,221 +385,128 @@ export function getCountryInfo(name: string): CountryInfo | null {
   return COUNTRY_DATA[name] ?? null
 }
 
-// ── Approximate country centroids (lat, lng) ─────────────────────────────────
-// Used as fallback when an event lacks explicit coordinates.
-const COUNTRY_CENTROIDS: Record<string, [number, number]> = {
-  'United States of America': [38.9, -77.0],
-  'China':            [35.9, 104.2],
-  'Russia':           [61.5, 105.3],
-  'Ukraine':          [48.4,  31.2],
-  'Taiwan':           [23.7, 120.9],
-  'Japan':            [36.2, 138.3],
-  'South Korea':      [35.9, 127.8],
-  'North Korea':      [40.3, 127.5],
-  'Germany':          [51.2,  10.5],
-  'France':           [46.2,   2.2],
-  'United Kingdom':   [51.5,  -0.1],
-  'India':            [20.6,  78.9],
-  'Pakistan':         [30.4,  69.3],
-  'Iran':             [32.4,  53.7],
-  'Israel':           [31.0,  35.0],
-  'Palestine':        [31.9,  35.2],
-  'Lebanon':          [33.9,  35.5],
-  'Jordan':           [31.0,  36.1],
-  'Saudi Arabia':     [23.9,  45.1],
-  'Turkey':           [38.9,  35.2],
-  'Syria':            [34.8,  38.9],
-  'Iraq':             [33.2,  43.7],
-  'Afghanistan':      [33.9,  67.7],
-  'Brazil':           [-14.2, -51.9],
-  'Mexico':           [23.6, -102.6],
-  'Argentina':        [-38.4, -63.6],
-  'Venezuela':        [6.4,  -66.6],
-  'Colombia':         [4.1,  -72.3],
-  'Nigeria':          [9.1,    8.7],
-  'Ethiopia':         [9.1,   40.5],
-  'Sudan':            [12.9,  30.2],
-  'South Africa':     [-30.6,  22.9],
-  'Egypt':            [26.8,  30.8],
-  'Libya':            [26.3,  17.2],
-  'Somalia':          [5.2,   46.2],
-  'Kenya':            [-0.0,  37.9],
-  'Poland':           [51.9,  19.1],
-  'Indonesia':        [-0.8, 113.9],
-  'Malaysia':         [4.2,  108.0],
-  'Vietnam':          [14.1, 108.3],
-  'Thailand':         [13.0, 100.5],
-  'Myanmar':          [19.2,  96.7],
-  'Philippines':      [12.9, 121.8],
-  'Australia':        [-25.3, 133.8],
-  'Canada':           [56.1, -106.3],
-  'Kazakhstan':       [48.0,  66.9],
-  'Uzbekistan':       [41.4,  64.6],
-  'Spain':            [40.5,  -3.7],
-  'Italy':            [41.9,  12.6],
-  'Greece':           [39.1,  21.8],
-  'Romania':          [45.9,  24.9],
-  'Belarus':          [53.7,  28.0],
-  'Serbia':           [44.0,  21.0],
-  'Kosovo':           [42.6,  20.9],
-  'Morocco':          [31.8,  -7.1],
-  'Algeria':          [28.0,   1.7],
-  'Chad':             [15.5,  18.7],
-  'Dem. Rep. Congo':  [-4.0,  21.8],
-  'Sweden':           [60.1,  18.6],
-  'Finland':          [61.9,  25.7],
-  'Norway':           [60.5,   8.5],
-  'Netherlands':      [52.1,   5.3],
-  'Switzerland':      [46.8,   8.2],
-  // Common news locations not in COUNTRY_DATA
-  'United States':    [38.9, -77.0],
-  'USA':              [38.9, -77.0],
-  'UK':               [51.5,  -0.1],
-  'Beirut':           [33.9,  35.5],
-  'Gaza':             [31.4,  34.4],
-  'West Bank':        [31.9,  35.2],
-  'Yemen':            [15.6,  48.5],
-  'Myanmar/Burma':    [19.2,  96.7],
-  'Taiwan Strait':    [24.0, 120.5],
-  'South China Sea':  [15.0, 115.0],
-  'Persian Gulf':     [26.5,  52.0],
+// ── Recognised place names ───────────────────────────────────────────────────
+//
+// Names only — the coordinates that used to sit here now live in the server
+// gazetteer (server/src/data/gazetteer.ts), which resolves every event's
+// position once at classification time and persists it. The client reads
+// `lat`/`lng` off the event and never derives them.
+//
+// What is still needed here is recognition: deciding whether a string is a
+// place at all (so the entity linker does not offer it as a person) and which
+// country page a label should open.
+const PLACE_NAMES: string[] = [
+  'United States of America', 'China', 'Russia', 'Ukraine', 'Taiwan', 'Japan',
+  'South Korea', 'North Korea', 'Germany', 'France', 'United Kingdom', 'India',
+  'Pakistan', 'Iran', 'Israel', 'Palestine', 'Lebanon', 'Jordan',
+  'Saudi Arabia', 'Turkey', 'Syria', 'Iraq', 'Afghanistan', 'Brazil', 'Mexico',
+  'Argentina', 'Venezuela', 'Colombia', 'Nigeria', 'Ethiopia', 'Sudan',
+  'South Africa', 'Egypt', 'Libya', 'Somalia', 'Kenya', 'Poland', 'Indonesia',
+  'Malaysia', 'Vietnam', 'Thailand', 'Myanmar', 'Philippines', 'Australia',
+  'Canada', 'Kazakhstan', 'Uzbekistan', 'Spain', 'Italy', 'Greece', 'Romania',
+  'Belarus', 'Serbia', 'Kosovo', 'Morocco', 'Algeria', 'Chad',
+  'Dem. Rep. Congo', 'Sweden', 'Finland', 'Norway', 'Netherlands',
+  'Switzerland', 'Yemen', 'Gaza', 'West Bank', 'Beirut', 'Taiwan Strait',
+  'South China Sea', 'Persian Gulf',
 
-  // ── Chinese-language location labels ─────────────────────────────────────
-  // Cities
-  '北京':   [39.9,  116.4],  // Beijing
-  '上海':   [31.2,  121.5],  // Shanghai
-  '台北':   [25.0,  121.5],  // Taipei
-  '香港':   [22.3,  114.2],  // Hong Kong
-  '澳門':   [22.2,  113.5],  // Macau
-  '澳门':   [22.2,  113.5],
-  '廣州':   [23.1,  113.3],  // Guangzhou
-  '广州':   [23.1,  113.3],
-  '深圳':   [22.5,  114.1],  // Shenzhen
-  '武漢':   [30.6,  114.3],  // Wuhan
-  '武汉':   [30.6,  114.3],
-  '莫斯科': [55.8,   37.6],  // Moscow
-  '华盛顿': [38.9,  -77.0],  // Washington DC
-  '華盛頓': [38.9,  -77.0],
-  '紐約':   [40.7,  -74.0],  // New York
-  '纽约':   [40.7,  -74.0],
-  '倫敦':   [51.5,   -0.1],  // London
-  '伦敦':   [51.5,   -0.1],
-  '巴黎':   [48.9,    2.3],  // Paris
-  '柏林':   [52.5,   13.4],  // Berlin
-  '東京':   [35.7,  139.7],  // Tokyo
-  '东京':   [35.7,  139.7],
-  '首爾':   [37.6,  127.0],  // Seoul
-  '首尔':   [37.6,  127.0],
-  '平壤':   [39.0,  125.8],  // Pyongyang
-  '德黑蘭': [35.7,   51.4],  // Tehran
-  '德黑兰': [35.7,   51.4],
-  '基輔':   [50.5,   30.5],  // Kyiv
-  '基辅':   [50.5,   30.5],
-  '特拉維夫':[32.1,  34.8],  // Tel Aviv
-  '特拉维夫':[32.1,  34.8],
-  '耶路撒冷':[31.8,  35.2],  // Jerusalem
-  // Countries
-  '中國':   [35.9,  104.2],  // China
-  '中国':   [35.9,  104.2],
-  '台灣':   [23.7,  120.9],  // Taiwan
-  '台湾':   [23.7,  120.9],
-  '俄羅斯': [61.5,  105.3],  // Russia
-  '俄罗斯': [61.5,  105.3],
-  '美國':   [38.9,  -77.0],  // USA
-  '美国':   [38.9,  -77.0],
-  '烏克蘭': [48.4,   31.2],  // Ukraine
-  '乌克兰': [48.4,   31.2],
-  '以色列': [31.0,   35.0],  // Israel
-  '巴勒斯坦':[31.9,  35.2],  // Palestine
-  '黎巴嫩': [33.9,   35.5],  // Lebanon
-  '伊朗':   [32.4,   53.7],  // Iran
-  '伊拉克': [33.2,   43.7],  // Iraq
-  '敘利亞': [34.8,   38.9],  // Syria
-  '叙利亚': [34.8,   38.9],
-  '葉門':   [15.6,   48.5],  // Yemen
-  '也门':   [15.6,   48.5],
-  '沙烏地阿拉伯':[23.9, 45.1], // Saudi Arabia
-  '沙特阿拉伯':[23.9, 45.1],
-  '土耳其': [38.9,   35.2],  // Turkey
-  '日本':   [36.2,  138.3],  // Japan
-  '韓國':   [35.9,  127.8],  // South Korea
-  '韩国':   [35.9,  127.8],
-  '朝鮮':   [40.3,  127.5],  // North Korea
-  '北韓':   [40.3,  127.5],
-  '北朝鲜': [40.3,  127.5],
-  '印度':   [20.6,   78.9],  // India
-  '巴基斯坦':[30.4,  69.3],  // Pakistan
-  '阿富汗': [33.9,   67.7],  // Afghanistan
-  '英國':   [51.5,   -0.1],  // UK
-  '英国':   [51.5,   -0.1],
-  '法國':   [46.2,    2.2],  // France
-  '法国':   [46.2,    2.2],
-  '德國':   [51.2,   10.5],  // Germany
-  '德国':   [51.2,   10.5],
-  '歐盟':   [50.9,    4.4],  // EU (Brussels)
-  '欧盟':   [50.9,    4.4],
-  '加薩':   [31.4,   34.4],  // Gaza
-  '加沙':   [31.4,   34.4],
-  '約旦河西岸':[31.9, 35.2], // West Bank
-  '南海':   [15.0,  115.0],  // South China Sea
-  '台海':   [24.0,  120.5],  // Taiwan Strait
-  '波斯灣': [26.5,   52.0],  // Persian Gulf
+  // Chinese-language labels — the model is asked for English but leaks these
+  // often enough that dropping them would misread real places as people.
+  '北京', '上海', '台北', '香港', '澳門', '澳门', '廣州', '广州', '深圳',
+  '武漢', '武汉', '莫斯科', '華盛頓', '华盛顿', '紐約', '纽约', '倫敦', '伦敦',
+  '巴黎', '柏林', '東京', '东京', '首爾', '首尔', '平壤', '德黑蘭', '德黑兰',
+  '基輔', '基辅', '特拉維夫', '特拉维夫', '耶路撒冷', '中國', '中国', '台灣',
+  '台湾', '俄羅斯', '俄罗斯', '美國', '美国', '烏克蘭', '乌克兰', '以色列',
+  '巴勒斯坦', '黎巴嫩', '伊朗', '伊拉克', '敘利亞', '叙利亚', '葉門', '也门',
+  '沙烏地阿拉伯', '沙特阿拉伯', '土耳其', '日本', '韓國', '韩国', '朝鮮',
+  '北韓', '北朝鲜', '印度', '巴基斯坦', '阿富汗', '英國', '英国', '法國',
+  '法国', '德國', '德国', '歐盟', '欧盟', '加薩', '加沙', '約旦河西岸',
+  '南海', '台海', '波斯灣',
+]
+
+/** Spellings the model emits that are not themselves keys. */
+const PLACE_ALIASES: Record<string, string> = {
+  'united states':                'United States of America',
+  'usa':                          'United States of America',
+  'u.s.':                         'United States of America',
+  'u.s.a.':                       'United States of America',
+  'us':                           'United States of America',
+  'america':                      'United States of America',
+  'uk':                           'United Kingdom',
+  'britain':                      'United Kingdom',
+  'great britain':                'United Kingdom',
+  'burma':                        'Myanmar',
+  'myanmar/burma':                'Myanmar',
+  'czech republic':               'Czechia',
+  'turkiye':                      'Turkey',
+  'holland':                      'Netherlands',
+  'democratic republic of congo': 'Dem. Rep. Congo',
+  'democratic republic of the congo': 'Dem. Rep. Congo',
+  'dr congo':                     'Dem. Rep. Congo',
+  'drc':                          'Dem. Rep. Congo',
+  'gaza strip':                   'Gaza',
+  'republic of korea':            'South Korea',
+  'dprk':                         'North Korea',
 }
 
-/**
- * Return approximate [lat, lng] centroid for a country name,
- * trying both the exact key and a resolved alias.
- */
-export function getCountryCentroid(name: string): { lat: number; lng: number } | null {
-  // Direct lookup
-  const direct = COUNTRY_CENTROIDS[name]
-  if (direct) return { lat: direct[0], lng: direct[1] }
-
-  // Try resolving via country alias
-  const resolved = resolveCountryName(name)
-  if (resolved) {
-    const c = COUNTRY_CENTROIDS[resolved]
-    if (c) return { lat: c[0], lng: c[1] }
-  }
-
-  return null
+const NAME_INDEX = new Map<string, string>()
+for (const key of [...Object.keys(COUNTRY_DATA), ...PLACE_NAMES]) {
+  NAME_INDEX.set(key.toLowerCase(), key)
 }
 
+const ALIAS_INDEX = new Map<string, string>()
+for (const [alias, key] of Object.entries(PLACE_ALIASES)) {
+  if (NAME_INDEX.has(key.toLowerCase())) ALIAS_INDEX.set(alias, key)
+}
+
+/** Keys long enough for containment to be evidence rather than coincidence. */
+const CONTAINMENT_NAMES = [...NAME_INDEX.values()].filter(
+  k => k.length >= 4 || /[㐀-䶿一-鿿]/.test(k),
+)
+
 /**
- * Try to resolve a free-text location label (from Ollama) to a known
- * COUNTRY_DATA key.  Returns the canonical key or null if no match.
- * Matching order:
- *   1. Exact match
- *   2. Case-insensitive exact
- *   3. A COUNTRY_DATA key that starts with the label (or vice-versa)
- *   4. A COUNTRY_DATA key that contains the label as a whole word
+ * Resolve a free-text location label (from Ollama) to a known place name.
+ * Returns the canonical name, or null if the label names nothing we recognise.
+ *
+ * A name must appear *inside* the label, never the label inside a name. The
+ * previous version tested containment both ways, which quietly resolved "Mali"
+ * to Somalia (`'somalia'.includes('mali')`) and "Africa" to South Africa. When
+ * several names match, the one ending latest wins — qualified place names in
+ * English are head-final, as in "Eastern Ukraine" or "Northeast India".
  */
 export function resolveCountryName(label: string): string | null {
   if (!label) return null
 
-  // Search COUNTRY_DATA keys first, then COUNTRY_CENTROIDS keys as fallback
-  const dataKeys     = Object.keys(COUNTRY_DATA)
-  const centroidKeys = Object.keys(COUNTRY_CENTROIDS)
-  const allKeys      = [...new Set([...dataKeys, ...centroidKeys])]
+  const lower = label.toLowerCase().replace(/\s+/g, ' ').trim()
+  if (!lower) return null
 
-  // 1. Exact
-  if (COUNTRY_DATA[label] || COUNTRY_CENTROIDS[label]) return label
+  // 1. Exact, then alias.
+  const direct = NAME_INDEX.get(lower) ?? ALIAS_INDEX.get(lower)
+  if (direct) return direct
 
-  // 2. Case-insensitive exact
-  const lower = label.toLowerCase()
-  const exact = allKeys.find(k => k.toLowerCase() === lower)
-  if (exact) return exact
+  // 2. A recognised name embedded in a longer label.
+  let best: { key: string; end: number; len: number } | null = null
+  for (const key of CONTAINMENT_NAMES) {
+    const k = key.toLowerCase()
+    let at: number
 
-  // 3. Prefix match (e.g. "United States" → "United States of America")
-  const prefix = allKeys.find(k => k.toLowerCase().startsWith(lower) || lower.startsWith(k.toLowerCase()))
-  if (prefix) return prefix
+    if (/[㐀-䶿一-鿿]/.test(k)) {
+      at = lower.lastIndexOf(k)
+    } else {
+      if (!lower.includes(k)) continue
+      // Word boundaries, so "Niger" does not match inside "Nigeria".
+      const re = new RegExp(`(?:^|[^a-z0-9])(${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(?:[^a-z0-9]|$)`, 'g')
+      at = -1
+      for (let m = re.exec(lower); m; m = re.exec(lower)) at = m.index + m[0].indexOf(m[1])
+    }
+    if (at === -1) continue
 
-  // 4. Whole-word containment
-  const word = allKeys.find(k => {
-    const kl = k.toLowerCase()
-    return kl.includes(lower) || lower.includes(kl)
-  })
-  return word ?? null
+    const end = at + k.length
+    if (!best || end > best.end || (end === best.end && k.length > best.len)) {
+      best = { key, end, len: k.length }
+    }
+  }
+
+  return best?.key ?? null
 }
 
 /** Derive dynamic status tags from live events (e.g. ACTIVE CONFLICT) */

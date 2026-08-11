@@ -21,7 +21,7 @@ function baseHeatScore(a: Article): number {
     title_zh:    '',
     summary_zh:  '',
     summary_en:  '',
-    location:    { type: 'geo', label: '', lat: null, lng: null, body: null },
+    location:    { type: 'geo', label: '', lat: null, lng: null, precision: 'none', body: null },
     actors:      [],
     tags:        [],
     reliability: 'UNVERIFIED',

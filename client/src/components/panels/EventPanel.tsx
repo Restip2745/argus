@@ -18,7 +18,6 @@ import { useAgentQuery }      from '../../hooks/useAgentQuery'
 import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
 import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
 import { usePanelDrag }       from '../../hooks/usePanelDrag'
-import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
 import { copyToClipboard } from '../../utils/clipboard'
 import { severityColor, categoryGlyph, categoryLabel } from '../../data/symbology'
 import { EventTimeline }      from './EventTimeline'
@@ -29,14 +28,10 @@ import { eventTitle, eventSummary } from '../../lib/eventText'
 import type { ArgusEvent }    from '../../types'
 
 
+/** Coordinates are resolved and persisted server-side, so an event either has
+ *  a point to fly to or names no point at all. */
 function resolveEventLatLng(ev: ArgusEvent): { lat: number; lng: number } | null {
   if (ev.lat !== null && ev.lng !== null) return { lat: ev.lat, lng: ev.lng }
-  if (ev.location_label) {
-    const direct = getCountryCentroid(ev.location_label)
-    if (direct) return direct
-    const key = resolveCountryName(ev.location_label)
-    if (key) { const c = getCountryCentroid(key); if (c) return c }
-  }
   return null
 }
 

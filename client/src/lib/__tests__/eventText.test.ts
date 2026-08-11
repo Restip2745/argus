@@ -12,7 +12,7 @@ const evt = (over: Partial<ArgusEvent> = {}): ArgusEvent => ({
   source: 'BBC', url: 'https://x/y',
   published_at: '2026-08-03T00:00:00Z', fetched_at: '2026-08-03T00:00:00Z',
   category: 'POLITICAL', intensity: 'MODERATE',
-  location_type: 'geo', location_label: 'X', lat: 0, lng: 0, body: null,
+  location_type: 'geo', location_label: 'X', lat: 0, lng: 0, geo_precision: 'exact', body: null,
   actors: [], tags: [], sources_count: 1, reliability: 'UNVERIFIED',
   image_url: null, heat_score: 0, expires_at: null, last_referenced: null,
   ...over,

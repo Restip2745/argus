@@ -8,7 +8,7 @@ import helmet from 'helmet'
 import { Ollama } from 'ollama'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { initDb, getAnalyzedArticles, getRelatedEvents, insertWebhookEvent, articleToClientEvent, type WebhookEventInput } from './db/sqlite'
+import { initDb, getAnalyzedArticles, getRelatedEvents, insertWebhookEvent, getArticleById, articleToClientEvent, type WebhookEventInput } from './db/sqlite'
 import { startSummaryWorker } from './workers/summary'
 import { initSocket } from './services/socket'
 import { startScraper } from './services/scraper'
@@ -118,27 +118,15 @@ app.post('/api/events/webhook', (req, res) => {
 
   try {
     insertWebhookEvent(event)
-    const clientEvent = articleToClientEvent({
-      id, source: event.source, title: event.title, content: null,
-      url: event.url, published_at: event.published_at, fetched_at: now,
-      is_analyzed: 1 as 0 | 1 | -1,
-      category:      event.category as EventCategory,
-      // Webhook events arrive pre-classified and are never sent to the model,
-      // so there is nothing to translate — '' lets the usual fallback show the
-      // caller's own title rather than inventing a translation.
-      title_zh:      '',
-      summary_zh:    '',
-      summary_en:    '',
-      intensity:     event.intensity as EventIntensity,
-      location_type: (event.location_type ?? null) as 'geo' | 'orbital' | null,
-      location_label: event.location_label,
-      lat: event.lat, lng: event.lng, body: null,
-      actors: JSON.stringify(event.actors), tags: JSON.stringify(event.tags),
-      sources_count: 1, reliability: 'MEDIUM',
-      heat_score: event.heat_score, expires_at: event.expires_at, last_referenced: null,
-      image_url: null,
-    })
-    io.emit('new_event', clientEvent)
+    // Read the row back rather than rebuilding it here. The insert resolves
+    // coordinates through the gazetteer, so a hand-assembled copy of `event`
+    // would broadcast the caller's unresolved lat/lng while the database held
+    // the resolved ones.
+    const stored = getArticleById(id)
+    if (!stored) {
+      res.status(500).json({ error: 'Event was not stored' }); return
+    }
+    io.emit('new_event', articleToClientEvent(stored))
     res.json({ id, message: 'Event ingested' })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })

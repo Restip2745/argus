@@ -27,6 +27,11 @@ CREATE TABLE IF NOT EXISTS articles (
   location_label TEXT,                  -- Human-readable location name
   lat            REAL,                  -- Latitude (-90 to 90, NULL for orbital)
   lng            REAL,                  -- Longitude (-180 to 180, NULL for orbital)
+  -- Provenance of lat/lng, so the globe can draw a model-supplied point
+  -- differently from a country centroid, and so a label that names no point
+  -- ("Global Tech Sector") is distinguishable from one we simply failed on:
+  --   exact | centroid | region | none
+  geo_precision  TEXT,
   body           TEXT,                  -- Celestial body name (NULL for geo events)
   actors         TEXT,                  -- JSON array: '["Ukraine","Russia"]'
   tags           TEXT,                  -- JSON array: '["artillery","frontline"]'

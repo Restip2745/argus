@@ -10,7 +10,7 @@
  */
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { resolveCountryName, getCountryCentroid } from '../../data/countryData'
+import { resolveCountryName } from '../../data/countryData'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import { useAppStore } from '../../store'
@@ -109,13 +109,14 @@ export function EventPanelBody({
   // fallback for anything ingested before summaries existed, or not translated.
   const summary = eventSummary(event, i18n.language) || event.content || null
 
+  // Opening the country panel flies the camera somewhere, so the link is only
+  // offered when the event has a position to fly to. Events whose label names
+  // an area rather than a point ("Europe", "Global Tech Sector") have none.
   function resolveCountry() {
     const label = event.location_label
     if (!label || label === '—') return null
-    const hasCoords  = event.lat !== null && event.lng !== null
-    const countryKey = resolveCountryName(label)
-    if (!hasCoords && countryKey === null) return null
-    return { label, countryKey }
+    if (event.lat === null || event.lng === null) return null
+    return { label, countryKey: resolveCountryName(label) }
   }
 
   const countryInfo = resolveCountry()
@@ -123,14 +124,10 @@ export function EventPanelBody({
   function handleOpenCountry() {
     if (!countryInfo) return
     const { label, countryKey } = countryInfo
-    const name = countryKey ?? label
-    let lat = event.lat ?? 0
-    let lng = event.lng ?? 0
-    if (event.lat === null) {
-      const centroid = getCountryCentroid(name)
-      if (centroid) { lat = centroid.lat; lng = centroid.lng }
-    }
-    setSelectedCountry({ name, lat, lng })
+    // The server has already resolved the label to a centroid where one
+    // exists, so event.lat/lng is the best position available.
+    if (event.lat === null || event.lng === null) return
+    setSelectedCountry({ name: countryKey ?? label, lat: event.lat, lng: event.lng })
   }
 
   function hostname() {

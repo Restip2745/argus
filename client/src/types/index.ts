@@ -46,6 +46,20 @@ export type EventCategory =
 export type EventIntensity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL'
 export type SourceReliability = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNVERIFIED'
 
+/**
+ * Where an event's coordinates came from. The server resolves this once at
+ * classification time — the client never derives coordinates itself.
+ *
+ *   exact    — the model named a point
+ *   centroid — resolved from the location label via the server gazetteer
+ *   region   — a real area ("Europe", "Global Tech Sector") with no one point
+ *   none     — nothing resolvable
+ *
+ * `region` and `none` both mean lat/lng are null, but they are not the same
+ * thing: the first has nowhere to put a marker, the second is a gap.
+ */
+export type GeoPrecision = 'exact' | 'centroid' | 'region' | 'none'
+
 export interface ArgusEvent {
   id: string
   title: string
@@ -64,6 +78,7 @@ export interface ArgusEvent {
   location_label: string | null
   lat: number | null
   lng: number | null
+  geo_precision: GeoPrecision
   body: CelestialBodyName | null
   // Intelligence metadata
   actors: string[]          // Parsed from JSON string

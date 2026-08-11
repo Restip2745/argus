@@ -15,6 +15,7 @@ import {
   articleToClientEvent,
 } from '../db/sqlite'
 import { broadcastEvent } from './socket'
+import { resolveLocation } from '../data/gazetteer'
 import { getLlmConfig } from '../config/llmConfig'
 
 // Ollama client is recreated per-call so host changes take effect immediately
@@ -142,9 +143,19 @@ export function validateClassification(raw: Record<string, unknown>): OllamaClas
     intensity = 'LOW'
   }
 
-  // Validate location
+  // Validate location.
+  //
+  // Roughly half the geo articles come back with a good label and a null
+  // lat/lng, so the label is put through the gazetteer here rather than being
+  // patched up per-render in the client. Resolving once, at write time, is
+  // what lets the coordinates be persisted and every consumer — markers,
+  // clustering, region panel, agent queries — see the same answer.
   const loc = (raw.location ?? {}) as Record<string, unknown>
   const locType = loc.type === 'orbital' ? 'orbital' : 'geo'
+  const locLabel = String(loc.label ?? '').trim()
+  const geo = locType === 'geo'
+    ? resolveLocation(locLabel, loc.lat as number | null, loc.lng as number | null)
+    : { lat: null, lng: null, precision: 'none' as const }
 
   // Chinese fields must actually be Chinese; otherwise drop them so the UI
   // falls back to the original rather than showing English twice.
@@ -158,11 +169,12 @@ export function validateClassification(raw: Record<string, unknown>): OllamaClas
     summary_zh: hasHan(summaryZh) ? summaryZh : '',
     summary_en: cleanText(raw.summary_en, 200),
     location: {
-      type:  locType,
-      label: String(loc.label ?? ''),
-      lat:   locType === 'geo' ? (typeof loc.lat === 'number' ? loc.lat : null) : null,
-      lng:   locType === 'geo' ? (typeof loc.lng === 'number' ? loc.lng : null) : null,
-      body:  locType === 'orbital' ? String(loc.body ?? '') || null : null,
+      type:      locType,
+      label:     locLabel,
+      lat:       geo.lat,
+      lng:       geo.lng,
+      precision: geo.precision,
+      body:      locType === 'orbital' ? String(loc.body ?? '') || null : null,
     },
     actors:        Array.isArray(raw.actors) ? raw.actors.map(String) : [],
     sources_count: typeof raw.sources_count === 'number' ? raw.sources_count : 1,

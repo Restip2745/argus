@@ -17,7 +17,7 @@ function evt(id: string, over: Partial<ArgusEvent> = {}): ArgusEvent {
     source: 'test', url: 'https://example.com',
     published_at: new Date().toISOString(), fetched_at: new Date().toISOString(),
     category: 'ARMED_CONFLICT', intensity: 'HIGH',
-    location_type: 'geo', location_label: null, lat: null, lng: null, body: null,
+    location_type: 'geo', location_label: null, lat: null, lng: null, geo_precision: 'none', body: null,
     actors: [], tags: [], sources_count: 1, reliability: 'HIGH',
     image_url: null, heat_score: 0, expires_at: null, last_referenced: null,
     ...over,

@@ -20,7 +20,7 @@ function makeEvent(over: Partial<ArgusEvent> = {}): ArgusEvent {
     source: 'CNA Asia', url: 'https://example.com/article',
     published_at: new Date().toISOString(), fetched_at: new Date().toISOString(),
     category: 'SOCIAL', intensity: 'HIGH',
-    location_type: 'geo', location_label: 'Taiwan', lat: 25, lng: 121, body: null,
+    location_type: 'geo', location_label: 'Taiwan', lat: 25, lng: 121, geo_precision: 'exact', body: null,
     actors: [], tags: [], sources_count: 1, reliability: 'HIGH',
     image_url: IMG, heat_score: 1, expires_at: null, last_referenced: null,
     ...over,

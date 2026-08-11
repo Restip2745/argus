@@ -2,6 +2,7 @@ import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import type { Article, OllamaClassification, ClientEvent, SourceReliability } from '../types'
+import { resolveLocation } from '../data/gazetteer'
 import { logger } from '../utils/logger'
 
 let db: Database.Database
@@ -37,6 +38,11 @@ export function initDb(): void {
   if (!cols.some(c => c.name === 'summary_en')) {
     db.exec("ALTER TABLE articles ADD COLUMN summary_en TEXT")
     logger.info('[DB]', 'Migration: added summary_en column')
+  }
+  if (!cols.some(c => c.name === 'geo_precision')) {
+    db.exec("ALTER TABLE articles ADD COLUMN geo_precision TEXT")
+    logger.info('[DB]', 'Migration: added geo_precision column')
+    logger.info('[DB]', 'Existing rows have no precision — run scripts/backfill-geo.ts')
   }
 
   logger.info('[DB]', 'SQLite initialised (articles schema)')
@@ -88,19 +94,28 @@ export interface WebhookEventInput {
 }
 
 export function insertWebhookEvent(e: WebhookEventInput): void {
+  // Webhook callers are no more reliable about coordinates than the model is,
+  // so they go through the same resolution rather than straight into the row.
+  const geo = e.location_type === 'orbital'
+    ? { lat: e.lat, lng: e.lng, precision: 'exact' as const }
+    : resolveLocation(e.location_label, e.lat, e.lng)
+
   getDb().prepare(
     `INSERT OR IGNORE INTO articles
       (id, source, title, content, url, published_at, is_analyzed,
        category, title_zh, summary_zh, intensity,
-       location_type, location_label, lat, lng, body,
+       location_type, location_label, lat, lng, geo_precision, body,
        actors, tags, sources_count, reliability, heat_score, expires_at)
      VALUES
       (@id, @source, @title, NULL, @url, @published_at, 1,
        @category, @title, '', @intensity,
-       @location_type, @location_label, @lat, @lng, NULL,
+       @location_type, @location_label, @lat, @lng, @geo_precision, NULL,
        @actors, @tags, 1, 'MEDIUM', @heat_score, @expires_at)`
   ).run({
     ...e,
+    lat:           geo.lat,
+    lng:           geo.lng,
+    geo_precision: geo.precision,
     actors: JSON.stringify(e.actors),
     tags:   JSON.stringify(e.tags),
   })
@@ -166,6 +181,7 @@ export function markAnalyzed(
        location_label = @location_label,
        lat            = @lat,
        lng            = @lng,
+       geo_precision  = @geo_precision,
        body           = @body,
        actors         = @actors,
        tags           = @tags,
@@ -185,6 +201,7 @@ export function markAnalyzed(
     location_label: data.location.label,
     lat:            data.location.lat,
     lng:            data.location.lng,
+    geo_precision:  data.location.precision,
     body:           data.location.body,
     actors:         JSON.stringify(data.actors),
     tags:           JSON.stringify(data.tags),
@@ -272,6 +289,9 @@ export function articleToClientEvent(row: Article): ClientEvent {
     location_label:  row.location_label ?? '',
     lat:             row.lat,
     lng:             row.lng,
+    // Rows written before resolution moved server-side carry no precision.
+    // Coordinates on those came straight from the model, hence 'exact'.
+    geo_precision:   row.geo_precision ?? (row.lat !== null && row.lng !== null ? 'exact' : 'none'),
     body:            row.body,
     actors:          safeJsonParse(row.actors),
     tags:            safeJsonParse(row.tags),

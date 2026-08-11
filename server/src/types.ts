@@ -21,6 +21,9 @@ export const VALID_CATEGORIES: EventCategory[] = [
 export type EventIntensity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL'
 export type SourceReliability = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNVERIFIED'
 
+import type { GeoPrecision } from './data/gazetteer'
+export type { GeoPrecision }
+
 export const VALID_INTENSITIES: EventIntensity[] = [
   'LOW', 'MODERATE', 'HIGH', 'CRITICAL',
 ]
@@ -50,6 +53,9 @@ export interface Article {
   location_label: string | null
   lat: number | null
   lng: number | null
+  /** Where lat/lng came from — see GeoPrecision. NULL on rows written before
+   *  coordinate resolution moved server-side. */
+  geo_precision: GeoPrecision | null
   body: string | null
   actors: string | null               // JSON array string in DB
   tags: string | null                  // JSON array string in DB
@@ -79,8 +85,11 @@ export interface OllamaClassification {
   location: {
     type: 'geo' | 'orbital'
     label: string
+    /** Resolved against the gazetteer, not raw model output — roughly half of
+     *  geo articles come back with a usable label and no coordinates. */
     lat: number | null
     lng: number | null
+    precision: GeoPrecision
     body: string | null
   }
   actors: string[]
@@ -110,6 +119,7 @@ export interface ClientEvent {
   location_label: string
   lat: number | null
   lng: number | null
+  geo_precision: GeoPrecision
   body: string | null
   actors: string[]
   tags: string[]

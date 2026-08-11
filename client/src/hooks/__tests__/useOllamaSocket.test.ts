@@ -43,6 +43,7 @@ function makeEvent(id: string): ArgusEvent {
     location_label: null,
     lat: null,
     lng: null,
+    geo_precision: 'none',
     body: null,
     actors: [],
     tags: [],

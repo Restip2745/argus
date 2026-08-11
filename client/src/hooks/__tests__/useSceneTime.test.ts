@@ -15,7 +15,7 @@ function evt(id: string, hoursAgo: number, over: Partial<ArgusEvent> = {}): Argu
     published_at: new Date(T0 - hoursAgo * HOUR).toISOString(),
     fetched_at: new Date(T0 - hoursAgo * HOUR).toISOString(),
     category: 'POLITICAL', intensity: 'LOW',
-    location_type: 'geo', location_label: null, lat: null, lng: null, body: null,
+    location_type: 'geo', location_label: null, lat: null, lng: null, geo_precision: 'none', body: null,
     actors: [], tags: [], sources_count: 1, reliability: 'HIGH',
     image_url: null, heat_score: 0, expires_at: null, last_referenced: null,
     ...over,
