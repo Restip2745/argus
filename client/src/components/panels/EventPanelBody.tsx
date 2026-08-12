@@ -350,7 +350,11 @@ export function EventPanelBody({
 
         {/* Commodity exposure — renders nothing for almost every event */}
         {event.market_link && event.market_link.length > 0 && (
-          <EventCommodities commodities={event.market_link} accentColor={accentColor} />
+          <EventCommodities
+            commodities={event.market_link}
+            accentColor={accentColor}
+            publishedAt={event.published_at}
+          />
         )}
 
         {/* Source Reliability Badge */}

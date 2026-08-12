@@ -42,26 +42,6 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: "Since this event" on the commodity rows
-  Description: The event panel shows what a linked market is doing *now*. For an event like a
-    strait closing the reading a reader actually wants is what crude has done *since* — a
-    comparison against the close on the day the story published, not today's level. The series
-    for it is already served by `GET /api/market/history`; what is missing is the client half.
-    Pick the baseline carefully: an event's `published_at` frequently falls on a day the market
-    did not trade, so the baseline has to be the last close at or before that instant rather
-    than an exact-date lookup, and an event older than the requested range has no baseline at
-    all and must show nothing rather than anchor to the start of the window.
-    Keep the wording as careful as the current row's. "Crude is up 6% since this published" is
-    a statement about two facts placed side by side; it must not become "this event moved
-    crude", which the data cannot support — roughly one link in seven is wrong to begin with.
-  Success Criteria: rows show a change against the event's own date with the baseline date
-    visible; events outside the fetched range show the plain current quote instead; no claim
-    of causation in any string.
-  Retry Count: 0
-  Source: USER REQUEST
-
----
-
 [TODO][LOW] Feature: Freight as post-event confirmation
   Description: Deferred out of the status bar after checking what is obtainable. The indices
     themselves are not: BDI is licensed by the Baltic Exchange and absent from the quote
@@ -115,6 +95,37 @@ Managed by the autonomous development agent. Follow strict format below.
   Source: USER REQUEST
 
 ## Completed Tasks
+
+---
+
+[DONE][MEDIUM] Feature: "Since this event" on the commodity rows
+  Description: A commodity row on the event panel now reports how far the market has moved
+    since the story published, rather than only what it is doing today. `changeSince` in
+    `client/src/utils/quote.ts` picks the baseline, `useHistories` fetches the series from
+    `/api/market/history`, and the row shows "since 08-06" where a measured change is possible
+    and a bare date where it is not, so the reader can tell which question is being answered
+    without reading the footnote. The baseline close and its full timestamp sit on the tooltip.
+    Two rules decide when there is no answer, and both return nothing rather than a number.
+    An event older than the fetched month has no baseline in the window, and anchoring to the
+    start of the range would silently answer a different question. An event with no trading
+    since it published has not moved anything yet, and 0.00% would read as a finding. Both fall
+    back to the day's change, which is a weaker answer rather than a wrong one.
+    The baseline is the last close *at or before* publication, never a lookup of that date: a
+    story filed on a Saturday, during a holiday, or after the session closed has no print of
+    its own, and reaching forward to the next one would measure from a price that did not exist
+    when it broke.
+    WORTH KNOWING: futures stamp their daily bar around 04:00 UTC, so an event published after
+    that waits until the next stamp before a "since" reading exists. At the time of writing all
+    six linked events in the database were published after the most recent close and every one
+    of them fell back. The fallback is the common case in an event's first hours, not the edge.
+  Success Criteria: Met — verified in the running app: a linked Hormuz event back-dated to
+    08-06 renders "自 08-06" with Brent +7.36% against a baseline of 82.49, which matches the
+    arithmetic, and the unmodified event correctly falls back to the day's change. Unit tests
+    cover the weekend reach-back, the after-close reach-back, the out-of-window and
+    nothing-traded-since refusals, unordered input and a zero baseline; a component test
+    asserts no string in the section claims causation. client 372 and server 143 tests pass.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ---
 

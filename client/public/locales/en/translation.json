@@ -83,7 +83,8 @@
       "placeholder": "SEARCH"
     },
     "commodities": "COMMODITY EXPOSURE",
-    "commoditiesHint": "Markets this story bears on. Last close, not a reaction to it."
+    "commoditiesHint": "Markets this story bears on. A change marked \"since\" is measured from the close before it published, not attributed to it.",
+    "since": "since"
   },
   "region": {
     "overview": "OVERVIEW",

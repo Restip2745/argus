@@ -86,6 +86,65 @@ export function isPriorSession(iso: string, now: number = Date.now()): boolean {
       || d.getDate() !== today.getDate()
 }
 
+/** One dated close from `/api/market/history`. */
+export interface HistoryPoint {
+  t:     string
+  close: number
+}
+
+export interface ChangeSince {
+  changePct:    number
+  /** The close the change is measured from. */
+  baseline:     number
+  /** When that close was set — the date the reader is being shown, and rarely
+   *  the same day as the event. */
+  baselineDate: string
+  latest:       number
+}
+
+/**
+ * How far a market has moved since an instant, or null when it cannot be said.
+ *
+ * The baseline is the last close *at or before* `sinceIso`, never a lookup of
+ * that exact date. An event published on a Saturday, or during a holiday, or
+ * after a market's close has no print of its own to anchor to, and reaching
+ * forward to the next one would measure from a price that did not exist when
+ * the story broke.
+ *
+ * Returns null rather than a number in the two cases where a change would be
+ * an invention: an event older than the fetched window, where anchoring to the
+ * start of the range would silently answer a different question than the one
+ * asked; and an event with no trading since it published, where the honest
+ * answer is that nothing has happened yet rather than 0.00%.
+ */
+export function changeSince(points: HistoryPoint[], sinceIso: string): ChangeSince | null {
+  const since = Date.parse(sinceIso)
+  if (!Number.isFinite(since) || points.length === 0) return null
+
+  // Sorted defensively: the endpoint hands these over in upstream order, and
+  // nothing downstream should depend on that staying true.
+  const ordered = [...points].sort((a, b) => Date.parse(a.t) - Date.parse(b.t))
+
+  let baselineIdx = -1
+  for (let i = 0; i < ordered.length; i++) {
+    if (Date.parse(ordered[i].t) <= since) baselineIdx = i
+    else break
+  }
+  if (baselineIdx === -1) return null                  // event predates the window
+  if (baselineIdx === ordered.length - 1) return null   // nothing has traded since
+
+  const baseline = ordered[baselineIdx]
+  const latest = ordered[ordered.length - 1]
+  if (baseline.close <= 0) return null
+
+  return {
+    changePct:    ((latest.close - baseline.close) / baseline.close) * 100,
+    baseline:     baseline.close,
+    baselineDate: baseline.t,
+    latest:       latest.close,
+  }
+}
+
 /**
  * Price with a sane number of decimals for its magnitude.
  *

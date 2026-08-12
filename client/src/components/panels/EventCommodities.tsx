@@ -1,13 +1,16 @@
 import { useTranslation } from 'react-i18next'
 import { useQuotes } from '../../hooks/useQuotes'
+import { useHistories } from '../../hooks/useHistories'
 import { useAppStore } from '../../store'
 import { COMMODITY_INSTRUMENT } from '../../data/commodities'
-import { quoteColor, formatChange, formatPrice, formatAsOf } from '../../utils/quote'
+import { quoteColor, formatChange, formatPrice, formatAsOf, changeSince } from '../../utils/quote'
 import type { MarketCommodity } from '../../types'
 
 interface Props {
   commodities: MarketCommodity[]
   accentColor: string
+  /** When the story published — the instant a change is measured from. */
+  publishedAt: string | null
 }
 
 /**
@@ -26,14 +29,18 @@ interface Props {
  * reader a moment's confusion, which is the reason this shows a market and not
  * a conclusion.
  */
-export function EventCommodities({ commodities, accentColor }: Props) {
+export function EventCommodities({ commodities, accentColor, publishedAt }: Props) {
   const { t } = useTranslation()
   const upColor = useAppStore((s) => s.upColor)
 
   const instruments = commodities.map((c) => COMMODITY_INSTRUMENT[c]).filter(Boolean)
-  const { quotes } = useQuotes(instruments.map((i) => i.symbol))
+  const symbols = instruments.map((i) => i.symbol)
+  const { quotes } = useQuotes(symbols)
+  const { histories } = useHistories(symbols)
 
   if (instruments.length === 0 || quotes.length === 0) return null
+
+  const seriesFor = (symbol: string) => histories.find((h) => h.symbol === symbol)?.points ?? []
 
   const labelOf = (symbol: string) => {
     const inst = instruments.find((i) => i.symbol === symbol)
@@ -54,7 +61,16 @@ export function EventCommodities({ commodities, accentColor }: Props) {
         background: `${accentColor}06`,
         padding: '4px 6px',
       }}>
-        {quotes.map((q) => (
+        {quotes.map((q) => {
+          // The move since the story published, when there is one to measure.
+          // Falls back to the day's change: an event older than the fetched
+          // window, or one with no trading since, gets the weaker answer rather
+          // than a fabricated baseline.
+          const since = publishedAt ? changeSince(seriesFor(q.symbol), publishedAt) : null
+          const changePct = since ? since.changePct : q.changePct
+          const stamp = since ? since.baselineDate : q.asOf
+
+          return (
           <div
             key={q.symbol}
             style={{
@@ -78,24 +94,30 @@ export function EventCommodities({ commodities, accentColor }: Props) {
             </span>
 
             <span style={{
-              color: quoteColor(q.changePct, upColor), flexShrink: 0,
+              color: quoteColor(changePct, upColor), flexShrink: 0,
               width: '48px', textAlign: 'right', fontVariantNumeric: 'tabular-nums',
             }}>
-              {formatChange(q.changePct)}
+              {formatChange(changePct)}
             </span>
 
+            {/* "since 08-07" when measured from the event, a bare date when the
+                figure is just the day's move — the reader can tell which
+                question is being answered without reading the footnote. */}
             <span
-              title={new Date(q.asOf).toLocaleString()}
+              title={since
+                ? `${t('event.since', 'since')} ${new Date(stamp).toLocaleString()} · ${formatPrice(since.baseline)} ${q.currency}`
+                : new Date(stamp).toLocaleString()}
               style={{ color: '#3d5568', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}
             >
-              {formatAsOf(q.asOf)}
+              {since ? `${t('event.since', 'since')} ${formatAsOf(stamp)}` : formatAsOf(stamp)}
             </span>
           </div>
-        ))}
+          )
+        })}
       </div>
 
       <p style={{ color: '#2a4a63', fontSize: '10px', margin: '3px 0 0', lineHeight: 1.4 }}>
-        {t('event.commoditiesHint', 'Markets this story bears on. Last close, not a reaction to it.')}
+        {t('event.commoditiesHint', 'Markets this story bears on. A change marked "since" is measured from the close before it published, not attributed to it.')}
       </p>
     </div>
   )
