@@ -170,17 +170,28 @@ export function EventPanel() {
   }, [displayedEvent])
 
   // ── Focus ──────────────────────────────────────────────────────────────────
+  //
+  // Reads `event`, never `displayedEvent`. The latter is animation state: it is
+  // set to activePanelId from inside an effect, so for one commit after a
+  // selection it still holds the event being slid *out*. Focusing on it sent
+  // the camera to the previously selected event every time — the panel showed
+  // one place and the globe flew to another, and the next selection would fly
+  // to where this one should have gone. `event` is derived straight from
+  // activePanelId in render, so it is never a step behind.
   function triggerFocus() {
-    if (!displayedEvent) return
-    const coords = resolveEventLatLng(displayedEvent)
+    if (!event) return
+    const coords = resolveEventLatLng(event)
     if (coords && focusOnEarthSurface) focusOnEarthSurface(coords.lat, coords.lng)
-    else if (displayedEvent.body && displayedEvent.body !== 'earth' && focusOn)
-      focusOn(displayedEvent.body as import('../../types').CelestialBodyName)
+    else if (event.body && event.body !== 'earth' && focusOn)
+      focusOn(event.body as import('../../types').CelestialBodyName)
   }
-  useEffect(() => { triggerFocus() }, [activePanelId]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Keyed on the event's id rather than on activePanelId, so that selecting an
+  // event whose row has not arrived in the store yet still focuses once it does
+  // instead of being dropped.
+  useEffect(() => { triggerFocus() }, [event?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const canFocus = !!(displayedEvent &&
-    (resolveEventLatLng(displayedEvent) !== null || (displayedEvent.body && displayedEvent.body !== 'earth')))
+  const canFocus = !!(event &&
+    (resolveEventLatLng(event) !== null || (event.body && event.body !== 'earth')))
 
   // ── SVG tail — reads via ref each rAF tick ─────────────────────────────────
   const eventRef   = useRef(event)
