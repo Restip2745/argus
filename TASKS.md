@@ -42,6 +42,26 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[TODO][MEDIUM] Feature: "Since this event" on the commodity rows
+  Description: The event panel shows what a linked market is doing *now*. For an event like a
+    strait closing the reading a reader actually wants is what crude has done *since* — a
+    comparison against the close on the day the story published, not today's level. The series
+    for it is already served by `GET /api/market/history`; what is missing is the client half.
+    Pick the baseline carefully: an event's `published_at` frequently falls on a day the market
+    did not trade, so the baseline has to be the last close at or before that instant rather
+    than an exact-date lookup, and an event older than the requested range has no baseline at
+    all and must show nothing rather than anchor to the start of the window.
+    Keep the wording as careful as the current row's. "Crude is up 6% since this published" is
+    a statement about two facts placed side by side; it must not become "this event moved
+    crude", which the data cannot support — roughly one link in seven is wrong to begin with.
+  Success Criteria: rows show a change against the event's own date with the baseline date
+    visible; events outside the fetched range show the plain current quote instead; no claim
+    of causation in any string.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
 [TODO][LOW] Feature: Freight as post-event confirmation
   Description: Deferred out of the status bar after checking what is obtainable. The indices
     themselves are not: BDI is licensed by the Baltic Exchange and absent from the quote
@@ -56,8 +76,10 @@ Managed by the autonomous development agent. Follow strict format below.
     ETF, does quote daily through the existing path and is the only free daily proxy found; if
     it is ever used it must be labelled as the ETF it is, since fund roll and tracking error
     drift it away from the index it stands in for.
-  Success Criteria: a history endpoint serving a multi-week series, and an event-panel view
-    that reads as "since this event" rather than as a price.
+    NOTE: the series half is built. `GET /api/market/history` now serves daily closes, so what
+    remains here is choosing an instrument and a multi-week view, not new infrastructure.
+  Success Criteria: a multi-week freight view on the event panel that reads as "since this
+    event" rather than as a price.
   Retry Count: 0
   Source: USER REQUEST
 
@@ -96,6 +118,61 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][MEDIUM] Feature: Daily close series endpoint
+  Description: `GET /api/market/history?symbols=…&range=…` serves daily closes, for the two
+    questions a spot price cannot answer: what a market has done *since* an event, and whether
+    a disruption held over weeks. Same upstream and cache pattern as the quote proxy, with an
+    hour's TTL rather than ten minutes — the last point only changes when a market closes, and
+    the payload is a hundred times the size, so the trade-off runs the other way.
+    Serves the series, not a computed change. The server does not know which instant a caller
+    measures from — one anchors to an event's publication, the other to a rolling window — and
+    a `changeSince` parameter would have to guess at trading days, holidays and the caller's
+    timezone. Handing over the closes keeps that judgement where the context is.
+    Gaps are dropped rather than filled: the upstream returns a null close for a day a market
+    was shut, and a caller computing a change between two dates wants the days that actually
+    traded — an interpolated price is a number nobody ever paid. `range` is an allowlist
+    because the value reaches an outbound URL.
+  Success Criteria: Met — verified against the running server: two symbols over `1mo` return
+    23 dated points each with currency; `5d` returns 4. All four guards return `[]` rather
+    than an error or an upstream call: an unlisted range, a path-traversal range, no symbols,
+    and a symbol the upstream does not know. server 143 tests pass; typecheck clean.
+    No consumer yet — the two that want it are open tasks above.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][MEDIUM] Feature: Commodity exposure on the event panel
+  Description: The commodity classes recorded on an event now surface, one row per market with
+    its last close, and nothing at all for the great majority of events that have no link.
+    `market_link` was carried through `ClientEvent` and `articleToClientEvent` to reach the
+    client; `EventCommodities` renders it; `COMMODITY_INSTRUMENT` in
+    `client/src/data/commodities.ts` decides which contract stands for each class, which is
+    where that decision belongs since the analysis pass records classes rather than tickers.
+    The section says "this story bears on crude" and shows what crude is doing. It does not
+    say the story moved the price, and the wording is built to keep it that way — the link is
+    a judgement about subject matter, the price is a fact about the market, and welding them
+    would assert a cause the data cannot support. Every row carries its own date because the
+    close shown may predate the event, and the footnote says as much outright. That restraint
+    is not decoration: two of the four links in the database are wrong (a midterm-elections
+    piece and a Fed inflation piece, both linked to crude, both written before the prompt was
+    tightened), and a wrong row should cost a reader a moment rather than mislead them.
+    One instrument per class, unlike the status bar which carries both crude benchmarks. The
+    bar compares them; the panel answers which market a story touches, and two crude rows on
+    one event would invite a comparison the event does not support. Silver and wheat are in
+    the table although the bar omits them — the model can name them, and a class with no
+    visible price is worse than one row more.
+    `market_link` is optional on the client's `ArgusEvent`: required would have put the field
+    into six fixtures with no interest in it, and consumers should read absent and empty alike.
+  Success Criteria: Met — verified in the running app on the Strait of Hormuz event, which
+    renders Brent and natural gas with prices, changes and dates, unclipped, coloured by the
+    reader's up-colour setting; an event with no link renders no section at all. client 358
+    and server 135 tests pass; both typecheck clean.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
 [DONE][HIGH] Feature: Commodity market links on analysed events
   Description: Articles are now tagged with the commodities they bear on. `market_link` is a
     nullable JSON array on `articles` — `["CRUDE_OIL"]` — written by the existing Ollama pass
@@ -104,8 +181,9 @@ Managed by the autonomous development agent. Follow strict format below.
     instead of the documented one. Six classes are offered (crude, gas, gold, silver, copper,
     wheat) although the status bar draws only four: an unused option is an escape hatch, and
     without one a gas story gets pushed into CRUDE_OIL for want of anywhere better. Classes,
-    not tickers — which contract stands for CRUDE_OIL is a display decision. No UI, per the
-    task; the column is written and nothing reads it yet.
+    not tickers — which contract stands for CRUDE_OIL is a display decision. No UI in this
+    task, by its own terms; the panel that reads the column shipped separately, in the DONE
+    entry above.
     A `relation` field (SUBJECT / AFFECTED / NONE) was specified and then removed. Across
     three replays it answered AFFECTED essentially always — 1 SUBJECT in 18 links, then 1 in
     12, then 0 in 12, including for headlines plainly about the commodity itself. A field with

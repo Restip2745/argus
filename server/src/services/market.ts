@@ -149,6 +149,142 @@ export function isValidSymbol(s: string): boolean {
   return /^[A-Z0-9][A-Z0-9.\-=]{0,11}$/.test(s)
 }
 
+// ── History ──────────────────────────────────────────────────────────────────
+
+/**
+ * A daily close series, for questions a spot price cannot answer.
+ *
+ * Two callers want this and neither wants a level. The event panel shows what
+ * a market is doing beside a story it bears on, but the reading a strait
+ * closure actually invites is "what has crude done *since*" — a comparison
+ * against the day of the event, not today's number. Freight is the same shape
+ * stretched further: it moves over weeks, and its value is confirming that a
+ * disruption held rather than announcing it.
+ *
+ * Deliberately a series and not a computed change. The server does not know
+ * which instant a caller is measuring from — one is anchored to an event's
+ * publication, the other to a rolling window — and a "changeSince" parameter
+ * would have to guess at trading days, holidays and the caller's timezone.
+ * Handing over the closes and letting the caller pick its own baseline keeps
+ * that judgement where the context is.
+ */
+export interface HistoryPoint {
+  /** Close timestamp, ISO 8601. */
+  t:     string
+  close: number
+}
+
+export interface History {
+  symbol:   string
+  currency: string
+  points:   HistoryPoint[]
+}
+
+/**
+ * Ranges this proxy will forward, as an allowlist.
+ *
+ * The value is interpolated into an outbound URL, and the upstream rejects
+ * anything it does not recognise anyway. Kept short on purpose: a series long
+ * enough to need pagination is not a thing either caller has asked for.
+ */
+export const VALID_RANGES = ['5d', '1mo', '3mo', '6mo', '1y'] as const
+export type HistoryRange = typeof VALID_RANGES[number]
+
+export function isValidRange(r: string): r is HistoryRange {
+  return (VALID_RANGES as readonly string[]).includes(r)
+}
+
+/**
+ * The closes from one chart response, or null if the shape is not what it claims.
+ *
+ * Gaps are dropped rather than carried as nulls or filled. The upstream returns
+ * a null close for a day a market was shut, and a consumer computing a change
+ * between two dates wants the trading days it actually has — an interpolated
+ * price would be a number nobody ever paid.
+ */
+export function parseChartSeries(body: unknown, symbol: string): History | null {
+  const result = (body as {
+    chart?: { result?: Array<{
+      meta?: { currency?: unknown }
+      timestamp?: unknown
+      indicators?: { quote?: Array<{ close?: unknown }> }
+    }> }
+  })?.chart?.result?.[0]
+  if (!result) return null
+
+  const stamps = result.timestamp
+  const closes = result.indicators?.quote?.[0]?.close
+  if (!Array.isArray(stamps) || !Array.isArray(closes)) return null
+
+  const points: HistoryPoint[] = []
+  for (let i = 0; i < stamps.length; i++) {
+    const t = num(stamps[i])
+    const close = num(closes[i])
+    // A zero or negative close is an empty field, the same as in a spot quote.
+    if (t === null || close === null || close <= 0) continue
+    points.push({ t: new Date(t * 1000).toISOString(), close })
+  }
+
+  if (points.length === 0) return null
+
+  return {
+    symbol,
+    currency: typeof result.meta?.currency === 'string' ? result.meta.currency : '',
+    points,
+  }
+}
+
+/**
+ * How long a daily series stays fresh.
+ *
+ * An hour, against ten minutes for a spot quote. The last point only changes
+ * when a market closes, and the payload is a hundred times the size — the
+ * trade-off runs the other way from the quote cache.
+ */
+const HISTORY_TTL = 60 * 60 * 1000
+
+const historyCache = new Map<string, { history: History | null; ts: number }>()
+
+async function fetchOneHistory(symbol: string, range: HistoryRange): Promise<History | null> {
+  const url = `${CHART_API}/${encodeURIComponent(symbol)}?range=${range}&interval=1d`
+  const res = await fetch(url, {
+    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    signal:  AbortSignal.timeout(10_000),
+  })
+  if (!res.ok) return null
+  return parseChartSeries(await res.json(), symbol)
+}
+
+/**
+ * Daily closes for `symbols`, cached, with unresolvable ones simply absent.
+ *
+ * Same contract as `fetchQuotes`: a symbol the upstream cannot serve is missing
+ * from the reply rather than reported, because on the panel an unavailable
+ * series and a market with nothing to show are the same absence.
+ */
+export async function fetchHistories(symbols: string[], range: HistoryRange): Promise<History[]> {
+  const wanted = [...new Set(symbols.filter(isValidSymbol))].slice(0, MAX_SYMBOLS)
+  const now = Date.now()
+
+  const results = await Promise.all(wanted.map(async (symbol) => {
+    const key = `${symbol}|${range}`
+    const hit = historyCache.get(key)
+    if (hit && now - hit.ts < HISTORY_TTL) return hit.history
+
+    try {
+      const history = await fetchOneHistory(symbol, range)
+      historyCache.set(key, { history, ts: now })
+      return history
+    } catch (err) {
+      logger.warn('[market]', `${symbol} history fetch failed:`, (err as Error).message)
+      // Not cached: a timeout says nothing about whether the series exists.
+      return null
+    }
+  }))
+
+  return results.filter((h): h is History => h !== null)
+}
+
 // ── Fetching ─────────────────────────────────────────────────────────────────
 
 async function fetchQuote(symbol: string): Promise<Quote | null> {

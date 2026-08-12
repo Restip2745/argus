@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseChart, isValidSymbol } from '../services/market'
+import { parseChart, parseChartSeries, isValidSymbol, isValidRange } from '../services/market'
 
 /** The subset of the chart reply that is actually read, in its real shape. */
 function chart(meta: Record<string, unknown>) {
@@ -143,5 +143,90 @@ describe('isValidSymbol', () => {
     expect(isValidSymbol('TSM TW')).toBe(false)
     expect(isValidSymbol('')).toBe(false)
     expect(isValidSymbol('.TW')).toBe(false)
+  })
+})
+
+// ── History ──────────────────────────────────────────────────────────────────
+
+describe('parseChartSeries', () => {
+  /** The chart reply's series half, in the shape the upstream really sends. */
+  function series(stamps: unknown[], closes: unknown[], currency = 'USD') {
+    return {
+      chart: { result: [{
+        meta: { currency },
+        timestamp: stamps,
+        indicators: { quote: [{ close: closes }] },
+      }] },
+    }
+  }
+
+  const DAY = 24 * 3600
+
+  it('pairs each close with its own timestamp', () => {
+    const t0 = 1786339802
+    const out = parseChartSeries(series([t0, t0 + DAY], [83.3, 84.73]), 'BZ=F')
+    expect(out).not.toBeNull()
+    expect(out!.symbol).toBe('BZ=F')
+    expect(out!.currency).toBe('USD')
+    expect(out!.points).toEqual([
+      { t: new Date(t0 * 1000).toISOString(),         close: 83.3 },
+      { t: new Date((t0 + DAY) * 1000).toISOString(), close: 84.73 },
+    ])
+  })
+
+  it('drops the days a market was shut rather than filling them', () => {
+    // The upstream returns a null close for a holiday. A caller measuring a
+    // change between two dates wants the days that actually traded; an
+    // interpolated price would be a number nobody ever paid.
+    const t0 = 1786339802
+    const out = parseChartSeries(
+      series([t0, t0 + DAY, t0 + 2 * DAY], [83.3, null, 84.9]), 'BZ=F')
+    expect(out!.points.map((p) => p.close)).toEqual([83.3, 84.9])
+  })
+
+  it('drops a zero or negative close, which is an empty field', () => {
+    const t0 = 1786339802
+    const out = parseChartSeries(series([t0, t0 + DAY], [0, 84.9]), 'BZ=F')
+    expect(out!.points.map((p) => p.close)).toEqual([84.9])
+  })
+
+  it('returns null when nothing survived, rather than an empty series', () => {
+    expect(parseChartSeries(series([1, 2], [null, null]), 'X')).toBeNull()
+    expect(parseChartSeries(series([], []), 'X')).toBeNull()
+  })
+
+  it('survives every shape that is not the one documented', () => {
+    expect(parseChartSeries(null, 'X')).toBeNull()
+    expect(parseChartSeries({}, 'X')).toBeNull()
+    expect(parseChartSeries({ chart: { result: [] } }, 'X')).toBeNull()
+    expect(parseChartSeries({ chart: { result: [{ meta: {} }] } }, 'X')).toBeNull()
+    expect(parseChartSeries({ chart: { error: 'Not Found' } }, 'X')).toBeNull()
+    expect(parseChartSeries('<html>rate limited</html>', 'X')).toBeNull()
+    // Timestamps without closes, and closes without timestamps.
+    expect(parseChartSeries(series([1, 2], undefined as unknown as unknown[]), 'X')).toBeNull()
+  })
+
+  it('tolerates a missing currency rather than dropping the series', () => {
+    const out = parseChartSeries(
+      { chart: { result: [{ timestamp: [1786339802], indicators: { quote: [{ close: [83.3] }] } }] } },
+      'X')
+    expect(out!.currency).toBe('')
+    expect(out!.points).toHaveLength(1)
+  })
+})
+
+describe('isValidRange', () => {
+  it('accepts the ranges the callers ask for', () => {
+    expect(isValidRange('5d')).toBe(true)
+    expect(isValidRange('1mo')).toBe(true)
+    expect(isValidRange('3mo')).toBe(true)
+    expect(isValidRange('1y')).toBe(true)
+  })
+
+  it('rejects anything else, since the value reaches an outbound URL', () => {
+    expect(isValidRange('10y')).toBe(false)
+    expect(isValidRange('1mo&interval=1m')).toBe(false)
+    expect(isValidRange('../../quote')).toBe(false)
+    expect(isValidRange('')).toBe(false)
   })
 })

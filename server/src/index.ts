@@ -18,7 +18,7 @@ import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
-import { fetchQuotes, MAX_SYMBOLS } from './services/market'
+import { fetchQuotes, fetchHistories, isValidRange, MAX_SYMBOLS } from './services/market'
 import { resolveEventLimit, validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
 import { logger } from './utils/logger'
 import type { EventCategory, EventIntensity } from './types'
@@ -507,6 +507,33 @@ app.get('/api/market/quote', async (req, res) => {
     res.json(await fetchQuotes(symbols))
   } catch (err) {
     logger.warn('[market]', 'quote fetch failed:', (err as Error).message)
+    res.json([])
+  }
+})
+
+// ── Market History ────────────────────────────────────────
+// Daily closes, for the questions a spot price cannot answer: what a market
+// has done *since* an event, and whether a disruption held over weeks. Serves
+// the series rather than a computed change — the caller knows which instant it
+// is measuring from, and this does not.
+
+app.get('/api/market/history', async (req, res) => {
+  const symbols = String(req.query.symbols ?? '')
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean)
+    .slice(0, MAX_SYMBOLS)
+
+  const rangeParam = String(req.query.range ?? '1mo')
+  if (symbols.length === 0 || !isValidRange(rangeParam)) {
+    res.json([])
+    return
+  }
+
+  try {
+    res.json(await fetchHistories(symbols, rangeParam))
+  } catch (err) {
+    logger.warn('[market]', 'history fetch failed:', (err as Error).message)
     res.json([])
   }
 })
