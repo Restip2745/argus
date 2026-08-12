@@ -61,6 +61,7 @@ export interface Article {
   tags: string | null                  // JSON array string in DB
   sources_count: number | null
   reliability: SourceReliability | null
+  market_link: string | null           // JSON array string in DB, NULL for most rows
 
   image_url: string | null
 
@@ -169,6 +170,8 @@ export interface ClientEvent {
   tags: string[]
   sources_count: number
   reliability: SourceReliability
+  /** Commodity classes the article bears on, empty for almost every event. */
+  market_link: MarketCommodity[]
   heat_score: number
   expires_at: string | null
   last_referenced: string | null

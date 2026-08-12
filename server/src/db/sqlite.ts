@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import type { Article, OllamaClassification, ClientEvent, SourceReliability } from '../types'
+import type { Article, OllamaClassification, ClientEvent, SourceReliability, MarketCommodity } from '../types'
 import { resolveLocation } from '../data/gazetteer'
 import { logger } from '../utils/logger'
 
@@ -305,6 +305,10 @@ export function articleToClientEvent(row: Article): ClientEvent {
     tags:            safeJsonParse(row.tags),
     sources_count:   row.sources_count ?? 1,
     reliability:     (row.reliability ?? 'UNVERIFIED') as SourceReliability,
+    // Null for the great majority of rows, and an empty array is what the
+    // client wants to see for those — nothing to render rather than a missing
+    // field to guard against.
+    market_link:     safeJsonParse(row.market_link) as MarketCommodity[],
     heat_score:      row.heat_score,
     expires_at:      row.expires_at,
     last_referenced: row.last_referenced,

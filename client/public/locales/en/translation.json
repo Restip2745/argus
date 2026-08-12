@@ -30,7 +30,10 @@
       "brent": "BRENT",
       "wti": "WTI",
       "gold": "GOLD",
-      "copper": "COPPER"
+      "copper": "COPPER",
+      "gas": "NAT GAS",
+      "silver": "SILVER",
+      "wheat": "WHEAT"
     }
   },
   "panel": {
@@ -78,7 +81,9 @@
     },
     "search": {
       "placeholder": "SEARCH"
-    }
+    },
+    "commodities": "COMMODITY EXPOSURE",
+    "commoditiesHint": "Markets this story bears on. Last close, not a reaction to it."
   },
   "region": {
     "overview": "OVERVIEW",

@@ -11,6 +11,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { resolveCountryName } from '../../data/countryData'
+import { EventCommodities } from './EventCommodities'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import { useAppStore } from '../../store'
@@ -345,6 +346,11 @@ export function EventPanelBody({
               </button>
             ))}
           </div>
+        )}
+
+        {/* Commodity exposure — renders nothing for almost every event */}
+        {event.market_link && event.market_link.length > 0 && (
+          <EventCommodities commodities={event.market_link} accentColor={accentColor} />
         )}
 
         {/* Source Reliability Badge */}

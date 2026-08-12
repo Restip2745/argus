@@ -60,6 +60,21 @@ export type SourceReliability = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNVERIFIED'
  */
 export type GeoPrecision = 'exact' | 'centroid' | 'region' | 'none'
 
+/**
+ * Commodity classes an event can be linked to.
+ *
+ * Mirrors the server's list. These are classes rather than tickers: which
+ * contract stands for CRUDE_OIL is a display decision, and lives in
+ * `data/commodities.ts` beside the instruments the status bar draws.
+ */
+export type MarketCommodity =
+  | 'CRUDE_OIL'
+  | 'NATURAL_GAS'
+  | 'GOLD'
+  | 'SILVER'
+  | 'COPPER'
+  | 'WHEAT'
+
 export interface ArgusEvent {
   id: string
   title: string
@@ -85,6 +100,15 @@ export interface ArgusEvent {
   tags: string[]            // Parsed from JSON string
   sources_count: number
   reliability: SourceReliability
+  /**
+   * Commodity classes this event bears on.
+   *
+   * Optional because it arrived long after the shape settled and is absent from
+   * every event stored or mocked before it existed. Consumers must read absent
+   * and empty as the same thing — no link — which is what all but a few percent
+   * of events carry anyway.
+   */
+  market_link?: MarketCommodity[]
   image_url: string | null
   // Heat Score
   heat_score: number

@@ -30,7 +30,10 @@
       "brent": "布蘭特",
       "wti": "西德州",
       "gold": "黃金",
-      "copper": "銅"
+      "copper": "銅",
+      "gas": "天然氣",
+      "silver": "白銀",
+      "wheat": "小麥"
     }
   },
   "panel": {
@@ -78,7 +81,9 @@
     },
     "search": {
       "placeholder": "搜尋"
-    }
+    },
+    "commodities": "相關商品",
+    "commoditiesHint": "本則報導所涉及的市場。顯示最新收盤價，非對此事件的反應。"
   },
   "region": {
     "overview": "概覽",
