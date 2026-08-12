@@ -1,0 +1,76 @@
+{
+  "ui": {
+    "language": "zh-TW"
+  },
+  "llm": {
+    "host": "http://localhost:11434",
+    "model": "gemma4:12b",
+    "temperature": 0.1,
+    "contextSize": 2048
+  },
+  "feeds": [
+    {
+      "name": "BBC World",
+      "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "lang": "en",
+      "region": null,
+      "enabled": true
+    },
+    {
+      "name": "Al Jazeera",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "lang": "en",
+      "region": "ME",
+      "enabled": true
+    },
+    {
+      "name": "NASA Breaking",
+      "url": "https://www.nasa.gov/news-release/feed/",
+      "lang": "en",
+      "region": "space",
+      "enabled": true
+    },
+    {
+      "name": "SpaceNews",
+      "url": "https://spacenews.com/feed/",
+      "lang": "en",
+      "region": "space",
+      "enabled": true
+    },
+    {
+      "name": "CNA Asia",
+      "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511",
+      "lang": "en",
+      "region": "AP",
+      "enabled": true
+    },
+    {
+      "name": "BBC Business",
+      "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "lang": "en",
+      "region": null,
+      "enabled": true
+    },
+    {
+      "name": "Reuters",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UChqUTb7kYRX8-EiaN3XFrSQ",
+      "lang": "en",
+      "region": null,
+      "enabled": true
+    },
+    {
+      "name": "Associated Press",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC52X5wxOL_s5yw0dQk7NtgA",
+      "lang": "en",
+      "region": null,
+      "enabled": true
+    },
+    {
+      "name": "France 24",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCCCPCZNChQdGa9EkATeye4g",
+      "lang": "en",
+      "region": null,
+      "enabled": true
+    }
+  ]
+}
