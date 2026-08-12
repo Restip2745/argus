@@ -40,7 +40,20 @@ export function RegionPanel() {
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
     usePanelDrag({ panelKey: 'region', defaultPos: { x: 20, y: 80 } })
 
-  // Auto-focus on new country select
+  // Auto-focus on new country select.
+  //
+  // The missing dependency is load-bearing, not an oversight. `focusOnEarthSurface`
+  // is a useCallback in SolarSystem keyed on `focusedBody`, so it takes a new
+  // identity every time the camera focuses a different body. Adding it here — as
+  // the lint rule asks — would re-run this effect on each of those changes and
+  // yank the camera back to the last selected country the moment the operator
+  // looked at Mars and came back.
+  //
+  // Keying on the country name is safe for the same reason it looks unsafe: a
+  // country's coordinates are fixed, so a fresh object with the same name
+  // carries the same point. And the guard cannot silently swallow a focus —
+  // `selectedCountry` starts null and is never persisted, so it can only be set
+  // by an interaction, long after the scene has registered the callback.
   useEffect(() => {
     if (selectedCountry && focusOnEarthSurface) {
       focusOnEarthSurface(selectedCountry.lat, selectedCountry.lng)

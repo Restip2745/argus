@@ -97,6 +97,13 @@ export function EventPanel() {
       const tb = b.published_at ? new Date(b.published_at).getTime() : 0
       return tb - ta
     })
+    // Keyed on identity rather than on the arrays themselves, deliberately. The
+    // store hands out a new `events` array on every arrival, and re-sorting the
+    // timeline on each one would be work for nothing, since only the *set* of
+    // events affects the order. The cost is that an event edited in place —
+    // a heat score boosted by the retention pass, say — keeps its old object in
+    // this list until the set changes. Rows can therefore be a few minutes
+    // stale in their numbers; they are never the wrong events.
   }, [relatedIdsKey, event?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const allTimelineEventsRef = useRef(allTimelineEvents)
