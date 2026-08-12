@@ -1,8 +1,11 @@
 import { Ollama } from 'ollama'
 import cron from 'node-cron'
 import type { Server } from 'socket.io'
-import type { Article, OllamaClassification, EventCategory, EventIntensity, SourceReliability } from '../types'
-import { VALID_CATEGORIES, VALID_INTENSITIES } from '../types'
+import type {
+  Article, OllamaClassification, EventCategory, EventIntensity, SourceReliability,
+  MarketCommodity, MarketLink,
+} from '../types'
+import { VALID_CATEGORIES, VALID_INTENSITIES, VALID_MARKET_COMMODITIES } from '../types'
 import { logger } from '../utils/logger'
 
 const VALID_RELIABILITIES: SourceReliability[] = ['HIGH', 'MEDIUM', 'LOW', 'UNVERIFIED']
@@ -25,13 +28,15 @@ function getClient(): Ollama {
 
 // ── System prompt (from README spec) ────────────────────
 
-const SYSTEM_PROMPT = `You are an intelligence analysis system. Your task is to classify a news article and extract structured geopolitical or astronomical data from it.
+export const SYSTEM_PROMPT = `You are an intelligence analysis system. Your task is to classify a news article and extract structured geopolitical or astronomical data from it.
 
 You MUST respond with a single valid JSON object only. No explanation, no markdown, no extra text — only raw JSON.
 
 Follow this schema exactly:
 {
   "category": string,         // One of: ARMED_CONFLICT | POLITICAL | ECONOMIC | SOCIAL | SCIENCE_TECH | ENVIRONMENT | HEALTH | CRIME_SECURITY | SPACE
+                              // ARMED_CONFLICT is fighting itself — strikes, attacks, casualties.
+                              // Military policy, appointments, procurement and capability analysis are POLITICAL.
   "intensity": string,        // One of: LOW | MODERATE | HIGH | CRITICAL
   "title_zh": string,         // Traditional Chinese (zh-TW) translation of the title, max 40 characters. Use Taiwanese conventions, not Simplified.
   "summary_en": string,       // One-sentence English summary of what happened, max 200 characters
@@ -46,7 +51,11 @@ Follow this schema exactly:
   "actors": string[],         // Key parties involved, e.g. ["Ukraine", "Russia"] or ["NASA", "ESA"]
   "sources_count": number,    // Number of corroborating sources mentioned in the article (estimate 1 if unknown)
   "tags": string[],           // 2–4 short keyword tags in English, e.g. ["military", "frontline", "artillery"]
-  "reliability": string       // Perceived source reliability: HIGH | MEDIUM | LOW | UNVERIFIED
+  "reliability": string,      // Perceived source reliability: HIGH | MEDIUM | LOW | UNVERIFIED
+  "market_link": string[]     // 0-2 of: CRUDE_OIL | NATURAL_GAS | GOLD | SILVER | COPPER | WHEAT.
+                              // Empty unless the commodity's own supply or price is the story, or a
+                              // named facility or route carrying it was damaged or blocked.
+                              // Market wraps and economic commentary are empty.
 }`
 
 // ── Heat score calculation ──────────────────────────────
@@ -130,6 +139,34 @@ function hasHan(s: string): boolean {
   return /[一-鿿㐀-䶿]/.test(s)
 }
 
+/**
+ * The market link, or null — which is what most articles must produce.
+ *
+ * Fails closed at every step. Anything that is not an array, an empty list, a
+ * name that is not one of the six: all become null rather than a partial link.
+ * This field is the newest and least trustworthy thing the model emits, and it
+ * sits next to fields that have been working for months; nothing it gets wrong
+ * may cost them.
+ *
+ * An empty answer becomes null rather than an empty array. There is no
+ * difference between "the model considered it and found nothing" and "there is
+ * no link" once the row is written, and a column that is null for the great
+ * majority of rows says so more plainly than one full of `[]`.
+ */
+export function validateMarketLink(raw: unknown): MarketLink | null {
+  if (!Array.isArray(raw)) return null
+
+  const commodities = [...new Set(
+    raw
+      .filter((c): c is string => typeof c === 'string')
+      .map((c) => c.trim().toUpperCase())
+      .filter((c): c is MarketCommodity =>
+        VALID_MARKET_COMMODITIES.includes(c as MarketCommodity)),
+  )].slice(0, 3)
+
+  return commodities.length > 0 ? commodities : null
+}
+
 export function validateClassification(raw: Record<string, unknown>): OllamaClassification {
   // Validate category
   let category = raw.category as string
@@ -182,6 +219,7 @@ export function validateClassification(raw: Record<string, unknown>): OllamaClas
     reliability:   VALID_RELIABILITIES.includes(raw.reliability as SourceReliability)
                      ? (raw.reliability as SourceReliability)
                      : 'UNVERIFIED',
+    market_link:   validateMarketLink(raw.market_link),
   }
 }
 

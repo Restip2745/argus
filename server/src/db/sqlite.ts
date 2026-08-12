@@ -31,6 +31,10 @@ export function initDb(): void {
     db.exec("ALTER TABLE articles ADD COLUMN reliability TEXT")
     logger.info('[DB]', 'Migration: added reliability column')
   }
+  if (!cols.some(c => c.name === 'market_link')) {
+    db.exec("ALTER TABLE articles ADD COLUMN market_link TEXT")
+    logger.info('[DB]', 'Migration: added market_link column')
+  }
   if (!cols.some(c => c.name === 'image_url')) {
     db.exec("ALTER TABLE articles ADD COLUMN image_url TEXT")
     logger.info('[DB]', 'Migration: added image_url column')
@@ -187,6 +191,7 @@ export function markAnalyzed(
        tags           = @tags,
        sources_count  = @sources_count,
        reliability    = @reliability,
+       market_link    = @market_link,
        heat_score     = @heat_score,
        expires_at     = @expires_at
      WHERE id = @id`
@@ -207,6 +212,9 @@ export function markAnalyzed(
     tags:           JSON.stringify(data.tags),
     sources_count:  data.sources_count,
     reliability:    data.reliability,
+    // Stored as JSON so the column stays null for the great majority of rows,
+    // which is what "no link" looks like.
+    market_link:    data.market_link ? JSON.stringify(data.market_link) : null,
     heat_score:     heatScore,
     expires_at:     expiresAt,
   })

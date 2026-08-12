@@ -23,6 +23,7 @@ function baseHeatScore(a: Article): number {
     summary_en:  '',
     location:    { type: 'geo', label: '', lat: null, lng: null, precision: 'none', body: null },
     actors:      [],
+    market_link: null,
     tags:        [],
     reliability: 'UNVERIFIED',
   } as OllamaClassification)

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS articles (
   tags           TEXT,                  -- JSON array: '["artillery","frontline"]'
   sources_count  INTEGER,              -- Number of corroborating sources mentioned
   reliability    TEXT,                 -- HIGH | MEDIUM | LOW | UNVERIFIED
+  market_link    TEXT,                 -- JSON array or NULL: '["CRUDE_OIL"]'
 
   image_url      TEXT,                  -- Thumbnail image URL (from RSS enclosure/media)
 

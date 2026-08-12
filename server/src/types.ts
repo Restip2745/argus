@@ -96,7 +96,51 @@ export interface OllamaClassification {
   sources_count: number
   tags: string[]
   reliability: SourceReliability
+  /** Commodity markets the article bears on, or null — which is the usual answer. */
+  market_link: MarketLink | null
 }
+
+// ────────────────────────────────────────────────────────────
+// Market linkage
+// ────────────────────────────────────────────────────────────
+
+/**
+ * Commodity classes the model may name.
+ *
+ * Deliberately wider than what the status bar draws. Offering only the four
+ * instruments on screen would push a gas or wheat story into CRUDE_OIL for want
+ * of anywhere better to put it; an unused option is an escape hatch that keeps
+ * the answer honest, and one that maps to no instrument simply shows nothing.
+ *
+ * These are classes, not tickers. Which contract stands for CRUDE_OIL is a
+ * display decision and belongs with the display — the article is about crude,
+ * not about Brent specifically.
+ */
+export type MarketCommodity =
+  | 'CRUDE_OIL'
+  | 'NATURAL_GAS'
+  | 'GOLD'
+  | 'SILVER'
+  | 'COPPER'
+  | 'WHEAT'
+
+export const VALID_MARKET_COMMODITIES: MarketCommodity[] = [
+  'CRUDE_OIL', 'NATURAL_GAS', 'GOLD', 'SILVER', 'COPPER', 'WHEAT',
+]
+
+/**
+ * The commodities an article bears on, or null when it bears on none.
+ *
+ * There was a `relation` field here — SUBJECT for an article about a
+ * commodity's own price, AFFECTED for one reporting damage to what produces or
+ * carries it — meant to force the model to discriminate rather than
+ * pattern-match. Over three replays of 200 articles it answered AFFECTED
+ * essentially every time: 1 SUBJECT out of 18 links, then 1 of 12, then 0 of
+ * 12, including for headlines that were plainly about the commodity itself.
+ * A field that only ever takes one value is not information, so it was removed
+ * rather than left to look like a distinction the data does not support.
+ */
+export type MarketLink = MarketCommodity[]
 
 // ────────────────────────────────────────────────────────────
 // Client-facing event (broadcast via Socket.io + REST)

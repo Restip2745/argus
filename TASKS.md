@@ -20,40 +20,44 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][HIGH] Feature: Market context on ECONOMIC events
-  Description: The entity panel now prices listed companies (see the DONE entry below), but the
-    event panel does not. Relevance there is a content judgement — "is this article about a
-    company" cannot be derived from category, coordinates or actors — so it needs the Ollama
-    pass. Add a `market_link` field to the analysis prompt in `server/src/services/ollama.ts`
-    alongside the existing category/intensity/actors/reliability output:
-    `{ entities: string[], relation: "SUBJECT" | "AFFECTED" | "NONE" }`. The model names
-    companies only; symbol resolution stays with the deterministic Wikidata path in
-    `client/src/utils/listing.ts`, because a hallucinated ticker renders as a perfectly normal
-    price for the wrong company. Cap at 3 entities. Prompt must say "return NONE when unsure" —
-    a false positive costs far more than a miss here. Nullable column; a failure to parse the
-    field must not affect the fields that already work. Validate by replaying the modified
-    prompt over existing DB articles and counting false positives BEFORE building any UI.
-    NOTE: do commodities first. Since the status-bar strip landed there is a fixed set of four
-    instruments with strong geographic and categorical cues — an ARMED_CONFLICT event in the
-    Gulf implies crude without any inference about which company is involved — so an event's
-    commodity link is far more tractable than its company link, and getting the prompt shape
-    right on the easy case first de-risks the hard one.
-    NOTE: freight belongs in this task rather than in the status bar, decided after checking
-    what is obtainable. The indices themselves are not: BDI is licensed by the Baltic Exchange
-    and absent from the quote upstream, while SCFI and Drewry's WCI are weekly and published
-    only as web pages. More to the point, a weekly series in a bar whose unit is the daily
-    change would read 0.00% six days in seven — freight moves on a scale of weeks and ARGUS's
-    windows are 6h and 24h. What freight is actually good for is confirmation rather than
-    alarm: crude and shipping equities react to a strait closing within hours, freight takes
-    two or three weeks and answers the more valuable question of whether the disruption held.
-    That form needs a series, not a spot quote — a `/api/market/history` endpoint and a
-    multi-week window on the event panel — which is new infrastructure, not a table entry.
-    `BDRY`, a dry bulk freight ETF, does quote daily through the existing path and is the only
-    free daily proxy found; if it is ever used it must be labelled as the ETF it is, since fund
-    roll and tracking error drift it away from the index it stands in for.
-  Success Criteria: `market_link` present on newly analysed articles; false-positive rate
-    measured on a replay of ≥200 stored articles and recorded here; existing analysis fields
-    unchanged; no UI work in this task.
+[TODO][MEDIUM] Feature: Company market links on events
+  Description: The commodity half of this shipped (see the DONE entry below); the company half
+    did not. Extend `market_link` so the model can also name companies an article is about,
+    keeping the same rules that made commodities work: the model names *companies*, never
+    tickers, and symbol resolution stays with the deterministic Wikidata path in
+    `client/src/utils/listing.ts` — a hallucinated ticker renders as a perfectly normal price
+    for the wrong company. Cap at 3. Reuse `scripts/replay-market-link.ts` unchanged; it
+    already reports link rate, per-item review lines and drift against the stored category.
+    Harder than commodities was, and worth expecting: a commodity has six possible values and
+    strong geographic cues, whereas "which company is this about" is open-vocabulary, and the
+    model already fails at finer distinctions — the `relation` field had to be removed because
+    it could not tell SUBJECT from AFFECTED. Consider whether company links are better derived
+    from the `actors` array, which is already extracted and already flows through the entity
+    panel's Wikidata resolution.
+  Success Criteria: false-positive rate measured on a ≥200-article replay and recorded here,
+    judged against the commodity baseline of ~2 in 14; existing fields no worse than the noise
+    floor recorded below; no UI work in this task.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[TODO][LOW] Feature: Freight as post-event confirmation
+  Description: Deferred out of the status bar after checking what is obtainable. The indices
+    themselves are not: BDI is licensed by the Baltic Exchange and absent from the quote
+    upstream, while SCFI and Drewry's WCI are weekly and published only as web pages. More to
+    the point, a weekly series in a bar whose unit is the daily change would read 0.00% six
+    days in seven — freight moves on a scale of weeks and ARGUS's windows are 6h and 24h.
+    What freight is actually good for is confirmation rather than alarm: crude and shipping
+    equities react to a strait closing within hours, freight takes two or three weeks and
+    answers the more valuable question of whether the disruption held. That form needs a
+    series, not a spot quote — a `/api/market/history` endpoint and a multi-week window on the
+    event panel — which is new infrastructure, not a table entry. `BDRY`, a dry bulk freight
+    ETF, does quote daily through the existing path and is the only free daily proxy found; if
+    it is ever used it must be labelled as the ETF it is, since fund roll and tracking error
+    drift it away from the index it stands in for.
+  Success Criteria: a history endpoint serving a multi-week series, and an event-panel view
+    that reads as "since this event" rather than as a price.
   Retry Count: 0
   Source: USER REQUEST
 
@@ -89,6 +93,53 @@ Managed by the autonomous development agent. Follow strict format below.
   Source: USER REQUEST
 
 ## Completed Tasks
+
+---
+
+[DONE][HIGH] Feature: Commodity market links on analysed events
+  Description: Articles are now tagged with the commodities they bear on. `market_link` is a
+    nullable JSON array on `articles` — `["CRUDE_OIL"]` — written by the existing Ollama pass
+    rather than a second call, validated by `validateMarketLink` in
+    `server/src/services/ollama.ts`, which fails closed on every shape the model can produce
+    instead of the documented one. Six classes are offered (crude, gas, gold, silver, copper,
+    wheat) although the status bar draws only four: an unused option is an escape hatch, and
+    without one a gas story gets pushed into CRUDE_OIL for want of anywhere better. Classes,
+    not tickers — which contract stands for CRUDE_OIL is a display decision. No UI, per the
+    task; the column is written and nothing reads it yet.
+    A `relation` field (SUBJECT / AFFECTED / NONE) was specified and then removed. Across
+    three replays it answered AFFECTED essentially always — 1 SUBJECT in 18 links, then 1 in
+    12, then 0 in 12, including for headlines plainly about the commodity itself. A field with
+    one possible value is not information.
+    A category boundary was added in the same pass, after the replays kept showing military
+    policy landing in ARMED_CONFLICT: "ARMED_CONFLICT is fighting itself — strikes, attacks,
+    casualties. Military policy, appointments, procurement and capability analysis are
+    POLITICAL." Renaming the category to MILITARY was considered and rejected: it would have
+    fitted the four policy pieces at the cost of admitting budgets, parades and procurement
+    into the bucket that answers "where is there fighting", along with the +0.2 heat bonus and
+    7-day retention that bucket carries.
+  Success Criteria: Met. Re-running all 91 stored ARMED_CONFLICT articles under the new prompt
+    moved 10 out (88.9% kept) and the visible ones are exactly the intended cases — Iran's
+    military appointments, China's PLA leadership, the Saudi/Türkiye/Pakistan defence pact, US
+    war spending, a Gaza commemoration to SOCIAL — with no over-correction: Houthi ship
+    attacks, Libyan refinery strikes and Ukraine strikes all stayed. Link rate 6.0% across 200
+    mixed articles and 15.4% within ARMED_CONFLICT, which is the expected shape. Of the 14
+    links in that run, 12 were clearly right and 2 weak (a "war can't go much longer" piece
+    with no named facility; a Ukraine/Russia casualties piece linked to WHEAT by association).
+    Earlier prompt wording produced a distinct and worse failure — Fed and Morning Bid columns
+    linked to crude — which the "market wraps and economic commentary are empty" clause
+    removed. 1 JSON parse failure in 91, inside the existing two-attempt retry. server 135 and
+    client 347 tests pass; both typecheck clean.
+    METHOD NOTE, the expensive lesson: an A/B of two prompts on the same articles showed 93.0%
+    category agreement, which was reported here as the new field damaging classification by
+    ~6 points. It was not. Running the *same* prompt twice — the only way to measure the
+    model's own non-determinism — gave 98.8% on one 80-article sample and 93.8% on another.
+    The noise floor moves further than the effect being hunted, so at n=80–200 this measurement
+    cannot resolve a 5-point difference, and the A/B figures sat inside the control's own
+    range the whole time. Intensity behaved the same way: 85.0% control against 88.0% A/B, the
+    A/B higher. Before drawing a conclusion from an agreement rate here, measure the floor
+    twice.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ---
 
