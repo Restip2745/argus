@@ -11,6 +11,7 @@ const CONFIG_PATH = join(__dirname, '../../../data/config.json')
 interface PersistedConfig {
   llm?: Record<string, unknown>
   feeds?: unknown[]
+  ui?: Record<string, unknown>
 }
 
 function ensureDir(): void {

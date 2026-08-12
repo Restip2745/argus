@@ -7,6 +7,13 @@ const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 let socket: Socket | null = null
 
+/** Pushes the UI language to the server so LLM-generated broadcasts (the
+ *  intel brief) can be written in it. No-op if the socket isn't connected
+ *  yet — the initial language is sent from the 'connect' handler below. */
+export function emitLanguage(lang: string) {
+  socket?.emit('set_language', lang)
+}
+
 interface IntelBriefPayload {
   id: string
   summary: string
@@ -39,6 +46,7 @@ export function useOllamaSocket() {
 
     socket.on('connect', () => {
       setSocketConnected(true)
+      emitLanguage(useAppStore.getState().language)
     })
 
     socket.on('reconnect', () => {

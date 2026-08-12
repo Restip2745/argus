@@ -1,6 +1,7 @@
 import type { Server, Socket } from 'socket.io'
 import type { ClientEvent } from '../types'
 import { logger } from '../utils/logger'
+import { setUiLanguage } from '../config/uiConfig'
 
 interface AnnotationStroke {
   id: string
@@ -22,6 +23,12 @@ export function initSocket(io: Server): void {
 
     socket.on('clear_strokes', () => {
       socket.broadcast.emit('clear_strokes')
+    })
+
+    // The client's UI language, so LLM-generated content with no per-request
+    // question to infer a language from (the intel brief) can match it.
+    socket.on('set_language', (lang: string) => {
+      setUiLanguage(lang)
     })
 
     socket.on('disconnect', () => {

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
+import { emitLanguage } from '../../hooks/useOllamaSocket'
 
 const LANGS = [
   { code: 'zh-TW', label: '繁中' },
@@ -14,6 +15,7 @@ export function LanguageSwitcher() {
     const next = language === 'zh-TW' ? 'en' : 'zh-TW'
     setLanguage(next)
     void i18n.changeLanguage(next)
+    emitLanguage(next)
   }
 
   return (

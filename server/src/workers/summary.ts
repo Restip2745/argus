@@ -5,12 +5,25 @@ import { Ollama } from 'ollama'
 import { getTopHeatEvents } from '../db/sqlite'
 import { broadcastBrief } from '../services/socket'
 import { getLlmConfig } from '../config/llmConfig'
+import { getUiLanguage } from '../config/uiConfig'
 import { logger } from '../utils/logger'
 
-const SYSTEM_PROMPT = `You are a senior intelligence analyst. Based on the top intelligence events provided, write a concise situational brief (3-5 sentences maximum).
+const BASE_SYSTEM_PROMPT = `You are a senior intelligence analyst. Based on the top intelligence events provided, write a concise situational brief (3-5 sentences maximum).
 Focus on the most critical developments, emerging patterns, and operational significance.
-Respond in HTML format only. Use only these tags: <p> <b> <i>. No markdown, no code blocks.
-If the user context is in Chinese, respond in Traditional Chinese (繁體中文).`
+Respond in HTML format only. Use only these tags: <p> <b> <i>. No markdown, no code blocks.`
+
+// The brief is broadcast to every connected client with no per-request
+// question to infer a language from (unlike the agent chat endpoints), so it
+// has to be told explicitly which language the viewer's UI is set to.
+const LANGUAGE_DIRECTIVE: Record<string, string> = {
+  'zh-TW': 'Respond only in Traditional Chinese (繁體中文), regardless of the language the source events are written in.',
+  en:      'Respond only in English, regardless of the language the source events are written in.',
+}
+
+function buildSystemPrompt(): string {
+  const directive = LANGUAGE_DIRECTIVE[getUiLanguage()] ?? LANGUAGE_DIRECTIVE.en
+  return `${BASE_SYSTEM_PROMPT}\n${directive}`
+}
 
 async function generateBrief(io: Server): Promise<void> {
   const topEvents = getTopHeatEvents(5)
@@ -28,7 +41,7 @@ async function generateBrief(io: Server): Promise<void> {
   const response = await client.chat({
     model: cfg.model,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: buildSystemPrompt() },
       { role: 'user',   content: userMsg },
     ],
     options: { temperature: 0.6, num_ctx: Math.min(cfg.contextSize, 2048) },

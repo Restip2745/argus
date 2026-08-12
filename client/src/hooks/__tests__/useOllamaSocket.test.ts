@@ -11,6 +11,7 @@ function makeMockSocket() {
   const _handlers: Record<string, Handler> = {}
   const socket = {
     on:         vi.fn((event: string, handler: Handler) => { _handlers[event] = handler; return socket }),
+    emit:       vi.fn(),
     disconnect: vi.fn(),
     id:         'mock-socket-id',
     // Helper to simulate an inbound socket event from the server
