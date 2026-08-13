@@ -7,7 +7,27 @@ import { setLastScraperRun, recordFeedSuccess, recordFeedError } from './healthT
 import type { RawFeedItem } from '../types'
 import { logger } from '../utils/logger'
 
+/**
+ * YouTube answers a burst of feed requests from one address with a 404 that
+ * clears within seconds — the channel is fine, the request was merely one too
+ * many. A single miss would otherwise cost that source a whole 15-minute cycle,
+ * so failures are retried with a widening gap before the feed is given up on.
+ */
+const FETCH_ATTEMPTS = 3
+const RETRY_BASE_MS  = 2_000
+/** Gap between feeds, so a cycle is a trickle rather than one burst of requests. */
+const FEED_GAP_MS    = 800
+
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+
 const parser = new Parser({
+  timeout: 15_000,
+  // Default clients get throttled hardest; identify as a browser would.
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+                  '(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+  },
   customFields: {
     item: [
       ['media:content',   'mediaContent'],
@@ -68,6 +88,24 @@ function sha256(input: string): string {
   return createHash('sha256').update(input).digest('hex')
 }
 
+/** Fetch one feed, retrying transient rejections before reporting it broken. */
+async function parseFeedWithRetry(feedName: string, url: string) {
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
+    try {
+      return await parser.parseURL(url)
+    } catch (err) {
+      lastErr = err
+      if (attempt === FETCH_ATTEMPTS) break
+      // Jittered backoff: feeds that failed together must not retry in lockstep.
+      const wait = RETRY_BASE_MS * 2 ** (attempt - 1) + Math.floor(Math.random() * 500)
+      logger.warn('[Scraper]', `"${feedName}" attempt ${attempt} failed (${(err as Error).message}) — retrying in ${wait}ms`)
+      await sleep(wait)
+    }
+  }
+  throw lastErr
+}
+
 export function startScraper(): void {
   // Initial fetch on startup
   void fetchAllFeeds()
@@ -85,9 +123,12 @@ async function fetchAllFeeds(): Promise<void> {
   let inserted = 0
   let skipped = 0
 
-  for (const feed of getFeedsConfig().filter(f => f.enabled)) {
+  const enabled = getFeedsConfig().filter(f => f.enabled)
+
+  for (const [index, feed] of enabled.entries()) {
+    if (index > 0) await sleep(FEED_GAP_MS)
     try {
-      const result = await parser.parseURL(feed.url)
+      const result = await parseFeedWithRetry(feed.name, feed.url)
       const items = (result.items as RawFeedItem[]).slice(0, 20)
 
       for (const item of items) {
