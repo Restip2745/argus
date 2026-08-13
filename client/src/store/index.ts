@@ -11,6 +11,18 @@ const CONTEXT_ENTITY_LIMIT = 8
 
 const CONTEXT_KEY = 'argus-context-entities'
 
+/**
+ * Hard cap on how many events the client holds at once.
+ *
+ * Matches the server's own DEFAULT_EVENT_LIMIT/MAX_EVENT_LIMIT — if the
+ * backend considers 2000 the meaningful working set, the client shouldn't
+ * accumulate more than that across a long-running session. Without this,
+ * `addEvent` prepends forever and every per-second consumer of the event
+ * list (filtering, sorting, marker clustering) does steadily more work the
+ * longer the tab stays open.
+ */
+const EVENTS_CAP = 2000
+
 function loadContextEntities(): ContextEntity[] {
   try {
     const raw = JSON.parse(localStorage.getItem(CONTEXT_KEY) ?? '[]')
@@ -324,8 +336,10 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   // Events
   events:     [],
-  setEvents:  (events) => set({ events }),
-  addEvent:   (event) => set((s) => s.events.some(e => e.id === event.id) ? s : { events: [event, ...s.events] }),
+  setEvents:  (events) => set({ events: events.slice(0, EVENTS_CAP) }),
+  addEvent:   (event) => set((s) => s.events.some(e => e.id === event.id)
+    ? s
+    : { events: [event, ...s.events].slice(0, EVENTS_CAP) }),
 
   // Camera
   focusedBody:    null,

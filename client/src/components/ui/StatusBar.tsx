@@ -191,15 +191,19 @@ export function StatusBar({
   // ── POSTURE ────────────────────────────────────────────────────────────────
   const posture = useMemo(() => {
     const counts: Record<string, number> = { CRITICAL: 0, HIGH: 0, MODERATE: 0, LOW: 0 }
+    // Minute-rounded, like trend/tempo below — a minute of slop against a
+    // scrubbed instant is invisible, and it keeps this full-array pass from
+    // re-running every second purely because the live clock ticked.
+    const cutoff = minuteTick * 60_000
     for (const e of events) {
       // Unfiltered by category on purpose — but never unfiltered by time. An
       // event that had not happened yet at the viewed instant cannot be part
       // of that instant's posture.
-      if (!isLive && ts(e.published_at) > sceneNow) continue
+      if (!isLive && ts(e.published_at) > cutoff) continue
       counts[e.intensity] = (counts[e.intensity] ?? 0) + 1
     }
     return counts
-  }, [events, isLive, sceneNow])
+  }, [events, isLive, minuteTick])
 
   // ── TREND — 6h vs the preceding 6h, ranked by absolute movement ────────────
   const trend = useMemo(() => {

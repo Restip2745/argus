@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useAppStore } from '../store'
 import { severityRank } from '../data/symbology'
-import { useSceneTime } from './useSceneTime'
+import { useSceneTimeCoarse } from './useSceneTime'
 import { filterEvents, safeTs, type FilterCriteria } from '../lib/eventFilter'
 import type { ArgusEvent } from '../types'
 
@@ -18,7 +18,10 @@ export function useFilterCriteria(): FilterCriteria {
   const searchQuery       = useAppStore((s) => s.searchQuery)
   const bookmarkedIds     = useAppStore((s) => s.bookmarkedIds)
   const showWatchlistOnly = useAppStore((s) => s.showWatchlistOnly)
-  const { now, isLive }   = useSceneTime()
+  // Coarse, not useSceneTime: filtering's coarsest window is 6h, so a
+  // once-a-minute tick is indistinguishable from once-a-second here, and
+  // this recompute fans out into every one of useFilteredEvents' call sites.
+  const { now, isLive }   = useSceneTimeCoarse()
 
   return useMemo(
     () => ({ hiddenCategories, timeRangeFilter, searchQuery, bookmarkedIds, showWatchlistOnly, now, isLive }),
