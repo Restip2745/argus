@@ -405,20 +405,22 @@ export function SolarSystem() {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Sun light — single point light at origin, powers day/night on all bodies */}
+      {/* Sun light — single point light at origin, powers day/night on all bodies.
+       *
+       * It casts no shadow. A point light's shadow is a cube, so three.js would
+       * redraw every caster into six faces every frame, and at Saturn's 1437
+       * scene units a 90° face spans ~2874 units — a 4096² map spent about 64
+       * texels on the only occlusion the scene can honestly show. That pair is
+       * solved analytically in the material now (see ringShadow.ts), which is
+       * both cheaper and sharper, and reads the rings' alpha so the Cassini
+       * division survives into the shadow. Nothing else here casts one: the
+       * planets are astronomical distances apart. */}
       <pointLight
         position={[0, 0, 0]}
         intensity={2.5}
         color="#fff9e6"
         distance={0}
         decay={0}
-        castShadow
-        shadow-mapSize-width={4096}
-        shadow-mapSize-height={4096}
-        shadow-camera-near={0.5}
-        shadow-camera-far={5000}
-        shadow-bias={-0.0005}
-        shadow-normalBias={0.02}
       />
       {/* Very faint ambient so dark sides aren't pure black */}
       <ambientLight intensity={0.04} />

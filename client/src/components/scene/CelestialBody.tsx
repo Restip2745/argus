@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useMemo, forwardRef } from 'react' // r3f
+import { useRef, useState, useCallback, useMemo, useEffect, forwardRef } from 'react' // r3f
 import { useFrame, useThree, useLoader } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
@@ -8,6 +8,17 @@ import type { CelestialBodyName } from '../../types'
 import { useAppStore } from '../../store'
 import { getGAST, gastToRotY } from '../../hooks/useGAST'
 import { worldToLatLng } from '../../lib/coordinates'
+import {
+  applyRingShadow, createRingShadowUniforms, type RingShadowUniforms,
+} from './ringShadow'
+
+// ── Ring system geometry ──────────────────────────────────────────────────────
+// Module-level because two things have to agree on them: the annulus that gets
+// drawn, and the shader that works out where its shadow lands. If these drifted
+// apart the shadow would simply stop lining up with the rings casting it.
+const RING_INNER_FACTOR = 1.12
+const RING_OUTER_FACTOR = 2.35
+const RING_OPACITY      = 0.85
 
 interface Props {
   def: BodyDef
@@ -95,6 +106,28 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
 
   const axialTiltRad = (def.axialTiltDeg * Math.PI) / 180
 
+  /**
+   * Shared uniform block for the analytic ring shadows — see ringShadow.ts.
+   *
+   * The ring plane's world normal is a constant, and that is worth saying out
+   * loud because it is the reason none of this needs matrix work per frame:
+   * the axial tilt lives on an inner group that rotates about Z, and the outer
+   * group carries position only, so the inner group's +Y in world space is
+   * just Rz(tilt) applied to (0,1,0). The body's own spin is about Y, which
+   * neither moves the ring plane nor changes a radius within it.
+   */
+  const ringShadow = useMemo<RingShadowUniforms | null>(() => {
+    if (!def.hasRings) return null
+    const u = createRingShadowUniforms({
+      ringInner:    def.renderedRadius * RING_INNER_FACTOR,
+      ringOuter:    def.renderedRadius * RING_OUTER_FACTOR,
+      planetRadius: def.renderedRadius,
+      ringOpacity:  RING_OPACITY,
+    })
+    u.uRingNormal.value.set(-Math.sin(axialTiltRad), Math.cos(axialTiltRad), 0)
+    return u
+  }, [def.hasRings, def.renderedRadius, axialTiltRad])
+
   useFrame((_, delta) => {
     const group = groupRef.current
     const mesh  = meshRef.current
@@ -103,6 +136,14 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
     // Update world position from astronomy hook
     const pos = positionsRef.current.get(def.id)
     if (pos) group.position.copy(pos)
+
+    // Ring shadows need only where the body is and which way the Sun lies.
+    // The Sun is the scene's single light and sits at the world origin, so the
+    // direction toward it is the body's own position, negated.
+    if (ringShadow && pos) {
+      ringShadow.uPlanetCenter.value.copy(pos)
+      ringShadow.uSunDir.value.copy(pos).negate().normalize()
+    }
 
     // Self-rotation around body's own Y axis
     if (mesh && def.rotationPeriodHours !== 0) {
@@ -171,21 +212,23 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
   const segs = sphereSegments(def.renderedRadius)
 
   /**
-   * Shadow-map participation.
+   * There is no shadow map in this scene, and nothing here casts one.
    *
-   * Moons are excluded. Their orbital distance is overridden to a visual value
-   * (the Moon sits at 4 scene units from Earth rather than the true ~60 radii),
-   * so the shadow geometry around them is not physically meaningful: Earth's
-   * umbra is still roughly one Earth-radius wide at 4 units, nearly four times
-   * the Moon's radius, and the Moon's real 5-degree inclination only carries it
-   * ~0.35 units off the anti-sun axis. The result is a permanent artificial
-   * eclipse — the Moon renders black even on its sun-facing side.
+   * The only occlusion the solar system can honestly show is Saturn's, between
+   * its globe and its rings, and that pair is solved analytically in the
+   * material instead (see ringShadow.ts). Everything else would be fiction:
+   * the planets are astronomical distances apart, and moons are the case that
+   * a shadow map got actively wrong. A moon's orbital distance is overridden
+   * to a visual value — the Moon sits at 4 scene units from Earth rather than
+   * the true ~60 radii — so Earth's umbra is still about one Earth-radius wide
+   * where the Moon is, nearly four times the Moon's own radius, while its real
+   * 5-degree inclination carries it only ~0.35 units off the anti-sun axis.
+   * The result was a permanent artificial eclipse, the Moon rendering black on
+   * its sun-facing side.
    *
    * At a compressed scale a correctly lit moon beats a physically-derived but
-   * wrong shadow. Sunlight itself is unaffected; this only disables occlusion
-   * by other geometry.
+   * wrong shadow. Sunlight itself is unaffected by any of this.
    */
-  const shadows = !def.isStar && !def.orbitParent
 
   // Distance from camera to body (for label visibility — snapshot at render time is fine)
   const distToCamera = camera.position.distanceTo(
@@ -242,16 +285,11 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
             segs={segs}
             color={def.color}
             isStar={!!def.isStar}
-            shadows={shadows}
+            ringShadow={ringShadow}
             onClick={handleClick}
           />
         ) : (
-          <mesh
-            ref={meshRef as React.Ref<THREE.Mesh>}
-            onClick={handleClick}
-            castShadow={shadows}
-            receiveShadow={shadows}
-          >
+          <mesh ref={meshRef as React.Ref<THREE.Mesh>} onClick={handleClick}>
             <sphereGeometry args={[def.renderedRadius, segs, segs]} />
             {def.isStar ? (
               <meshBasicMaterial color={def.color} />
@@ -262,10 +300,14 @@ export function CelestialBody({ def, positionsRef, onFocus, labelMinDist = 300 }
         )}
 
         {/* Saturn ring system */}
-        {def.hasRings && (
+        {def.hasRings && ringShadow && (
           def.ringTexturePath
-            ? <TexturedSaturnRings radius={def.renderedRadius} ringTexturePath={def.ringTexturePath} />
-            : <PlainSaturnRings radius={def.renderedRadius} />
+            ? <TexturedSaturnRings
+                radius={def.renderedRadius}
+                ringTexturePath={def.ringTexturePath}
+                ringShadow={ringShadow}
+              />
+            : <PlainSaturnRings radius={def.renderedRadius} ringShadow={ringShadow} />
         )}
       </group>
 
@@ -316,7 +358,7 @@ const IrregularMesh = forwardRef<THREE.Object3D, IrregularMeshProps>(
     )
 
     return (
-      <mesh ref={ref as React.Ref<THREE.Mesh>} geometry={geometry} onClick={onClick} castShadow receiveShadow>
+      <mesh ref={ref as React.Ref<THREE.Mesh>} geometry={geometry} onClick={onClick}>
         <meshStandardMaterial color={color} roughness={1.0} metalness={0.0} />
       </mesh>
     )
@@ -332,12 +374,13 @@ interface TexturedMeshProps {
   segs: number
   color: string
   isStar: boolean
-  shadows: boolean
+  /** Present only for a body that has rings to be shadowed by. */
+  ringShadow: RingShadowUniforms | null
   onClick: (e: ThreeEvent<MouseEvent>) => void
 }
 
 const TexturedMesh = forwardRef<THREE.Object3D, TexturedMeshProps>(
-  ({ texturePath, radius, segs, color, isStar, shadows, onClick }, ref) => {
+  ({ texturePath, radius, segs, color, isStar, ringShadow, onClick }, ref) => {
     const texture = useLoader(THREE.TextureLoader, texturePath)
 
     const processedTexture = useMemo(() => {
@@ -348,12 +391,7 @@ const TexturedMesh = forwardRef<THREE.Object3D, TexturedMeshProps>(
     }, [texture])
 
     return (
-      <mesh
-        ref={ref as React.Ref<THREE.Mesh>}
-        onClick={onClick}
-        castShadow={shadows && !isStar}
-        receiveShadow={shadows && !isStar}
-      >
+      <mesh ref={ref as React.Ref<THREE.Mesh>} onClick={onClick}>
         <sphereGeometry args={[radius, segs, segs]} />
         {isStar ? (
           <meshBasicMaterial
@@ -362,6 +400,7 @@ const TexturedMesh = forwardRef<THREE.Object3D, TexturedMeshProps>(
           />
         ) : (
           <meshStandardMaterial
+            ref={(m) => { if (m && ringShadow) applyRingShadow(m, ringShadow, 'planet') }}
             map={processedTexture}
             color={processedTexture ? undefined : color}
             roughness={0.8}
@@ -403,7 +442,7 @@ const EarthSurface = forwardRef<THREE.Object3D, EarthSurfaceProps>(
     // Texture off: plain dark sphere — preserves depth, occlusion, and click.
     // Country borders (GeoJsonLayer at r=1.004) remain fully visible.
     return (
-      <mesh ref={ref as React.Ref<THREE.Mesh>} onClick={onClick} castShadow receiveShadow>
+      <mesh ref={ref as React.Ref<THREE.Mesh>} onClick={onClick}>
         <sphereGeometry args={[radius, segs, segs]} />
         <meshStandardMaterial color="#0b1622" roughness={1} metalness={0} />
       </mesh>
@@ -444,7 +483,7 @@ const EarthMesh = forwardRef<THREE.Object3D, EarthMeshProps>(
          rotates day AND night textures in lock-step, keeping them aligned. */
       <group ref={ref as React.Ref<THREE.Group>}>
         {/* Base layer: day texture lit by the Sun — opaque, writes depth */}
-        <mesh onClick={onClick} castShadow receiveShadow>
+        <mesh onClick={onClick}>
           <sphereGeometry args={[radius, segs, segs]} />
           <meshStandardMaterial
             map={day}
@@ -545,9 +584,13 @@ function useRadialRingGeometry(inner: number, outer: number, segments: number) {
   }, [inner, outer, segments])
 }
 
-function TexturedSaturnRings({ radius, ringTexturePath }: { radius: number; ringTexturePath: string }) {
-  const inner = radius * 1.12
-  const outer = radius * 2.35
+function TexturedSaturnRings({ radius, ringTexturePath, ringShadow }: {
+  radius: number
+  ringTexturePath: string
+  ringShadow: RingShadowUniforms
+}) {
+  const inner = radius * RING_INNER_FACTOR
+  const outer = radius * RING_OUTER_FACTOR
   const texture = useLoader(THREE.TextureLoader, ringTexturePath)
   const geometry = useRadialRingGeometry(inner, outer, 128)
 
@@ -558,13 +601,21 @@ function TexturedSaturnRings({ radius, ringTexturePath }: { radius: number; ring
     return texture
   }, [texture])
 
+  // Hand the ring texture to the globe's shader. It is the globe that has to
+  // sample this alpha — that is what puts the Cassini division into the shadow
+  // band — but only this component ever loads it.
+  useEffect(() => {
+    if (processedTexture) ringShadow.uRingTex.value = processedTexture
+  }, [processedTexture, ringShadow])
+
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={geometry} castShadow receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={geometry}>
       <meshStandardMaterial
+        ref={(m) => { if (m) applyRingShadow(m, ringShadow, 'rings') }}
         map={processedTexture}
         side={THREE.DoubleSide}
         transparent
-        opacity={0.85}
+        opacity={RING_OPACITY}
         roughness={0.9}
         metalness={0.0}
       />
@@ -572,18 +623,22 @@ function TexturedSaturnRings({ radius, ringTexturePath }: { radius: number; ring
   )
 }
 
-function PlainSaturnRings({ radius }: { radius: number }) {
-  const inner = radius * 1.12
-  const outer = radius * 2.35
+function PlainSaturnRings({ radius, ringShadow }: {
+  radius: number
+  ringShadow: RingShadowUniforms
+}) {
+  const inner = radius * RING_INNER_FACTOR
+  const outer = radius * RING_OUTER_FACTOR
   const geometry = useRadialRingGeometry(inner, outer, 128)
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={geometry} castShadow receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={geometry}>
       <meshStandardMaterial
+        ref={(m) => { if (m) applyRingShadow(m, ringShadow, 'rings') }}
         color="#c8b06e"
         side={THREE.DoubleSide}
         transparent
-        opacity={0.85}
+        opacity={RING_OPACITY}
         roughness={0.9}
         metalness={0.0}
       />

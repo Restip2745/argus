@@ -1,6 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import * as THREE from 'three'
 import { Stars } from '@react-three/drei'
 import { SolarSystem } from './components/scene/SolarSystem'
 import { Nebula } from './components/scene/Nebula'
@@ -127,10 +126,13 @@ export default function App() {
   return (
     <div className="fixed inset-0 bg-[#04060f] overflow-hidden">
       {/* ── 3-D Solar System Canvas ───────────────────────────────────── */}
+      {/* No `shadows` prop: nothing in the scene casts a shadow map. Saturn's
+          globe and rings shadow each other analytically in their materials
+          (see components/scene/ringShadow.ts), and no other pair of bodies is
+          close enough for an occlusion to be anything but invented. */}
       <Canvas
         camera={{ position: [0, 180, 520], fov: 55, near: 0.01, far: 200000 }}
         gl={{ antialias: true, logarithmicDepthBuffer: true }}
-        shadows={{ type: THREE.PCFSoftShadowMap }}
       >
         <Suspense fallback={null}>
           <Nebula />
