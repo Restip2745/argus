@@ -1,9 +1,9 @@
 /**
- * EventTimeline — left-strip timeline for EventPanel.
+ * EventTimeline — right-strip timeline for EventPanel.
  *
  * Shows the events related to the open one, plus the open one itself, newest
  * first. The current event is the anchor of the whole strip, so it is marked
- * hard: accent fill, accent rail, brighter bold title and a ▶.
+ * hard: accent fill, accent rail, and a brighter bold title.
  *
  * (The header used to claim this showed ALL events. It never did — EventPanel
  * passes related + current — and the mismatch made the strip look broken.)
@@ -36,7 +36,7 @@ function relativeTime(iso: string | null): string {
 interface RowProps {
   ev:          ArgusEvent
   isLast:      boolean
-  isActive:    boolean   // currently displayed event → show bookmark
+  isActive:    boolean   // currently displayed event → accent fill, rail, bold title
   accentColor: string
   isNew:       boolean
   nudgeGen:    number
@@ -149,7 +149,7 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
         transition: 'all 0.2s',
       }} />
 
-      {/* Header row: icon · time · intensity dot · bookmark */}
+      {/* Header row: icon · time · intensity dot */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
         <span style={{ fontSize: 11, color, lineHeight: 1 }}>{icon}</span>
         <span style={{
@@ -163,16 +163,6 @@ function TimelineRow({ ev, isLast, isActive, accentColor, isNew, nudgeGen, onSel
           width: 4, height: 4, borderRadius: '50%', flexShrink: 0,
           background: severityColor(ev.intensity),
         }} />
-        {/* Bookmark ▶ marks the currently displayed event */}
-        {isActive && (
-          <span style={{
-            fontSize: 10,
-            color: accentColor,
-            lineHeight: 1,
-            marginLeft: 2,
-            opacity: 0.9,
-          }}>▶</span>
-        )}
       </div>
 
       {/* Title */}
@@ -238,6 +228,9 @@ export function EventTimeline({
   const count = loading ? '…' : events.length
 
   // ── Collapsed tab ──────────────────────────────────────────────────────────
+  // Chevrons follow where the strip actually moves, not the side it is docked
+  // on: the panel's left edge is anchored, so opening the strip grows it to the
+  // right (▶) and closing it pulls back to the left (◀).
   if (!isOpen) {
     return (
       <button
@@ -248,8 +241,8 @@ export function EventTimeline({
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: 6,
           background: 'rgba(2,6,14,0.97)', border: 'none',
-          borderRight: `1px solid ${accentColor}18`,
-          borderRadius: '4px 0 0 4px',
+          borderLeft: `1px solid ${accentColor}18`,
+          borderRadius: '0 4px 4px 0',
           cursor: 'pointer', padding: '10px 0', transition: 'background 0.15s',
         }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${accentColor}08` }}
@@ -273,9 +266,9 @@ export function EventTimeline({
     <div style={{
       width: 172, flexShrink: 0,
       display: 'flex', flexDirection: 'column',
-      borderRight: `1px solid ${accentColor}18`,
+      borderLeft: `1px solid ${accentColor}18`,
       background: 'rgba(2,6,14,0.97)',
-      borderRadius: '4px 0 0 4px',
+      borderRadius: '0 4px 4px 0',
       overflow: 'hidden',
       maxHeight: 'calc(100vh - 3rem)',
     }}>

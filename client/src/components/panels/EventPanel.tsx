@@ -257,26 +257,7 @@ export function EventPanel() {
           fontSize:   '12px',
         }}
       >
-        {/* Left: timeline strip */}
-        {hasTimeline && (
-          <EventTimeline
-            events={allTimelineEvents}
-            loading={relatedLoading}
-            accentColor={accentColor}
-            activeEventId={displayedEventId ?? ''}
-            onSelect={(id) => {
-              const sorted = allTimelineEventsRef.current
-              const curIdx = sorted.findIndex((e) => e.id === (displayedEventIdRef.current ?? ''))
-              const newIdx = sorted.findIndex((e) => e.id === id)
-              pendingDirRef.current = (newIdx !== -1 && curIdx !== -1 && newIdx < curIdx) ? 'up' : 'down'
-              setActivePanelId(id)
-            }}
-            isOpen={timelineOpen}
-            onToggle={() => setTimelineOpen((o) => !o)}
-          />
-        )}
-
-        {/* Right: main card via Panel base */}
+        {/* Left: main card via Panel base */}
         <Panel
           accentColor={accentColor}
           width={320}
@@ -433,6 +414,27 @@ export function EventPanel() {
             </div>
           </div>
         </Panel>
+
+        {/* Right: timeline strip. Placed after the card in the markup as well as
+            on screen, so reading order and tab order both reach the event before
+            its history. */}
+        {hasTimeline && (
+          <EventTimeline
+            events={allTimelineEvents}
+            loading={relatedLoading}
+            accentColor={accentColor}
+            activeEventId={displayedEventId ?? ''}
+            onSelect={(id) => {
+              const sorted = allTimelineEventsRef.current
+              const curIdx = sorted.findIndex((e) => e.id === (displayedEventIdRef.current ?? ''))
+              const newIdx = sorted.findIndex((e) => e.id === id)
+              pendingDirRef.current = (newIdx !== -1 && curIdx !== -1 && newIdx < curIdx) ? 'up' : 'down'
+              setActivePanelId(id)
+            }}
+            isOpen={timelineOpen}
+            onToggle={() => setTimelineOpen((o) => !o)}
+          />
+        )}
       </div>
     </>
   )
