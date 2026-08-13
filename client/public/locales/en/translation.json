@@ -236,14 +236,30 @@
       "nebulaOff": "OFF",
       "upColor": "PRICE COLOURS",
       "upColorGreen": "GREEN UP (US / EU)",
-      "upColorRed": "RED UP (TW / JP)"
+      "upColorRed": "RED UP (TW / JP)",
+      "azureSpeechKey": "API KEY",
+      "azureSpeechKeySet": "•••• configured — leave blank to keep",
+      "azureSpeechKeyPlaceholder": "Subscription key",
+      "azureSpeechRegion": "REGION",
+      "azureSpeechRegionPlaceholder": "eastasia",
+      "azureSpeechVoice": "VOICE",
+      "azureSpeechHint": "Reads the intel brief aloud when opened, using Azure Cognitive Services Speech."
     },
     "title": "⚙ Configuration",
     "sections": {
       "llm": "LLM Settings",
       "display": "Display",
       "feeds": "RSS Feeds",
+      "azureSpeech": "Azure Speech",
       "webhook": "Webhook"
+    },
+    "azureVoice": {
+      "zh-TW-HsiaoChenNeural": "Traditional Chinese — HsiaoChen (F)",
+      "zh-TW-YunJheNeural": "Traditional Chinese — YunJhe (M)",
+      "zh-TW-HsiaoYuNeural": "Traditional Chinese — HsiaoYu (F)",
+      "en-US-JennyNeural": "English (US) — Jenny (F)",
+      "en-US-GuyNeural": "English (US) — Guy (M)",
+      "en-GB-SoniaNeural": "English (UK) — Sonia (F)"
     },
     "model": {
       "refresh": "↻ Refresh",

@@ -236,14 +236,30 @@
       "nebulaOff": "關閉",
       "upColor": "漲跌顏色",
       "upColorGreen": "綠漲紅跌（美／歐）",
-      "upColorRed": "紅漲綠跌（台／日）"
+      "upColorRed": "紅漲綠跌（台／日）",
+      "azureSpeechKey": "API 金鑰",
+      "azureSpeechKeySet": "•••• 已設定 — 留空以保留",
+      "azureSpeechKeyPlaceholder": "訂閱金鑰",
+      "azureSpeechRegion": "區域",
+      "azureSpeechRegionPlaceholder": "eastasia",
+      "azureSpeechVoice": "語音",
+      "azureSpeechHint": "開啟情資簡報時使用 Azure Cognitive Services Speech 朗讀內容。"
     },
     "title": "⚙ 設定",
     "sections": {
       "llm": "LLM 設定",
       "display": "顯示",
       "feeds": "RSS 訂閱",
+      "azureSpeech": "Azure 語音",
       "webhook": "Webhook"
+    },
+    "azureVoice": {
+      "zh-TW-HsiaoChenNeural": "繁體中文 — HsiaoChen（女聲）",
+      "zh-TW-YunJheNeural": "繁體中文 — YunJhe（男聲）",
+      "zh-TW-HsiaoYuNeural": "繁體中文 — HsiaoYu（女聲）",
+      "en-US-JennyNeural": "英文（美）— Jenny（女聲）",
+      "en-US-GuyNeural": "英文（美）— Guy（男聲）",
+      "en-GB-SoniaNeural": "英文（英）— Sonia（女聲）"
     },
     "model": {
       "refresh": "↻ 重新整理",

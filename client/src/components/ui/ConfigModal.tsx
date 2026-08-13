@@ -25,6 +25,25 @@ interface FeedConfigItem {
   enabled: boolean
 }
 
+interface AzureSpeechConfig {
+  region: string
+  voice:  string
+  hasKey: boolean
+}
+
+// A curated set rather than a free-text field — most Azure neural voices are
+// irrelevant here, and a dropdown means no one has to know Azure's naming
+// scheme to pick between "read this in Mandarin" and "read this in English".
+// Labels live in the locale files (config.azureVoice.<id>), not here.
+const AZURE_VOICE_IDS = [
+  'zh-TW-HsiaoChenNeural',
+  'zh-TW-YunJheNeural',
+  'zh-TW-HsiaoYuNeural',
+  'en-US-JennyNeural',
+  'en-US-GuyNeural',
+  'en-GB-SoniaNeural',
+] as const
+
 interface FeedStatus {
   name:         string
   lastSuccess:  string | null
@@ -135,10 +154,17 @@ export function ConfigModal() {
   const [newFeedUrl,  setNewFeedUrl]  = useState('')
   const [localScale,  setLocalScale]  = useState(uiScale)
 
+  const [azureSpeech,   setAzureSpeech]   = useState<AzureSpeechConfig | null>(null)
+  // A fresh key the user just typed; empty means "leave whatever is saved
+  // alone" — the server never echoes the key back, so there is nothing to
+  // prefill this with.
+  const [azureKeyInput, setAzureKeyInput] = useState('')
+
   // Snapshot of last-saved state — used by Cancel to revert
-  const savedConfig = useRef<LlmConfig | null>(null)
-  const savedFeeds  = useRef<FeedConfigItem[]>([])
-  const savedScale  = useRef(uiScale)
+  const savedConfig      = useRef<LlmConfig | null>(null)
+  const savedFeeds       = useRef<FeedConfigItem[]>([])
+  const savedScale       = useRef(uiScale)
+  const savedAzureSpeech = useRef<AzureSpeechConfig | null>(null)
 
   // ── Drag ──────────────────────────────────────────────────
   function handleHeaderMouseDown(e: React.MouseEvent) {
@@ -163,15 +189,19 @@ export function ConfigModal() {
     setStatus('loading')
     setErrMsg('')
     try {
-      const [cfgRes, modRes, feedsRes, healthRes] = await Promise.all([
+      const [cfgRes, modRes, feedsRes, healthRes, azureRes] = await Promise.all([
         fetch(`${API}/api/config/llm`),
         fetch(`${API}/api/ollama/models`),
         fetch(`${API}/api/config/feeds`),
         fetch(`${API}/api/health`),
+        fetch(`${API}/api/config/azure-speech`),
       ])
       if (!cfgRes.ok) throw new Error(`Config fetch failed: ${cfgRes.status}`)
       const cfg: LlmConfig = await cfgRes.json()
       const fds: FeedConfigItem[] = feedsRes.ok ? await feedsRes.json() : []
+      const azure: AzureSpeechConfig = azureRes.ok
+        ? await azureRes.json()
+        : { region: '', voice: 'zh-TW-HsiaoChenNeural', hasKey: false }
       if (healthRes.ok) {
         const h = await healthRes.json() as { feedStatuses?: FeedStatus[] }
         const statusMap: Record<string, FeedStatus> = {}
@@ -181,6 +211,8 @@ export function ConfigModal() {
       setConfig(cfg);       savedConfig.current = cfg
       setFeeds(fds);        savedFeeds.current  = fds
       setLocalScale(uiScale); savedScale.current = uiScale
+      setAzureSpeech(azure); savedAzureSpeech.current = azure
+      setAzureKeyInput('')
       setModels(modRes.ok ? await modRes.json() : [])
       setDirty(false)
       setStatus('idle')
@@ -198,7 +230,7 @@ export function ConfigModal() {
     setStatus('saving')
     setErrMsg('')
     try {
-      const [llmRes, feedsRes] = await Promise.all([
+      const [llmRes, feedsRes, azureRes] = await Promise.all([
         fetch(`${API}/api/config/llm`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(config),
@@ -207,16 +239,32 @@ export function ConfigModal() {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(feeds),
         }),
+        fetch(`${API}/api/config/azure-speech`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            region: azureSpeech?.region ?? '',
+            voice:  azureSpeech?.voice  ?? 'zh-TW-HsiaoChenNeural',
+            // Omit key entirely unless the user typed a new one — sending ''
+            // would overwrite an already-saved key with nothing.
+            ...(azureKeyInput.trim() ? { key: azureKeyInput.trim() } : {}),
+          }),
+        }),
       ])
       if (!llmRes.ok) throw new Error(`Save failed: ${llmRes.status}`)
       const saved: LlmConfig = await llmRes.json()
       const savedFds: FeedConfigItem[] = feedsRes.ok ? await feedsRes.json() : feeds
+      const savedAzure: AzureSpeechConfig = azureRes.ok
+        ? await azureRes.json()
+        : (azureSpeech ?? { region: '', voice: 'zh-TW-HsiaoChenNeural', hasKey: false })
       savedConfig.current = saved
       savedFeeds.current  = savedFds
       savedScale.current  = localScale
+      savedAzureSpeech.current = savedAzure
       setUiScale(localScale)
       setConfig(saved)
       setFeeds(savedFds)
+      setAzureSpeech(savedAzure)
+      setAzureKeyInput('')
       setDirty(false)
       setStatus('idle')
       setShowConfig(false)   // close after successful save
@@ -232,12 +280,19 @@ export function ConfigModal() {
     setFeeds(savedFeeds.current)
     setLocalScale(savedScale.current)
     setUiScale(savedScale.current)
+    setAzureSpeech(savedAzureSpeech.current)
+    setAzureKeyInput('')
     setDirty(false)
     setShowConfig(false)
   }
 
   function patch(field: keyof LlmConfig, value: string | number) {
     setConfig((prev) => prev ? { ...prev, [field]: value } : prev)
+    setDirty(true)
+  }
+
+  function patchAzure(field: 'region' | 'voice', value: string) {
+    setAzureSpeech((prev) => prev ? { ...prev, [field]: value } : prev)
     setDirty(true)
   }
 
@@ -630,6 +685,55 @@ export function ConfigModal() {
                   </button>
                 </div>
               </div>
+
+              {/* Azure Speech */}
+              {azureSpeech && (
+                <div>
+                  <SectionTitle label={t('config.sections.azureSpeech', 'Azure Speech')} />
+                  <p className="text-[10px] mb-2 leading-snug" style={{ color: '#2a4a63' }}>
+                    {t('config.fields.azureSpeechHint', 'Reads the intel brief aloud when opened, using Azure Cognitive Services Speech.')}
+                  </p>
+
+                  <label className="block mb-2.5">
+                    <FieldLabel text={t('config.fields.azureSpeechKey', 'API KEY')} />
+                    <input
+                      type="password" value={azureKeyInput}
+                      onChange={(e) => { setAzureKeyInput(e.target.value); setDirty(true) }}
+                      className="argus-input w-full border rounded px-2 py-1.5 transition-colors"
+                      placeholder={azureSpeech.hasKey
+                        ? t('config.fields.azureSpeechKeySet', '•••• configured — leave blank to keep')
+                        : t('config.fields.azureSpeechKeyPlaceholder', 'Subscription key')}
+                      disabled={isLoading}
+                      autoComplete="off"
+                    />
+                  </label>
+
+                  <label className="block mb-2.5">
+                    <FieldLabel text={t('config.fields.azureSpeechRegion', 'REGION')} />
+                    <input
+                      type="text" value={azureSpeech.region}
+                      onChange={(e) => patchAzure('region', e.target.value)}
+                      className="argus-input w-full border rounded px-2 py-1.5 transition-colors"
+                      placeholder={t('config.fields.azureSpeechRegionPlaceholder', 'eastasia')}
+                      disabled={isLoading}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <FieldLabel text={t('config.fields.azureSpeechVoice', 'VOICE')} />
+                    <select
+                      value={azureSpeech.voice}
+                      onChange={(e) => patchAzure('voice', e.target.value)}
+                      className="argus-input w-full border rounded px-2 py-1.5 transition-colors appearance-none cursor-pointer"
+                      disabled={isLoading}
+                    >
+                      {AZURE_VOICE_IDS.map((id) => (
+                        <option key={id} value={id}>{t(`config.azureVoice.${id}`, id)}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              )}
 
               {/* Webhook */}
               {serviceHealth.webhookEnabled && (

@@ -11,6 +11,33 @@ import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useSceneTime } from '../../hooks/useSceneTime'
 import { SCRUBBER_TOP } from './TimeScrubber'
 
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
+
+/**
+ * Reads a brief aloud via the server's Azure Speech proxy. Silently does
+ * nothing if Azure Speech isn't configured (the endpoint 400s) or the
+ * request fails — a broken TTS call should never block reading the brief.
+ */
+function speakBrief(summaryHtml: string) {
+  const div = document.createElement('div')
+  div.innerHTML = summaryHtml
+  const text = (div.textContent ?? '').trim()
+  if (!text) return
+  fetch(`${API}/api/speech/synthesize`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  })
+    .then((res) => (res.ok ? res.blob() : null))
+    .then((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audio.addEventListener('ended', () => URL.revokeObjectURL(url))
+      void audio.play().catch(() => URL.revokeObjectURL(url))
+    })
+    .catch(() => {/* best-effort — see comment above */})
+}
+
 /** Gap between the bottom of the screen and the dock. */
 const DOCK_BOTTOM = 12
 /** Breathing room between a dock popover and whatever it opens over. */
@@ -588,7 +615,14 @@ export function FloatDock() {
           badge={briefRead ? undefined : '!'}
           color="#ffd700"
           active={showBrief}
-          onClick={() => { setShowBrief(v => !v); setBriefRead(true) }}
+          onClick={() => {
+            setShowBrief((v) => {
+              const next = !v
+              if (next) speakBrief(intelBrief.summary)
+              return next
+            })
+            setBriefRead(true)
+          }}
         />
       )}
 

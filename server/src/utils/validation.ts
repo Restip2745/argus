@@ -67,6 +67,27 @@ export function validateLlmConfigBody(body: unknown): string | null {
   return null
 }
 
+export function validateAzureSpeechConfigBody(body: unknown): string | null {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return 'body must be a JSON object'
+  }
+  const b = body as Record<string, unknown>
+  if (b.key    !== undefined && typeof b.key    !== 'string') return 'key must be a string'
+  if (b.region !== undefined && typeof b.region !== 'string') return 'region must be a string'
+  if (b.voice  !== undefined && typeof b.voice  !== 'string') return 'voice must be a string'
+  return null
+}
+
+export function validateSpeechSynthesizeBody(body: unknown): string | null {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return 'body must be a JSON object'
+  }
+  const b = body as Record<string, unknown>
+  if (typeof b.text !== 'string' || !b.text.trim()) return 'text is required'
+  if (b.text.length > 4000) return 'text too long (max 4000 characters)'
+  return null
+}
+
 export function validateFeedsBody(body: unknown): string | null {
   if (!Array.isArray(body)) return 'body must be a JSON array of feed objects'
   for (const item of body) {

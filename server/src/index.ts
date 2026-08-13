@@ -16,10 +16,14 @@ import { startOllamaWorker } from './services/ollama'
 import { startRetention } from './workers/retention'
 import { getLlmConfig, setLlmConfig } from './config/llmConfig'
 import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
+import { getAzureSpeechConfig, setAzureSpeechConfig } from './config/azureSpeechConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
 import { fetchQuotes, fetchHistories, isValidRange, MAX_SYMBOLS } from './services/market'
-import { resolveEventLimit, validateExportParams, validateEventId, validateLlmConfigBody, validateFeedsBody, validateConfigAuth } from './utils/validation'
+import {
+  resolveEventLimit, validateExportParams, validateEventId, validateLlmConfigBody,
+  validateFeedsBody, validateConfigAuth, validateAzureSpeechConfigBody, validateSpeechSynthesizeBody,
+} from './utils/validation'
 import { logger } from './utils/logger'
 import type { EventCategory, EventIntensity } from './types'
 
@@ -242,6 +246,21 @@ app.post('/api/config/feeds', (req, res) => {
   }
 })
 
+// The subscription key never goes to the client — only whether one is set —
+// so a browser fetching this config can't leak it back out over the network.
+app.get('/api/config/azure-speech', (_req, res) => {
+  const cfg = getAzureSpeechConfig()
+  res.json({ region: cfg.region, voice: cfg.voice, hasKey: Boolean(cfg.key) })
+})
+
+app.post('/api/config/azure-speech', (req, res) => {
+  if (!checkConfigAuth(req, res)) return
+  const err = validateAzureSpeechConfigBody(req.body)
+  if (err) { res.status(400).json({ error: err }); return }
+  const updated = setAzureSpeechConfig(req.body)
+  res.json({ region: updated.region, voice: updated.voice, hasKey: Boolean(updated.key) })
+})
+
 
 // ── Agent chat endpoint ──────────────────────────────────
 
@@ -335,6 +354,56 @@ app.post('/api/agent-vision', async (req, res) => {
       options: { temperature: 0.6, num_ctx: cfg.contextSize },
     })
     res.json({ html: response.message.content })
+  } catch (err) {
+    res.status(502).json({ error: (err as Error).message })
+  }
+})
+
+// ── Speech synthesis (Azure) ──────────────────────────────
+// Proxies Azure's TTS REST API so the subscription key is only ever held
+// server-side. Used to read the intel brief aloud when configured.
+
+function escapeXml(s: string): string {
+  return s.replace(/[<>&'"]/g, (c) => (
+    { '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c] as string
+  ))
+}
+
+app.post('/api/speech/synthesize', async (req, res) => {
+  const speechIp = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()
+    ?? req.socket.remoteAddress ?? 'unknown'
+  if (!checkRateLimit(`speech:${speechIp}`, 10, 60_000)) {
+    res.status(429).json({ error: 'Rate limited — please wait a moment' }); return
+  }
+  const err = validateSpeechSynthesizeBody(req.body)
+  if (err) { res.status(400).json({ error: err }); return }
+
+  const cfg = getAzureSpeechConfig()
+  if (!cfg.key || !cfg.region) {
+    res.status(400).json({ error: 'Azure Speech is not configured' }); return
+  }
+
+  const { text } = req.body as { text: string }
+  // "zh-TW-HsiaoChenNeural" → "zh-TW", the xml:lang SSML expects.
+  const lang = cfg.voice.split('-').slice(0, 2).join('-')
+  const ssml = `<speak version="1.0" xml:lang="${escapeXml(lang)}"><voice name="${escapeXml(cfg.voice)}">${escapeXml(text.trim().slice(0, 4000))}</voice></speak>`
+
+  try {
+    const azureRes = await fetch(`https://${cfg.region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+      method: 'POST',
+      headers: {
+        'Ocp-Apim-Subscription-Key': cfg.key,
+        'Content-Type': 'application/ssml+xml',
+        'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
+      },
+      body: ssml,
+    })
+    if (!azureRes.ok) {
+      logger.warn('[Speech]', `Azure TTS request failed: ${azureRes.status}`)
+      res.status(502).json({ error: `Azure Speech error: ${azureRes.status}` }); return
+    }
+    res.setHeader('Content-Type', 'audio/mpeg')
+    res.send(Buffer.from(await azureRes.arrayBuffer()))
   } catch (err) {
     res.status(502).json({ error: (err as Error).message })
   }

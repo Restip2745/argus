@@ -5,6 +5,9 @@ intelligence.db
 client/dist/
 *.db-shm
 *.db-wal
+# Runtime secrets (Azure Speech key, etc.) — kept separate from
+# data/config.json, which is tracked, so a credential never ends up committed.
+data/secrets.json
 # Local agent/editor state: personal settings, scratch worktrees, and the
 # temp files the settings writer leaves behind.
 .claude/
