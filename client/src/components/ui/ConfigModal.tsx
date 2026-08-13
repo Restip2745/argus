@@ -376,91 +376,213 @@ export function ConfigModal() {
           {/* ── Two-column body ── */}
           <div className="grid grid-cols-2 gap-x-6 px-6 py-5" style={{ alignItems: 'start' }}>
 
-            {/* ── LEFT: LLM Settings ── */}
-            <div className="space-y-4">
-              <SectionTitle label={t('config.sections.llm')} />
+            {/* ── LEFT: LLM Settings + RSS Feeds + Webhook — the model and
+                content-source integrations. Azure Speech is paired with
+                Display on the right instead of here, purely so the two
+                columns come out close to even. ── */}
+            <div className="space-y-6">
 
-              {status === 'loading' && !config ? (
-                <div className="text-[#2a4060] py-4 text-center tracking-widest">{t('config.status.loading')}</div>
-              ) : status === 'error' && !config ? (
-                <div className="text-[#ff4d4d] py-2">{errMsg}</div>
-              ) : config ? (<>
+              {/* LLM Settings */}
+              <div className="space-y-4">
+                <SectionTitle label={t('config.sections.llm')} />
 
-                <label className="block">
-                  <FieldLabel text={t('config.fields.ollamaHost')} />
-                  <input
-                    type="text" value={config.host}
-                    onChange={(e) => patch('host', e.target.value)}
-                    className="argus-input w-full border rounded px-2 py-1.5 transition-colors"
-                    placeholder="http://localhost:11434"
-                    disabled={isLoading}
-                  />
-                </label>
+                {status === 'loading' && !config ? (
+                  <div className="text-[#2a4060] py-4 text-center tracking-widest">{t('config.status.loading')}</div>
+                ) : status === 'error' && !config ? (
+                  <div className="text-[#ff4d4d] py-2">{errMsg}</div>
+                ) : config ? (<>
 
-                <label className="block">
-                  <div className="flex justify-between mb-1">
-                    <FieldLabel text={t('config.fields.model')} />
-                    <button
-                      onClick={fetchAll} disabled={isLoading}
-                      className="text-[#4a6070] hover:text-[#00d4ff] transition-colors text-[11px]"
-                    >{t('config.model.refresh')}</button>
-                  </div>
-                  {models.length > 0 ? (
-                    <select
-                      value={config.model}
-                      onChange={(e) => patch('model', e.target.value)}
-                      className="argus-input w-full border rounded px-2 py-1.5 transition-colors appearance-none cursor-pointer"
-                      disabled={isLoading}
-                    >
-                      {models.map((m) => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  ) : (
+                  <label className="block">
+                    <FieldLabel text={t('config.fields.ollamaHost')} />
                     <input
-                      type="text" value={config.model}
-                      onChange={(e) => patch('model', e.target.value)}
+                      type="text" value={config.host}
+                      onChange={(e) => patch('host', e.target.value)}
                       className="argus-input w-full border rounded px-2 py-1.5 transition-colors"
-                      placeholder="gemma4:e4b" disabled={isLoading}
+                      placeholder="http://localhost:11434"
+                      disabled={isLoading}
                     />
+                  </label>
+
+                  <label className="block">
+                    <div className="flex justify-between mb-1">
+                      <FieldLabel text={t('config.fields.model')} />
+                      <button
+                        onClick={fetchAll} disabled={isLoading}
+                        className="text-[#4a6070] hover:text-[#00d4ff] transition-colors text-[11px]"
+                      >{t('config.model.refresh')}</button>
+                    </div>
+                    {models.length > 0 ? (
+                      <select
+                        value={config.model}
+                        onChange={(e) => patch('model', e.target.value)}
+                        className="argus-input w-full border rounded px-2 py-1.5 transition-colors appearance-none cursor-pointer"
+                        disabled={isLoading}
+                      >
+                        {models.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type="text" value={config.model}
+                        onChange={(e) => patch('model', e.target.value)}
+                        className="argus-input w-full border rounded px-2 py-1.5 transition-colors"
+                        placeholder="gemma4:e4b" disabled={isLoading}
+                      />
+                    )}
+                    <span className="text-[#2a4060] text-[11px] mt-1 block">
+                      {models.length > 0
+                        ? t('config.model.available', { count: models.length })
+                        : t('config.model.enterManually')}
+                    </span>
+                  </label>
+
+                  <label className="block">
+                    <FieldLabel text={t('config.fields.temperature')} value={config.temperature.toFixed(2)} />
+                    <input
+                      type="range" min={0} max={1} step={0.05}
+                      value={config.temperature}
+                      onChange={(e) => patch('temperature', parseFloat(e.target.value))}
+                      className="w-full cursor-pointer" disabled={isLoading}
+                    />
+                    <div className="flex justify-between text-[#2a4060] text-[11px] mt-0.5">
+                      <span>{t('config.temp.precise')}</span><span>{t('config.temp.creative')}</span>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <FieldLabel text={t('config.fields.contextSize')} value={config.contextSize.toLocaleString()} />
+                    <input
+                      type="range" min={512} max={32768} step={512}
+                      value={config.contextSize}
+                      onChange={(e) => patch('contextSize', parseInt(e.target.value, 10))}
+                      className="w-full cursor-pointer"
+                      style={{ '--thumb-color': '#9b6dff', '--thumb-glow': 'rgba(155,109,255,0.6)' } as React.CSSProperties}
+                      disabled={isLoading}
+                    />
+                    <div className="flex justify-between text-[#2a4060] text-[11px] mt-0.5">
+                      <span>512</span><span>32 768</span>
+                    </div>
+                  </label>
+
+                </>) : null}
+              </div>
+
+              {/* RSS Feeds */}
+              <div>
+                <SectionTitle label={t('config.sections.feeds')} />
+
+                <div
+                  className="space-y-0.5 mb-3 overflow-y-auto"
+                  style={{ maxHeight: 200, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.12) transparent' }}
+                >
+                  {feeds.length === 0 && (
+                    <div className="text-[#2a4060] py-2 text-center">{t('config.feed.noFeeds')}</div>
                   )}
-                  <span className="text-[#2a4060] text-[11px] mt-1 block">
-                    {models.length > 0
-                      ? t('config.model.available', { count: models.length })
-                      : t('config.model.enterManually')}
-                  </span>
-                </label>
+                  {feeds.map((feed, i) => {
+                    const fs = feedStatuses[feed.name]
+                    const dotColor = !fs ? '#2a4060'
+                      : fs.lastError && (!fs.lastSuccess || fs.lastError > fs.lastSuccess) ? '#ff4d4d'
+                      : '#39ff8a'
+                    const dotTitle = !fs ? t('config.feed.noData')
+                      : fs.errorMessage ? t('config.feed.error', { msg: fs.errorMessage })
+                      : fs.lastSuccess ? t('config.feed.lastOk', { time: new Date(fs.lastSuccess).toLocaleTimeString() }) : ''
+                    return (
+                      <div key={i} className="flex items-center gap-2 py-1 border-b border-[rgba(0,180,255,0.06)]">
+                        <button
+                          onClick={() => toggleFeed(i)} disabled={isLoading}
+                          className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors text-[11px] flex items-center justify-center
+                            ${feed.enabled
+                              ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.15)] text-[#00d4ff]'
+                              : 'border-[rgba(0,180,255,0.2)] text-[#2a4060]'}`}
+                          title={feed.enabled ? t('config.feed.disable') : t('config.feed.enable')}
+                        >
+                          {feed.enabled ? '✓' : ''}
+                        </button>
+                        {/* Feed health status dot */}
+                        <span
+                          title={dotTitle}
+                          style={{
+                            width: 5, height: 5, borderRadius: '50%',
+                            background: dotColor,
+                            flexShrink: 0,
+                            boxShadow: dotColor !== '#2a4060' ? `0 0 4px ${dotColor}88` : 'none',
+                          }}
+                        />
+                        <span
+                          className={`flex-1 truncate cursor-pointer text-[10px] transition-colors
+                            ${feed.enabled ? 'text-[#a8c4d8]' : 'text-[#2a4060]'}`}
+                          onClick={() => toggleFeed(i)} title={feed.url}
+                        >
+                          {feed.name}
+                        </span>
+                        <button
+                          onClick={() => deleteFeed(i)} disabled={isLoading}
+                          className="text-[#4a6070] hover:text-[#ff4d4d] transition-colors text-[10px] flex-shrink-0"
+                          title={t('config.feed.remove')}
+                        >✕</button>
+                      </div>
+                    )
+                  })}
+                </div>
 
-                <label className="block">
-                  <FieldLabel text={t('config.fields.temperature')} value={config.temperature.toFixed(2)} />
+                {/* Add feed */}
+                <div className="flex gap-2">
                   <input
-                    type="range" min={0} max={1} step={0.05}
-                    value={config.temperature}
-                    onChange={(e) => patch('temperature', parseFloat(e.target.value))}
-                    className="w-full cursor-pointer" disabled={isLoading}
-                  />
-                  <div className="flex justify-between text-[#2a4060] text-[11px] mt-0.5">
-                    <span>{t('config.temp.precise')}</span><span>{t('config.temp.creative')}</span>
-                  </div>
-                </label>
-
-                <label className="block">
-                  <FieldLabel text={t('config.fields.contextSize')} value={config.contextSize.toLocaleString()} />
-                  <input
-                    type="range" min={512} max={32768} step={512}
-                    value={config.contextSize}
-                    onChange={(e) => patch('contextSize', parseInt(e.target.value, 10))}
-                    className="w-full cursor-pointer"
-                    style={{ '--thumb-color': '#9b6dff', '--thumb-glow': 'rgba(155,109,255,0.6)' } as React.CSSProperties}
+                    type="text" value={newFeedName}
+                    onChange={(e) => setNewFeedName(e.target.value)}
+                    placeholder={t('config.feed.namePlaceholder')}
+                    className="argus-input border rounded px-2 py-1.5 transition-colors w-[30%] text-[10px]"
                     disabled={isLoading}
+                    onKeyDown={(e) => e.key === 'Enter' && addFeed()}
                   />
-                  <div className="flex justify-between text-[#2a4060] text-[11px] mt-0.5">
-                    <span>512</span><span>32 768</span>
-                  </div>
-                </label>
+                  <input
+                    type="text" value={newFeedUrl}
+                    onChange={(e) => setNewFeedUrl(e.target.value)}
+                    placeholder={t('config.feed.urlPlaceholder')}
+                    className="argus-input border rounded px-2 py-1.5 transition-colors flex-1 text-[10px]"
+                    disabled={isLoading}
+                    onKeyDown={(e) => e.key === 'Enter' && addFeed()}
+                  />
+                  <button
+                    onClick={addFeed}
+                    disabled={isLoading || !newFeedName.trim() || !newFeedUrl.trim()}
+                    className="px-2 py-1.5 border rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-[rgba(0,212,255,0.4)] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.08)] text-[10px] flex-shrink-0"
+                  >
+                    {t('config.feed.add')}
+                  </button>
+                </div>
+              </div>
 
-              </>) : null}
+              {/* Webhook */}
+              {serviceHealth.webhookEnabled && (
+                <div>
+                  <SectionTitle label={t('config.sections.webhook')} />
+                  <div className="text-[#2a4060] text-[11px] mb-2 leading-relaxed">
+                    {t('config.webhook.description')}
+                    <code className="block mt-1 text-[#4a6070] bg-[rgba(0,180,255,0.05)] border border-[rgba(0,180,255,0.12)] rounded px-2 py-1">
+                      POST {API}/api/events/webhook
+                    </code>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const cmd = `curl -X POST ${API}/api/events/webhook \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-Webhook-Key: <YOUR_KEY>' \\
+  -d '{"title":"Test Event","category":"POLITICAL","intensity":"MODERATE"}'`
+                      void copyToClipboard(cmd).then((ok) => {
+                        if (ok) { setCurlCopied(true); setTimeout(() => setCurlCopied(false), 2000) }
+                      })
+                    }}
+                    className="px-3 py-1 text-[11px] tracking-widest border rounded transition-colors border-[rgba(0,180,255,0.2)] text-[#2a5070] hover:text-[#00d4ff] hover:border-[rgba(0,212,255,0.4)]"
+                  >
+                    {curlCopied ? t('config.webhook.copied') : t('config.webhook.copyCurl')}
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* ── RIGHT: Display + RSS Feeds ── */}
+            {/* ── RIGHT: Display + Azure Speech — display/presentation settings,
+                kept apart from the LLM/feeds/webhook backend integrations on
+                the left so the two columns run roughly even. ── */}
             <div className="space-y-6">
 
               {/* Display */}
@@ -600,92 +722,6 @@ export function ConfigModal() {
                 </div>
               </div>
 
-              {/* RSS Feeds */}
-              <div>
-                <SectionTitle label={t('config.sections.feeds')} />
-
-                <div
-                  className="space-y-0.5 mb-3 overflow-y-auto"
-                  style={{ maxHeight: 200, scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.12) transparent' }}
-                >
-                  {feeds.length === 0 && (
-                    <div className="text-[#2a4060] py-2 text-center">{t('config.feed.noFeeds')}</div>
-                  )}
-                  {feeds.map((feed, i) => {
-                    const fs = feedStatuses[feed.name]
-                    const dotColor = !fs ? '#2a4060'
-                      : fs.lastError && (!fs.lastSuccess || fs.lastError > fs.lastSuccess) ? '#ff4d4d'
-                      : '#39ff8a'
-                    const dotTitle = !fs ? t('config.feed.noData')
-                      : fs.errorMessage ? t('config.feed.error', { msg: fs.errorMessage })
-                      : fs.lastSuccess ? t('config.feed.lastOk', { time: new Date(fs.lastSuccess).toLocaleTimeString() }) : ''
-                    return (
-                      <div key={i} className="flex items-center gap-2 py-1 border-b border-[rgba(0,180,255,0.06)]">
-                        <button
-                          onClick={() => toggleFeed(i)} disabled={isLoading}
-                          className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors text-[11px] flex items-center justify-center
-                            ${feed.enabled
-                              ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.15)] text-[#00d4ff]'
-                              : 'border-[rgba(0,180,255,0.2)] text-[#2a4060]'}`}
-                          title={feed.enabled ? t('config.feed.disable') : t('config.feed.enable')}
-                        >
-                          {feed.enabled ? '✓' : ''}
-                        </button>
-                        {/* Feed health status dot */}
-                        <span
-                          title={dotTitle}
-                          style={{
-                            width: 5, height: 5, borderRadius: '50%',
-                            background: dotColor,
-                            flexShrink: 0,
-                            boxShadow: dotColor !== '#2a4060' ? `0 0 4px ${dotColor}88` : 'none',
-                          }}
-                        />
-                        <span
-                          className={`flex-1 truncate cursor-pointer text-[10px] transition-colors
-                            ${feed.enabled ? 'text-[#a8c4d8]' : 'text-[#2a4060]'}`}
-                          onClick={() => toggleFeed(i)} title={feed.url}
-                        >
-                          {feed.name}
-                        </span>
-                        <button
-                          onClick={() => deleteFeed(i)} disabled={isLoading}
-                          className="text-[#4a6070] hover:text-[#ff4d4d] transition-colors text-[10px] flex-shrink-0"
-                          title={t('config.feed.remove')}
-                        >✕</button>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Add feed */}
-                <div className="flex gap-2">
-                  <input
-                    type="text" value={newFeedName}
-                    onChange={(e) => setNewFeedName(e.target.value)}
-                    placeholder={t('config.feed.namePlaceholder')}
-                    className="argus-input border rounded px-2 py-1.5 transition-colors w-[30%] text-[10px]"
-                    disabled={isLoading}
-                    onKeyDown={(e) => e.key === 'Enter' && addFeed()}
-                  />
-                  <input
-                    type="text" value={newFeedUrl}
-                    onChange={(e) => setNewFeedUrl(e.target.value)}
-                    placeholder={t('config.feed.urlPlaceholder')}
-                    className="argus-input border rounded px-2 py-1.5 transition-colors flex-1 text-[10px]"
-                    disabled={isLoading}
-                    onKeyDown={(e) => e.key === 'Enter' && addFeed()}
-                  />
-                  <button
-                    onClick={addFeed}
-                    disabled={isLoading || !newFeedName.trim() || !newFeedUrl.trim()}
-                    className="px-2 py-1.5 border rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-[rgba(0,212,255,0.4)] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.08)] text-[10px] flex-shrink-0"
-                  >
-                    {t('config.feed.add')}
-                  </button>
-                </div>
-              </div>
-
               {/* Azure Speech */}
               {azureSpeech && (
                 <div>
@@ -732,33 +768,6 @@ export function ConfigModal() {
                       ))}
                     </select>
                   </label>
-                </div>
-              )}
-
-              {/* Webhook */}
-              {serviceHealth.webhookEnabled && (
-                <div>
-                  <SectionTitle label={t('config.sections.webhook')} />
-                  <div className="text-[#2a4060] text-[11px] mb-2 leading-relaxed">
-                    {t('config.webhook.description')}
-                    <code className="block mt-1 text-[#4a6070] bg-[rgba(0,180,255,0.05)] border border-[rgba(0,180,255,0.12)] rounded px-2 py-1">
-                      POST {API}/api/events/webhook
-                    </code>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const cmd = `curl -X POST ${API}/api/events/webhook \\
-  -H 'Content-Type: application/json' \\
-  -H 'X-Webhook-Key: <YOUR_KEY>' \\
-  -d '{"title":"Test Event","category":"POLITICAL","intensity":"MODERATE"}'`
-                      void copyToClipboard(cmd).then((ok) => {
-                        if (ok) { setCurlCopied(true); setTimeout(() => setCurlCopied(false), 2000) }
-                      })
-                    }}
-                    className="px-3 py-1 text-[11px] tracking-widest border rounded transition-colors border-[rgba(0,180,255,0.2)] text-[#2a5070] hover:text-[#00d4ff] hover:border-[rgba(0,212,255,0.4)]"
-                  >
-                    {curlCopied ? t('config.webhook.copied') : t('config.webhook.copyCurl')}
-                  </button>
                 </div>
               )}
 
