@@ -14,9 +14,11 @@ import { SCRUBBER_TOP } from './TimeScrubber'
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 /**
- * Reads a brief aloud via the server's Azure Speech proxy. Silently does
- * nothing if Azure Speech isn't configured (the endpoint 400s) or the
- * request fails — a broken TTS call should never block reading the brief.
+ * Reads a brief aloud via the server's Azure Speech proxy. A broken TTS call
+ * never blocks reading the brief itself, but every failure is logged —
+ * this used to fail dead silent (no console output at all), which made a
+ * misconfigured or revoked Azure key indistinguishable from "working as
+ * intended, brief has no audio".
  */
 function speakBrief(summaryHtml: string) {
   const div = document.createElement('div')
@@ -27,15 +29,25 @@ function speakBrief(summaryHtml: string) {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
   })
-    .then((res) => (res.ok ? res.blob() : null))
+    .then(async (res) => {
+      if (!res.ok) {
+        const body = await res.json().catch(() => null) as { error?: string } | null
+        throw new Error(body?.error ?? `HTTP ${res.status}`)
+      }
+      return res.blob()
+    })
     .then((blob) => {
-      if (!blob) return
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)
       audio.addEventListener('ended', () => URL.revokeObjectURL(url))
-      void audio.play().catch(() => URL.revokeObjectURL(url))
+      audio.play().catch((err) => {
+        URL.revokeObjectURL(url)
+        console.warn('[IntelBrief] Playback blocked:', err)
+      })
     })
-    .catch(() => {/* best-effort — see comment above */})
+    .catch((err) => {
+      console.warn('[IntelBrief] Speech synthesis failed:', err)
+    })
 }
 
 /** Gap between the bottom of the screen and the dock. */
