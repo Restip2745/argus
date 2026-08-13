@@ -58,6 +58,29 @@ export type MapMode = 'none' | 'political' | 'posture' | 'activity'
  */
 export type SpaceMapMode = 'none' | 'posture'
 
+/**
+ * How much chrome the HUD is showing.
+ *
+ * One axis, three stops, because that is what this always was. It used to be
+ * two independent booleans — `liteMode` and `immersiveMode` — which described
+ * points on the same scale and then had to forbid one of their four
+ * combinations by hand. That special case was the tell.
+ *
+ *   full       sidebar feed, every readout and control
+ *   compact    the icon stack instead of the sidebar, controls still up
+ *   immersive  the icon stack alone, over a clean globe
+ *
+ * The stack survives into `immersive` deliberately. This is a monitoring
+ * tool, and a view with no channel for "something just happened" is a
+ * screensaver; 26px at the left edge is what that awareness costs.
+ */
+export type HudMode = 'full' | 'compact' | 'immersive'
+
+/** Named so call sites state their intent rather than matching strings. */
+export const showsSidebar    = (m: HudMode): boolean => m === 'full'
+export const showsEventStack = (m: HudMode): boolean => m !== 'full'
+export const showsChrome     = (m: HudMode): boolean => m !== 'immersive'
+
 export type TimeRangeFilter = '6h' | '12h' | '24h' | 'all'
 
 /**
@@ -263,13 +286,13 @@ interface AppState {
   soundVolume: number
   setSoundVolume: (v: number) => void
 
-  // ── Lite mode ─────────────────────────────────────────────
-  liteMode: boolean
-  setLiteMode: (v: boolean) => void
-
-  // ── Immersive mode (hide all HUD) ─────────────────────────
-  immersiveMode: boolean
-  setImmersiveMode: (v: boolean) => void
+  // ── HUD chrome level ──────────────────────────────────────
+  hudMode: HudMode
+  setHudMode: (v: HudMode) => void
+  /** Where `I` returns to. Immersive is a place you look up from, so it has
+   *  to remember whether you were in the sidebar or the stack. */
+  prevHudMode: HudMode
+  toggleImmersive: () => void
 
   // ── Popout windows ────────────────────────────────────────
   poppedOut: Record<string, boolean>   // key: 'event' | 'region'
@@ -549,13 +572,17 @@ export const useAppStore = create<AppState>((set) => ({
     set({ soundVolume })
   },
 
-  // Lite mode
-  liteMode:    false,
-  setLiteMode: (liteMode) => set({ liteMode }),
-
-  // Immersive mode
-  immersiveMode:    false,
-  setImmersiveMode: (immersiveMode) => set({ immersiveMode }),
+  // HUD chrome level
+  hudMode:     'full',
+  prevHudMode: 'full',
+  setHudMode:  (hudMode) => set((s) => ({
+    hudMode,
+    // Immersive is never somewhere to come back to.
+    prevHudMode: hudMode === 'immersive' ? s.prevHudMode : hudMode,
+  })),
+  toggleImmersive: () => set((s) => s.hudMode === 'immersive'
+    ? { hudMode: s.prevHudMode }
+    : { hudMode: 'immersive', prevHudMode: s.hudMode }),
 
   // Popout
   poppedOut:    {},

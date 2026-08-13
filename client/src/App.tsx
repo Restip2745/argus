@@ -22,7 +22,7 @@ import { MultiEntityContextPanel } from './components/panels/MultiEntityContextP
 import { ToastContainer } from './components/ui/ToastContainer'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { KeyboardShortcutsModal } from './components/ui/KeyboardShortcutsModal'
-import { useAppStore } from './store'
+import { useAppStore, showsChrome, showsSidebar } from './store'
 import { useOllamaSocket } from './hooks/useOllamaSocket'
 import { usePopoutSync } from './hooks/usePopoutSync'
 import { useFilteredEvents } from './hooks/useFilteredEvents'
@@ -43,10 +43,9 @@ export default function App() {
   const showConfig    = useAppStore((s) => s.showConfig)
   const setShowConfig = useAppStore((s) => s.setShowConfig)
   const uiScale       = useAppStore((s) => s.uiScale)
-  const liteMode      = useAppStore((s) => s.liteMode)
-  const setLiteMode   = useAppStore((s) => s.setLiteMode)
-  const immersiveMode    = useAppStore((s) => s.immersiveMode)
-  const setImmersiveMode = useAppStore((s) => s.setImmersiveMode)
+  const hudMode         = useAppStore((s) => s.hudMode)
+  const setHudMode      = useAppStore((s) => s.setHudMode)
+  const toggleImmersive = useAppStore((s) => s.toggleImmersive)
   const [showCanvasAnalysis, setShowCanvasAnalysis] = useState(false)
   const [showShortcuts, setShowShortcuts] = useState(false)
 
@@ -90,8 +89,7 @@ export default function App() {
 
         case 'i':
         case 'I':
-          setImmersiveMode(!immersiveMode)
-          if (!immersiveMode) setLiteMode(false)
+          toggleImmersive()
           break
 
         case 'b':
@@ -117,11 +115,9 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [immersiveMode, setImmersiveMode, setLiteMode,
+  }, [toggleImmersive,
       activePanelId, setActivePanelId, setSelectedCountry, clearSelectedEntities,
       toggleBookmark, filteredEvents, showShortcuts])
-
-  const hudVisible = !immersiveMode
 
   return (
     <div className="fixed inset-0 bg-[#04060f] overflow-hidden">
@@ -155,65 +151,53 @@ export default function App() {
       <ErrorBoundary label="HUD">
       <div style={{ zoom: uiScale }}>
 
-        {hudVisible ? (
+        {/* ── Chrome: the readouts and controls the reduced modes shed ──── */}
+        {showsChrome(hudMode) && (
+          <StatusBar
+            onOpenConfig={() => setShowConfig(true)}
+            onToggleCanvasAnalysis={() => setShowCanvasAnalysis(v => !v)}
+            canvasAnalysisOpen={showCanvasAnalysis}
+            onEnterImmersive={() => setHudMode('immersive')}
+            languageSwitcher={<LanguageSwitcher />}
+          />
+        )}
+
+        {/* ── The feed: sidebar at full, icon stack once reduced ────────── */}
+        {showsSidebar(hudMode) ? <Sidebar /> : <EventStack />}
+
+        {/* Restore control. Only in compact — immersive is left via the dock
+            or `I`, and a button pinned to the corner would be the one piece
+            of chrome that mode exists to be rid of. */}
+        {hudMode === 'compact' && (
+          <button
+            onClick={() => setHudMode('full')}
+            title="Normal mode"
+            style={{ width: '28px', height: '28px', top: `${STATUS_BAR_H + 8}px`, left: '8px' }}
+            className="absolute z-50 flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors bg-[rgba(4,9,22,0.8)] text-[13px] font-mono"
+          >
+            ☰
+          </button>
+        )}
+
+        {showsChrome(hudMode) && (
           <>
-            {/* ── Always-on global situational readout ───────────────────── */}
-            <StatusBar
-              onOpenConfig={() => setShowConfig(true)}
-              onToggleCanvasAnalysis={() => setShowCanvasAnalysis(v => !v)}
-              canvasAnalysisOpen={showCanvasAnalysis}
-              onEnterImmersive={() => { setImmersiveMode(true); setLiteMode(false) }}
-              languageSwitcher={<LanguageSwitcher />}
-            />
-
-            {/* ── Sidebar / Lite mode ────────────────────────────────────── */}
-            {liteMode ? (
-              <>
-                <button
-                  onClick={() => setLiteMode(false)}
-                  title="Normal mode"
-                  style={{ width: '28px', height: '28px', top: `${STATUS_BAR_H + 8}px`, left: '8px' }}
-                  className="absolute z-50 flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors bg-[rgba(4,9,22,0.8)] text-[13px] font-mono"
-                >
-                  ☰
-                </button>
-                <EventStack />
-              </>
-            ) : (
-              <Sidebar />
-            )}
-
             <CategoryFilterBar />
             <ErrorBoundary label="Time Scrubber"><TimeScrubber /></ErrorBoundary>
-            <FloatDock />
-            <ErrorBoundary label="Event Panel"><EventPanel /></ErrorBoundary>
-            <ErrorBoundary label="Region Panel"><RegionPanel /></ErrorBoundary>
-            <ErrorBoundary label="Celestial Panel"><CelestialBodyPanel /></ErrorBoundary>
-            <ErrorBoundary label="Person Panel"><WikiPanel /></ErrorBoundary>
-            <ErrorBoundary label="Context Panel"><MultiEntityContextPanel /></ErrorBoundary>
             <CelestialNavList />
-
-            {/* ── Config modal ───────────────────────────────────────────── */}
-            {showConfig && <ConfigModal />}
-
-            {/* ── AI Canvas Analysis panel ───────────────────────────────── */}
-            {showCanvasAnalysis && <CanvasAnalysisPanel onClose={() => setShowCanvasAnalysis(false)} />}
-
-          </>
-        ) : (
-          /* ── Immersive mode: FloatDock only ──────────────────────────── */
-          <>
-            <FloatDock />
-            {/* Still render panels so they remain accessible from dock */}
-            <EventPanel />
-            <RegionPanel />
-            <CelestialBodyPanel />
-            <WikiPanel />
-            <MultiEntityContextPanel />
-            {showConfig && <ConfigModal />}
-            {showCanvasAnalysis && <CanvasAnalysisPanel onClose={() => setShowCanvasAnalysis(false)} />}
           </>
         )}
+
+        {/* ── Always present: the dock is how immersive stays navigable, and
+               the panels have to stay reachable from it ─────────────────── */}
+        <FloatDock />
+        <ErrorBoundary label="Event Panel"><EventPanel /></ErrorBoundary>
+        <ErrorBoundary label="Region Panel"><RegionPanel /></ErrorBoundary>
+        <ErrorBoundary label="Celestial Panel"><CelestialBodyPanel /></ErrorBoundary>
+        <ErrorBoundary label="Person Panel"><WikiPanel /></ErrorBoundary>
+        <ErrorBoundary label="Context Panel"><MultiEntityContextPanel /></ErrorBoundary>
+
+        {showConfig && <ConfigModal />}
+        {showCanvasAnalysis && <CanvasAnalysisPanel onClose={() => setShowCanvasAnalysis(false)} />}
 
       </div>{/* end scaled HUD layer */}
       </ErrorBoundary>

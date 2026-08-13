@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { useAppStore } from '../../store'
+import { useAppStore, showsChrome } from '../../store'
 import { useTranslation } from 'react-i18next'
 import {
   CATEGORY_GLYPH, CATEGORY_TINT, severityRank,
@@ -51,11 +51,12 @@ const POPOVER_GAP = 8
  * anchored to the dock has to be pushed past it explicitly — the legend was
  * previously at a hand-picked 44px and landed straight across the histogram.
  * Derived from the scrubber's own exported geometry so it tracks any change
- * there. In immersive mode the scrubber is not rendered at all, so the popover
- * drops back down rather than floating over a gap.
+ * there. The parameter asks about the scrubber rather than about a HUD mode,
+ * because that is the thing actually in the way — when it is not rendered the
+ * popover drops back down instead of floating over a gap.
  */
-function popoverBottom(immersive: boolean, restingOffset: number): number {
-  if (immersive) return restingOffset
+function popoverBottom(scrubberHidden: boolean, restingOffset: number): number {
+  if (scrubberHidden) return restingOffset
   return Math.max(restingOffset, SCRUBBER_TOP - DOCK_BOTTOM + POPOVER_GAP)
 }
 
@@ -172,10 +173,9 @@ export function FloatDock() {
   const briefRef = useRef<HTMLDivElement>(null)
   const briefModalRef = useRef<HTMLDivElement>(null)
   useFocusTrap(briefModalRef, showBrief)
-  const immersiveMode     = useAppStore((s) => s.immersiveMode)
-  const setImmersiveMode  = useAppStore((s) => s.setImmersiveMode)
-  const liteMode          = useAppStore((s) => s.liteMode)
-  const setLiteMode       = useAppStore((s) => s.setLiteMode)
+  const hudMode           = useAppStore((s) => s.hudMode)
+  const setHudMode        = useAppStore((s) => s.setHudMode)
+  const toggleImmersive   = useAppStore((s) => s.toggleImmersive)
   const activePanelId     = useAppStore((s) => s.activePanelId)
   const setActivePanelId  = useAppStore((s) => s.setActivePanelId)
   const selectedCountry   = useAppStore((s) => s.selectedCountry)
@@ -261,7 +261,7 @@ export function FloatDock() {
           aria-modal="true"
           aria-label="Intel Brief"
           style={{
-          position: 'absolute', bottom: `${popoverBottom(immersiveMode, 52)}px`,
+          position: 'absolute', bottom: `${popoverBottom(!showsChrome(hudMode), 52)}px`,
           left: '50%', transform: 'translateX(-50%)',
           width: '340px',
           background: 'rgba(4,9,22,0.97)',
@@ -321,7 +321,7 @@ export function FloatDock() {
     {((nearEarth && (mapMode === 'posture' || mapMode === 'activity'))
       || (!nearEarth && spaceMapMode === 'posture')) && (
       <div style={{
-        position: 'absolute', bottom: `${popoverBottom(immersiveMode, 44)}px`,
+        position: 'absolute', bottom: `${popoverBottom(!showsChrome(hudMode), 44)}px`,
         left: '50%', transform: 'translateX(-50%)',
         display: 'flex', alignItems: 'center', gap: '10px',
         padding: '4px 9px', whiteSpace: 'nowrap',
@@ -420,8 +420,8 @@ export function FloatDock() {
           label={`INTEL FEED — ${events.length} ITEMS`}
           badge={events.length}
           color="#00d4ff"
-          active={!liteMode && !immersiveMode}
-          onClick={() => { setImmersiveMode(false); setLiteMode(false) }}
+          active={hudMode === 'full'}
+          onClick={() => setHudMode('full')}
         />
         {/* 12-bar sparkline rendered beneath the button */}
         <svg width="28" height="6" style={{ position: 'absolute', bottom: '-5px', left: 0, opacity: 0.7, pointerEvents: 'none' }}>
@@ -646,23 +646,22 @@ export function FloatDock() {
       {/* Divider */}
       <div style={{ width: '1px', height: '16px', background: 'rgba(0,180,255,0.12)', margin: '0 2px' }} />
 
-      {/* Exit immersive */}
-      {immersiveMode && (
+      {/* Immersive toggle. Leaving returns to whichever mode you came from,
+          so dropping into immersive from the icon stack and back does not
+          silently put the sidebar in front of you. */}
+      {hudMode === 'immersive' ? (
         <DockBtn
           icon="⊟"
           label="EXIT IMMERSIVE (I)"
           color="#ff9c2a"
-          onClick={() => setImmersiveMode(false)}
+          onClick={toggleImmersive}
         />
-      )}
-
-      {/* Immersive toggle */}
-      {!immersiveMode && (
+      ) : (
         <DockBtn
           icon="⊞"
           label="IMMERSIVE MODE (I)"
           color="#4a6070"
-          onClick={() => { setImmersiveMode(true); setLiteMode(false) }}
+          onClick={toggleImmersive}
         />
       )}
     </div>

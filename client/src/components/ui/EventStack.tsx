@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from 'react'
+import { useState, useEffect, useMemo, useRef, memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import type { ArgusEvent } from '../../types'
@@ -16,9 +16,13 @@ interface IconItemProps {
   isNew: boolean
   nudgeGen: number  // increments each time a new item arrives → re-triggers nudge
   searchQuery: string
+  /** Immersive: one line instead of the full readout. The dense block is a
+   *  HUD element, and popping one over a view whose whole purpose is to be
+   *  clear works against the mode. */
+  terse: boolean
 }
 
-const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, searchQuery }: IconItemProps) {
+const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, searchQuery, terse }: IconItemProps) {
   const [hovered, setHovered] = useState(false)
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
   const prevNudgeGen = useRef(nudgeGen)
@@ -93,34 +97,48 @@ const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, sea
             fontSize: '11px',
           }}
         >
-          {/* Name the symbol so the glyph is learnable in passing */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
-            <span style={{ color }}>{icon}</span>
-            <span style={{ color: '#5d7c92', fontSize: '10px', letterSpacing: '0.1em' }}>{sym.label}</span>
-            <span style={{ color, fontSize: '10px', letterSpacing: '0.08em' }}>{SEVERITY_LABEL[event.intensity]}</span>
-            <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.06em' }}>{sym.reliabilityLabel}</span>
-          </div>
-          <span style={{ color: '#c8dde8' }}>{highlightText(title, searchQuery)}</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
-            {event.published_at && (
-              <span style={{ color: '#2a4060', fontSize: 10 }}>
-                {relativeTime(event.published_at)}
-              </span>
-            )}
-            {event.heat_score != null && (
-              <>
-                <span style={{ color: '#1a3050', fontSize: 10 }}>·</span>
-                <span style={{ color: '#1a3050', fontSize: 10, letterSpacing: '0.12em' }}>HEAT</span>
-                <span style={{
-                  color: heatColor(event.heat_score),
-                  fontSize: 10,
-                  fontWeight: 600,
-                }}>
-                  {event.heat_score.toFixed(2)}
+          {terse ? (
+            <span>
+              <span style={{ color }}>{icon} </span>
+              <span style={{ color: '#c8dde8' }}>{highlightText(title, searchQuery)}</span>
+              {event.published_at && (
+                <span style={{ color: '#2a4060', marginLeft: 6, fontSize: 10 }}>
+                  {relativeTime(event.published_at)}
                 </span>
-              </>
-            )}
-          </div>
+              )}
+            </span>
+          ) : (
+            <>
+              {/* Name the symbol so the glyph is learnable in passing */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                <span style={{ color }}>{icon}</span>
+                <span style={{ color: '#5d7c92', fontSize: '10px', letterSpacing: '0.1em' }}>{sym.label}</span>
+                <span style={{ color, fontSize: '10px', letterSpacing: '0.08em' }}>{SEVERITY_LABEL[event.intensity]}</span>
+                <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.06em' }}>{sym.reliabilityLabel}</span>
+              </div>
+              <span style={{ color: '#c8dde8' }}>{highlightText(title, searchQuery)}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
+                {event.published_at && (
+                  <span style={{ color: '#2a4060', fontSize: 10 }}>
+                    {relativeTime(event.published_at)}
+                  </span>
+                )}
+                {event.heat_score != null && (
+                  <>
+                    <span style={{ color: '#1a3050', fontSize: 10 }}>·</span>
+                    <span style={{ color: '#1a3050', fontSize: 10, letterSpacing: '0.12em' }}>HEAT</span>
+                    <span style={{
+                      color: heatColor(event.heat_score),
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}>
+                      {event.heat_score.toFixed(2)}
+                    </span>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -129,16 +147,34 @@ const IconItem = memo(function IconItem({ event, animDelay, isNew, nudgeGen, sea
   prev.event.id === next.event.id &&
   prev.isNew    === next.isNew &&
   prev.nudgeGen === next.nudgeGen &&
-  prev.searchQuery === next.searchQuery
+  prev.searchQuery === next.searchQuery &&
+  prev.terse === next.terse
 )
 
 const ITEM_H = 30  // 26px icon + 4px flex gap
 const VSCROLL_BUFFER = 8  // extra items rendered above/below visible window
 
+/**
+ * How many icons immersive will show.
+ *
+ * Not a performance limit — it is what the mode is for. Compact is a feed you
+ * work through; immersive is a glance that answers "anything just happen?",
+ * and an unbounded column of icons down a deliberately clean view stops
+ * reading as recent activity and starts reading as a wall.
+ */
+const IMMERSIVE_MAX = 14
+
 export function EventStack() {
-  const filtered     = useFilteredEvents()
+  const all          = useFilteredEvents()
   const eventsLoaded = useAppStore((s) => s.eventsLoaded)
   const searchQuery  = useAppStore((s) => s.searchQuery)
+  const hudMode      = useAppStore((s) => s.hudMode)
+
+  const immersive = hudMode === 'immersive'
+  const filtered  = useMemo(
+    () => (immersive ? all.slice(0, IMMERSIVE_MAX) : all),
+    [all, immersive],
+  )
 
   // ── Virtual scroll ────────────────────────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null)
@@ -156,10 +192,13 @@ export function EventStack() {
     return () => ro.disconnect()
   }, [])
 
-  // Drive scroll from wheel events while keeping pointer-events:none on container
+  // Drive scroll from wheel events while keeping pointer-events:none on container.
+  // Immersive caps the list short enough that it always fits, so there is
+  // nothing to scroll and no reason to keep a window-level wheel listener
+  // competing with the camera for the wheel.
   useEffect(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el || immersive) return
     function onWheel(e: WheelEvent) {
       const rect = el!.getBoundingClientRect()
       if (e.clientX < rect.left || e.clientX > rect.right ||
@@ -171,7 +210,7 @@ export function EventStack() {
     }
     window.addEventListener('wheel', onWheel, { passive: true })
     return () => window.removeEventListener('wheel', onWheel)
-  }, [filtered.length])
+  }, [filtered.length, immersive])
 
   const total    = filtered.length
   const startIdx = Math.max(0, Math.floor(scrollTop / ITEM_H) - VSCROLL_BUFFER)
@@ -215,7 +254,14 @@ export function EventStack() {
     <div
       ref={containerRef}
       className="absolute left-2 pointer-events-none"
-      style={{ top: `${STATUS_BAR_H + 44}px`, bottom: '36px', overflow: 'hidden' }}
+      style={{
+        // These offsets clear the status bar above and the time scrubber
+        // below. Immersive has neither, and leaving them in place would hang
+        // the stack off an edge that is no longer there.
+        top:    immersive ? '16px' : `${STATUS_BAR_H + 44}px`,
+        bottom: immersive ? '16px' : '36px',
+        overflow: 'hidden',
+      }}
     >
       {/* Loading skeleton — shown until first REST fetch resolves */}
       {!eventsLoaded && filtered.length === 0 && (
@@ -250,6 +296,7 @@ export function EventStack() {
               isNew={newIds.has(event.id)}
               nudgeGen={newIds.has(event.id) ? 0 : nudgeGen}
               searchQuery={searchQuery}
+              terse={immersive}
             />
           ))}
         </div>

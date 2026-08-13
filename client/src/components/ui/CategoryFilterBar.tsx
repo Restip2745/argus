@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAppStore, DEFAULT_TIME_RANGE } from '../../store'
+import { useAppStore, DEFAULT_TIME_RANGE, showsSidebar } from '../../store'
 import type { FilterPreset } from '../../store'
 import { CATEGORY_GLYPH, CATEGORY_TINT, CATEGORY_LABEL, ALL_CATEGORIES } from '../../data/symbology'
 import { STATUS_BAR_H } from './StatusBar'
@@ -187,7 +187,7 @@ export function CategoryFilterBar() {
   const applyFilterPreset    = useAppStore((s) => s.applyFilterPreset)
   const deleteFilterPreset   = useAppStore((s) => s.deleteFilterPreset)
   const decorativeFx         = useAppStore((s) => s.decorativeFx)
-  const liteMode             = useAppStore((s) => s.liteMode)
+  const hudMode              = useAppStore((s) => s.hudMode)
   const [savingPreset, setSavingPreset] = useState(false)
   const [presetName,   setPresetName]   = useState('')
   const presetInputRef = useRef<HTMLInputElement>(null)
@@ -224,9 +224,9 @@ export function CategoryFilterBar() {
         // Centred on the visible map, not on the viewport. Centring on the
         // viewport pushed the bar underneath the sidebar on narrow windows,
         // where the time-range buttons ended up unreachable behind the feed.
-        left: liteMode ? '50%' : `calc(50% + ${SIDEBAR_W / 2}px)`,
+        left: showsSidebar(hudMode) ? `calc(50% + ${SIDEBAR_W / 2}px)` : '50%',
         transform: 'translateX(-50%)',
-        maxWidth: liteMode ? 'calc(100vw - 24px)' : `calc(100vw - ${SIDEBAR_W + 24}px)`,
+        maxWidth: showsSidebar(hudMode) ? `calc(100vw - ${SIDEBAR_W + 24}px)` : 'calc(100vw - 24px)',
         alignItems: 'center',
       }}
     >

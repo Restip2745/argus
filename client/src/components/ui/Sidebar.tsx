@@ -44,7 +44,7 @@ export function Sidebar() {
   const events           = useAppStore((s) => s.events)
   const setActivePanelId = useAppStore((s) => s.setActivePanelId)
   const focusedBody      = useAppStore((s) => s.focusedBody)
-  const setLiteMode      = useAppStore((s) => s.setLiteMode)
+  const setHudMode       = useAppStore((s) => s.setHudMode)
 
   // Same source as the lite-mode stack, the 3-D markers and the map-mode fills.
   // The rule for which surfaces filter and which do not lives in
@@ -107,7 +107,7 @@ export function Sidebar() {
           )}
 
           <button
-            onClick={() => setLiteMode(true)}
+            onClick={() => setHudMode('compact')}
             title={t('ui.liteMode', 'Lite mode')}
             className="ml-auto flex-shrink-0 flex items-center justify-center text-[#4a6070] hover:text-[#00d4ff] border border-[rgba(0,180,255,0.15)] hover:border-[rgba(0,180,255,0.4)] rounded transition-colors"
             style={{ width: '20px', height: '20px', fontSize: '11px', background: 'rgba(4,9,22,0.6)' }}
