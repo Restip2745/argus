@@ -54,6 +54,9 @@ function speakBrief(summaryHtml: string) {
 const DOCK_BOTTOM = 12
 /** Breathing room between a dock popover and whatever it opens over. */
 const POPOVER_GAP = 8
+/** Rendered height of the map-mode legend pill (measured: one text row plus
+ *  its 4px/1px padding and border — 24.6px in practice, rounded up here). */
+const LEGEND_HEIGHT = 25
 
 /**
  * Bottom offset, in the dock's own coordinates, for a popover that opens
@@ -262,6 +265,19 @@ export function FloatDock() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showBrief])
 
+  // Both the brief and the map-mode legend anchor to the dock via
+  // popoverBottom(), and while the scrubber is visible they clamp to the
+  // exact same offset regardless of their own resting values — so when both
+  // are on screen at once, the legend sits inside the brief's footprint
+  // instead of below it. The brief needs to clear whatever the legend's own
+  // bottom position turns out to be, not just its own resting offset.
+  const legendVisible = (nearEarth && (mapMode === 'posture' || mapMode === 'activity'))
+    || (!nearEarth && spaceMapMode === 'posture')
+  const briefBottom = Math.max(
+    popoverBottom(!showsChrome(hudMode), 52),
+    legendVisible ? popoverBottom(!showsChrome(hudMode), 44) + LEGEND_HEIGHT + POPOVER_GAP : 0,
+  )
+
   return (
     <div ref={briefRef} style={{ position: 'fixed', bottom: `${DOCK_BOTTOM}px`, left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}>
 
@@ -273,7 +289,7 @@ export function FloatDock() {
           aria-modal="true"
           aria-label="Intel Brief"
           style={{
-          position: 'absolute', bottom: `${popoverBottom(!showsChrome(hudMode), 52)}px`,
+          position: 'absolute', bottom: `${briefBottom}px`,
           left: '50%', transform: 'translateX(-50%)',
           width: '340px',
           background: 'rgba(4,9,22,0.97)',
@@ -330,8 +346,7 @@ export function FloatDock() {
         Follows the family in force, or it would key a mode that is neither
         selected nor drawn. The severity band is shared between them, so the
         same key reads for country fills and for body halos. */}
-    {((nearEarth && (mapMode === 'posture' || mapMode === 'activity'))
-      || (!nearEarth && spaceMapMode === 'posture')) && (
+    {legendVisible && (
       <div style={{
         position: 'absolute', bottom: `${popoverBottom(!showsChrome(hudMode), 44)}px`,
         left: '50%', transform: 'translateX(-50%)',
