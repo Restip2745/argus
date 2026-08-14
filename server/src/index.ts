@@ -19,6 +19,7 @@ import { getFeedsConfig, setFeedsConfig } from './config/feedsConfig'
 import { getAzureSpeechConfig, setAzureSpeechConfig } from './config/azureSpeechConfig'
 import { getHealthSnapshot, startOllamaHealthPoll } from './services/healthTracker'
 import { checkRateLimit } from './services/rateLimiter'
+import { resolveConflictSources, loadConflictFronts } from './services/conflictSources'
 import { fetchQuotes, fetchHistories, isValidRange, MAX_SYMBOLS } from './services/market'
 import {
   resolveEventLimit, validateExportParams, validateEventId, validateLlmConfigBody,
@@ -608,9 +609,11 @@ app.get('/api/market/history', async (req, res) => {
 })
 
 // ── Conflict Front Layer ──────────────────────────────────
-// Serves GeoJSON of active conflict front lines.
-// If CONFLICT_GEOJSON_URL is set, fetches & caches that URL (24-hour TTL).
-// Otherwise returns embedded demo data (approximate Ukraine 2024 contact line).
+// Serves a merged GeoJSON FeatureCollection of active conflict fronts.
+// Sources come from CONFLICT_SOURCES (preset name or JSON array) or the legacy
+// single CONFLICT_GEOJSON_URL; see services/conflictSources.ts. With neither
+// set — or if every source comes back empty — returns embedded demo data
+// (approximate Ukraine 2024 contact line).
 
 let _demConflictGeoJSON: unknown | null = null
 function getDemoConflictGeoJSON(): unknown {
@@ -627,20 +630,16 @@ function getDemoConflictGeoJSON(): unknown {
 const CONFLICT_TTL = 24 * 60 * 60 * 1000  // 24 hours
 
 app.get('/api/conflict/fronts', async (_req, res) => {
-  const externalUrl = process.env.CONFLICT_GEOJSON_URL
-  if (!externalUrl) {
+  const sources = resolveConflictSources()
+  if (sources.length === 0) {
     res.json(getDemoConflictGeoJSON())
     return
   }
   try {
-    const geojson = await fetchCached<unknown>('conflict_fronts', CONFLICT_TTL, async () => {
-      const r = await fetch(externalUrl, { signal: AbortSignal.timeout(15_000) })
-      if (!r.ok) throw new Error(`CONFLICT_GEOJSON_URL fetch ${r.status}`)
-      return r.json()
-    })
-    res.json(geojson)
+    const merged = await loadConflictFronts(sources, { ttlMs: CONFLICT_TTL })
+    res.json(merged ?? getDemoConflictGeoJSON())
   } catch (err) {
-    logger.warn('[conflict]', 'GeoJSON fetch failed, using demo data:', (err as Error).message)
+    logger.warn('[conflict]', 'source load failed, using demo data:', (err as Error).message)
     res.json(getDemoConflictGeoJSON())
   }
 })

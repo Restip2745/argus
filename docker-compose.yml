@@ -20,6 +20,7 @@ services:
       # CONFIG_SECRET: your_config_secret
       # WEBHOOK_SECRET: your_webhook_secret
       # AISSTREAM_API_KEY: your_key
+      # CONFLICT_SOURCES: isw   # or a JSON array; see .env.example
       # CONFLICT_GEOJSON_URL: https://example.com/conflict_fronts.geojson
     volumes:
       # Persists intelligence.db and config.json across container restarts

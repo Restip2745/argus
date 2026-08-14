@@ -10,12 +10,14 @@ export interface ConflictFeature {
     name?: string
     control?: 'russia' | 'ukraine' | 'frontline' | 'contested' | string
     conflict?: string
+    /** Registry id of the source this feature came from. */
+    source?: string
     description?: string
     [key: string]: unknown
   }
   geometry: {
-    type: 'LineString' | 'MultiLineString' | 'Polygon' | 'MultiPolygon'
-    coordinates: number[][] | number[][][] | number[][][][] | number[][][][][]
+    type: 'LineString' | 'MultiLineString' | 'Polygon' | 'MultiPolygon' | 'Point' | 'MultiPoint'
+    coordinates: number[] | number[][] | number[][][] | number[][][][] | number[][][][][]
   }
 }
 
