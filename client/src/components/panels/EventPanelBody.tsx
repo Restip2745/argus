@@ -75,6 +75,8 @@ export function EventPanelBody({
 }: Props) {
   const { t, i18n } = useTranslation()
   const { now: sceneNow } = useSceneTime()
+  const agentSectionOpen    = useAppStore((s) => s.agentSectionOpen)
+  const setAgentSectionOpen = useAppStore((s) => s.setAgentSectionOpen)
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const searchQuery    = useAppStore((s) => s.searchQuery)
   const eventNotes     = useAppStore((s) => s.eventNotes)
@@ -104,6 +106,27 @@ export function EventPanelBody({
   }
   const addSelectedEntity = useAppStore((s) => s.addSelectedEntity)
   const personNames = extractPersonNames(event.actors ?? [])
+
+  // ── Agent section: collapsed / expanded ────────────────────────────────────
+  //
+  // Seeded from the stored preference and kept locally afterwards, so stepping
+  // through the timeline does not re-decide it on every event. Toggling writes
+  // through to the preference: closing the agent is a statement about the agent,
+  // not about this one article.
+  const [agentOpen, setAgentOpen] = useState(agentSectionOpen)
+  function toggleAgent() {
+    const next = !agentOpen
+    setAgentOpen(next)
+    setAgentSectionOpen(next)
+  }
+
+  // Asking opens the section without touching the preference — an answer the
+  // reader cannot see is worse than a long panel, and the suggested-query
+  // buttons sit outside this section and can be pressed while it is shut.
+  function askAgent(q: string, ctx: string) {
+    setAgentOpen(true)
+    agentAsk(q, ctx)
+  }
 
   const title = eventTitle(event, i18n.language)
   // The generated summary in the reader's language; the raw RSS snippet is the
@@ -520,7 +543,7 @@ export function EventPanelBody({
             {suggestedQueries.map(q => (
               <button
                 key={q}
-                onClick={() => { setAgentInput(q); agentAsk(q, agentContext) }}
+                onClick={() => { setAgentInput(q); askAgent(q, agentContext) }}
                 className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
                 style={{
                   background: `${accentColor}06`, border: `1px solid ${accentColor}20`,
@@ -537,10 +560,44 @@ export function EventPanelBody({
         </div>
       )}
 
-      {/* ── Agent Chat (hidden in popout mode — AI is in the right column) ── */}
+      {/* ── Agent Chat (hidden in popout mode — AI is in the right column) ──
+          The longest section in the panel, and the one most readers use on
+          some events and none of the others, so it collapses. The header stays
+          whatever the state: a section that vanished entirely would be a
+          feature nobody finds again. */}
       {!hideAgent && <div className="relative px-3 pb-3 pt-2 border-t border-[rgba(0,180,255,0.07)]">
-        <div className="text-[10px] text-[#2a4060] tracking-widest mb-2">{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</div>
+        <button
+          onClick={toggleAgent}
+          aria-expanded={agentOpen}
+          title={agentOpen ? t('event.labels.agentCollapse', 'Collapse agent') : t('event.labels.agentExpand', 'Expand agent')}
+          className="flex items-center gap-1.5 w-full text-left text-[10px] text-[#2a4060] tracking-widest mb-2"
+          style={{
+            background: 'none', border: 'none', padding: 0,
+            cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace',
+            letterSpacing: '0.15em',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = accentColor }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#2a4060' }}
+        >
+          {/* Fixed width so the label does not shift as the glyph changes. */}
+          <span style={{ display: 'inline-block', width: '10px' }}>{agentOpen ? '▾' : '▸'}</span>
+          <span>{t('event.labels.agent', '◈ INTELLIGENCE AGENT')}</span>
+          {/* Collapsed with answers in it: say so, or the reader loses the
+              transcript they just generated. */}
+          {!agentOpen && agentHistory.length > 0 && (
+            <span
+              style={{
+                marginLeft: 'auto',
+                color: accentColor + 'cc',
+                border: `1px solid ${accentColor}30`,
+                background: `${accentColor}0a`,
+                borderRadius: '2px', padding: '0 4px',
+              }}
+            >{agentHistory.length}</span>
+          )}
+        </button>
 
+        {agentOpen && <>
         {agentHistory.length > 0 && (
           <div className="mb-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
             {agentHistory.map((entry) => (
@@ -609,6 +666,7 @@ export function EventPanelBody({
             {agentLoading ? '…' : '↵'}
           </button>
         </div>
+        </>}
       </div>}
     </div>
   )

@@ -66,6 +66,8 @@
       "source": "來源",
       "suggestedQueries": "建議查詢",
       "agent": "◈ 情報代理",
+      "agentCollapse": "收合情報代理",
+      "agentExpand": "展開情報代理",
       "analyzing": "分析中",
       "viewSource": "查看原文",
       "askAgent": "詢問情報分析…",

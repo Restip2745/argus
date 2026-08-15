@@ -66,6 +66,8 @@
       "source": "SOURCE",
       "suggestedQueries": "SUGGESTED QUERIES",
       "agent": "◈ INTELLIGENCE AGENT",
+      "agentCollapse": "Collapse agent",
+      "agentExpand": "Expand agent",
       "analyzing": "ANALYZING",
       "viewSource": "VIEW SOURCE",
       "askAgent": "Ask intelligence analysis…",

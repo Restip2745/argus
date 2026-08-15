@@ -286,6 +286,18 @@ interface AppState {
   soundVolume: number
   setSoundVolume: (v: number) => void
 
+  /**
+   * Whether the event panel's agent section is expanded.
+   *
+   * A preference rather than per-panel state: the agent is the longest thing
+   * in the panel and the one a reader either uses constantly or never, so the
+   * answer holds across every event they open rather than being re-decided
+   * each time. Collapsed still shows the section's header, so the feature does
+   * not disappear for someone who put it away weeks ago.
+   */
+  agentSectionOpen: boolean
+  setAgentSectionOpen: (v: boolean) => void
+
   // ── HUD chrome level ──────────────────────────────────────
   hudMode: HudMode
   setHudMode: (v: HudMode) => void
@@ -570,6 +582,13 @@ export const useAppStore = create<AppState>((set) => ({
   setSoundVolume: (soundVolume) => {
     localStorage.setItem('argus-sound-volume', String(soundVolume))
     set({ soundVolume })
+  },
+  // Open unless the reader has said otherwise: someone who has never met the
+  // agent should meet it, and someone who has closed it once meant it.
+  agentSectionOpen: localStorage.getItem('argus-agent-section-open') !== 'false',
+  setAgentSectionOpen: (agentSectionOpen) => {
+    localStorage.setItem('argus-agent-section-open', String(agentSectionOpen))
+    set({ agentSectionOpen })
   },
 
   // HUD chrome level

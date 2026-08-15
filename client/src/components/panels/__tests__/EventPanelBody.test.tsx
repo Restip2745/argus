@@ -3,6 +3,7 @@ import { render, cleanup, fireEvent } from '@testing-library/react'
 import { createRef } from 'react'
 import { EventPanelBody } from '../EventPanelBody'
 import type { ArgusEvent } from '../../../types'
+import { useAppStore } from '../../../store'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -115,5 +116,87 @@ describe('EventPanelBody video embed', () => {
     expect(queryByLabelText('Play video')).toBeNull()
     expect(container.querySelector('iframe')).toBeNull()
     expect(container.querySelectorAll('img')).toHaveLength(1)
+  })
+})
+
+// ── Agent section ─────────────────────────────────────────────────────────────
+
+function renderWithAgent(over: Partial<Parameters<typeof EventPanelBody>[0]> = {}) {
+  return render(
+    <EventPanelBody
+      event={makeEvent()}
+      accentColor="#ff9500"
+      onFocus={() => {}}
+      canFocus={false}
+      setSelectedCountry={() => {}}
+      agentHistory={[]}
+      agentLoading={false}
+      agentError={null}
+      agentInput=""
+      setAgentInput={() => {}}
+      suggestedQueries={[]}
+      agentContext="ctx"
+      agentAsk={() => {}}
+      agentScrollRef={createRef<HTMLDivElement>()}
+      {...over}
+    />,
+  )
+}
+
+// The i18n stub returns the inline default when one is given, so these are
+// the literal strings the component falls back to.
+const ASK_PLACEHOLDER = '詢問情報分析...'
+const AGENT_HEADER    = '◈ INTELLIGENCE AGENT'
+
+describe('EventPanelBody agent section', () => {
+  beforeEach(() => {
+    cleanup()
+    useAppStore.setState({ agentSectionOpen: true })
+  })
+
+  it('follows the stored preference on open', () => {
+    // The agent is the longest thing in the panel. Someone who put it away
+    // meant it for every event, not just the one they were reading.
+    useAppStore.setState({ agentSectionOpen: false })
+    const { queryByPlaceholderText, getByText } = renderWithAgent()
+    expect(queryByPlaceholderText(ASK_PLACEHOLDER)).toBeNull()
+    expect(getByText(AGENT_HEADER)).toBeTruthy()   // header survives collapse
+  })
+
+  it('writes the preference through when toggled', () => {
+    const { getByText, queryByPlaceholderText } = renderWithAgent()
+    fireEvent.click(getByText(AGENT_HEADER))
+    expect(queryByPlaceholderText(ASK_PLACEHOLDER)).toBeNull()
+    expect(useAppStore.getState().agentSectionOpen).toBe(false)
+  })
+
+  it('counts the answers it is hiding', () => {
+    useAppStore.setState({ agentSectionOpen: false })
+    const { getByText } = renderWithAgent({
+      agentHistory: [
+        { id: '1', question: 'q1', html: 'a1', streaming: false },
+        { id: '2', question: 'q2', html: 'a2', streaming: false },
+      ],
+    })
+    expect(getByText('2')).toBeTruthy()
+  })
+
+  it('opens itself when a suggested query is asked from outside it', () => {
+    // The suggested-query buttons sit above the section and can be pressed
+    // while it is shut; an answer the reader cannot see is the one outcome
+    // collapsing must not produce.
+    useAppStore.setState({ agentSectionOpen: false })
+    const asked: string[] = []
+    const { getByText, queryByPlaceholderText } = renderWithAgent({
+      suggestedQueries: ['What changed?'],
+      agentAsk: (q: string) => asked.push(q),
+    })
+    expect(queryByPlaceholderText(ASK_PLACEHOLDER)).toBeNull()
+    fireEvent.click(getByText('What changed?'))
+    expect(asked).toEqual(['What changed?'])
+    expect(queryByPlaceholderText(ASK_PLACEHOLDER)).toBeTruthy()
+    // …without overriding the preference, which was about the section, not
+    // about this one question.
+    expect(useAppStore.getState().agentSectionOpen).toBe(false)
   })
 })
