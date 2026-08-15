@@ -361,15 +361,33 @@ export function EventPanel() {
           onClose={() => setActivePanelId(null)}
           style={{ flexShrink: 0, boxShadow: 'none' }}
         >
-          {/* Animated body clip container */}
+          {/* Animated body clip container.
+              A column flex box, not a plain block, so that the height set here
+              reaches the scroll area inside. The body asks for `height: 100%`,
+              and a percentage against an auto-height ancestor resolves to auto
+              — which is what the in-flow animation wrapper below used to be.
+              The body then sized itself to its own content, its `overflow-y`
+              never had anything to overflow, and everything past this height
+              was simply cut off by the `hidden` here with no scrollbar to say
+              so. Long events lost their agent chat entirely.
+
+              The height stays fixed rather than fitting the content: this card
+              sits in a flex row with the timeline strip and carries an SVG tail
+              to a point on the globe, so a height that changed with each event
+              would resize the strip and move the tail's anchor on every step
+              through the timeline. */}
           <div style={{
             overflow: 'hidden', position: 'relative',
+            display: 'flex', flexDirection: 'column',
             height: `calc(${80 / uiScale}vh - 5.6rem)`,
           }}>
-            {/* Outgoing event — absolute overlay, exits */}
+            {/* Outgoing event — absolute overlay, exits. Pinned top *and*
+                bottom so it keeps the card's height while it slides out
+                instead of collapsing onto its own content. */}
             {outgoingEvent && (
               <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0,
+                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                display: 'flex', flexDirection: 'column',
                 animation: exitAnim, pointerEvents: 'none', zIndex: 1,
               }}>
                 <EventPanelBody
@@ -390,8 +408,18 @@ export function EventPanel() {
                 />
               </div>
             )}
-            {/* Incoming event — in-flow, enters */}
-            <div onAnimationEnd={() => setOutgoingEvent(null)} style={{ animation: enterAnim }}>
+            {/* Incoming event — in-flow, enters. `minHeight: 0` is what lets it
+                shrink to the clip container instead of growing past it, which
+                is the whole of the fix: the body inside can then be the thing
+                that scrolls. */}
+            <div
+              onAnimationEnd={() => setOutgoingEvent(null)}
+              style={{
+                animation: enterAnim,
+                flex: '1 1 auto', minHeight: 0,
+                display: 'flex', flexDirection: 'column',
+              }}
+            >
               {displayedEvent && (
                 <EventPanelBody
                   event={displayedEvent}

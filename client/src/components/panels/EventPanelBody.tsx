@@ -137,7 +137,12 @@ export function EventPanelBody({
   }
 
   return (
-    <div style={{ overflowY: 'auto', height: '100%', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
+    // `flex` + `minHeight: 0` for the panel, where this is a flex item in a
+    // height-capped column and must be allowed to shrink below its content for
+    // `overflow-y` to mean anything. `height: 100%` for the popout, where the
+    // parent is an ordinary block of definite height. Both are needed: the two
+    // callers size this differently.
+    <div style={{ overflowY: 'auto', flex: '1 1 auto', minHeight: 0, height: '100%', scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
 
       {/* ── Thumbnail image · doubles as the video player for video events ──── */}
       {(event.image_url || (videoId && isPlaying)) && (
