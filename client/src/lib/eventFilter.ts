@@ -83,6 +83,29 @@ export function matchesFilters(event: ArgusEvent, c: FilterCriteria): boolean {
   return true
 }
 
+/**
+ * Per-category totals for the filter chips.
+ *
+ * Every criterion applies except the category toggles themselves. That
+ * exception is the whole point: a chip's number is what the operator reads to
+ * decide whether to switch that category back on, so counting a hidden
+ * category as zero would remove the only information the control carries.
+ * Every *other* narrowing — the time range, the search, the watchlist, and the
+ * scrubbed instant — does apply, because the chips sit beside a feed that has
+ * already been narrowed by them and two numbers describing different sets is
+ * exactly the disagreement this module exists to prevent.
+ */
+export function countByCategory(
+  events: ArgusEvent[],
+  criteria: FilterCriteria,
+): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const e of filterEvents(events, { ...criteria, hiddenCategories: [] })) {
+    counts[e.category] = (counts[e.category] ?? 0) + 1
+  }
+  return counts
+}
+
 /** Faster path for filtering a whole array — builds the bookmark set once. */
 export function filterEvents(events: ArgusEvent[], c: FilterCriteria): ArgusEvent[] {
   const bookmarkSet = new Set(c.bookmarkedIds)

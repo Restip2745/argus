@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  matchesFilters, filterEvents, isCategoryVisible, safeTs,
+  matchesFilters, filterEvents, isCategoryVisible, safeTs, countByCategory,
   type FilterCriteria,
 } from '../eventFilter'
 import type { ArgusEvent } from '../../types'
@@ -151,5 +151,82 @@ describe('safeTs', () => {
   it('does not let an unparseable timestamp fall out of the time window', () => {
     // ts === 0 must not be treated as "very old" and silently dropped.
     expect(matchesFilters(evt('a', { published_at: 'garbage' }), { ...base, timeRangeFilter: '6h' })).toBe(true)
+  })
+})
+
+/**
+ * The chips sit beside the feed, so their numbers have to describe the same
+ * set — they used to tally the raw store, which let POLITICAL read 163 next to
+ * a six-hour feed showing a dozen, and left the numbers frozen while the
+ * scrubber rewound everything else.
+ *
+ * The one exception is the category toggles themselves: a chip's number is what
+ * the operator reads to decide whether to switch that category back on, so
+ * counting a hidden category as zero would erase the only information it
+ * carries.
+ */
+describe('countByCategory', () => {
+  const spread = [
+    evt('p1', { category: 'POLITICAL' }),
+    evt('p2', { category: 'POLITICAL' }),
+    evt('c1', { category: 'ARMED_CONFLICT' }),
+    evt('s1', { category: 'SPACE' }),
+  ]
+
+  it('counts each category in the visible set', () => {
+    expect(countByCategory(spread, base)).toEqual({ POLITICAL: 2, ARMED_CONFLICT: 1, SPACE: 1 })
+  })
+
+  it('narrows with the time range', () => {
+    const events = [
+      evt('recent', { category: 'POLITICAL', published_at: new Date(NOW - HOUR).toISOString() }),
+      evt('old',    { category: 'POLITICAL', published_at: new Date(NOW - 20 * HOUR).toISOString() }),
+    ]
+    expect(countByCategory(events, { ...base, timeRangeFilter: 'all' }).POLITICAL).toBe(2)
+    expect(countByCategory(events, { ...base, timeRangeFilter: '6h' }).POLITICAL).toBe(1)
+  })
+
+  // The exception, stated in both directions.
+  it('leaves a hidden category counting its own events', () => {
+    const counts = countByCategory(spread, { ...base, hiddenCategories: ['ARMED_CONFLICT'] })
+    expect(counts.ARMED_CONFLICT).toBe(1)
+  })
+
+  it('does not let hiding one category change another', () => {
+    const before = countByCategory(spread, base)
+    const after  = countByCategory(spread, { ...base, hiddenCategories: ['ARMED_CONFLICT'] })
+    expect(after).toEqual(before)
+  })
+
+  it('narrows with the search query', () => {
+    const events = [
+      evt('hit',  { category: 'SPACE', title: 'Starship launch' }),
+      evt('miss', { category: 'SPACE', title: 'Something else' }),
+    ]
+    expect(countByCategory(events, { ...base, searchQuery: 'starship' }).SPACE).toBe(1)
+  })
+
+  it('narrows with the watchlist', () => {
+    const events = [evt('a', { category: 'SPACE' }), evt('b', { category: 'SPACE' })]
+    const counts = countByCategory(events, { ...base, showWatchlistOnly: true, bookmarkedIds: ['a'] })
+    expect(counts.SPACE).toBe(1)
+  })
+
+  // The case that was entirely dead before: rewinding moved the feed, the
+  // census and the map fills, and left these numbers untouched.
+  it('follows the scrubber into the past', () => {
+    const events = [
+      evt('before', { category: 'SPACE', published_at: new Date(NOW - 3 * HOUR).toISOString() }),
+      evt('after',  { category: 'SPACE', published_at: new Date(NOW + 3 * HOUR).toISOString() }),
+    ]
+    const live     = countByCategory(events, { ...base, isLive: true,  timeRangeFilter: 'all' })
+    const rewound  = countByCategory(events, { ...base, isLive: false, timeRangeFilter: 'all' })
+    expect(live.SPACE).toBe(2)
+    expect(rewound.SPACE).toBe(1)      // the later event has not happened yet
+  })
+
+  it('omits categories with nothing in the visible set', () => {
+    const counts = countByCategory(spread, { ...base, searchQuery: 'no such thing' })
+    expect(counts).toEqual({})
   })
 })

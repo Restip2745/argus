@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore, DEFAULT_TIME_RANGE, showsSidebar } from '../../store'
 import type { FilterPreset } from '../../store'
 import { CATEGORY_GLYPH, CATEGORY_TINT, CATEGORY_LABEL, ALL_CATEGORIES } from '../../data/symbology'
+import { useFilterCriteria } from '../../hooks/useFilteredEvents'
+import { countByCategory } from '../../lib/eventFilter'
 import { STATUS_BAR_H } from './StatusBar'
 
 /** Sidebar width — must match the w-64 on <aside> in Sidebar.tsx. */
@@ -200,11 +202,15 @@ export function CategoryFilterBar() {
     return () => window.removeEventListener('argus:focus-search', handler)
   }, [])
 
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    for (const e of events) counts[e.category] = (counts[e.category] ?? 0) + 1
-    return counts
-  }, [events])
+  // Counted through the same rule the feed uses, so the chips and the list
+  // beside them describe one set. These used to tally the raw store, which
+  // meant POLITICAL could read 163 while a 6-hour feed showed a dozen — and
+  // the numbers sat still while the scrubber rewound everything else.
+  const criteria = useFilterCriteria()
+  const categoryCounts = useMemo(
+    () => countByCategory(events, criteria),
+    [events, criteria],
+  )
 
   const isNonDefault = hiddenCategories.length > 0
     || timeRangeFilter !== DEFAULT_TIME_RANGE

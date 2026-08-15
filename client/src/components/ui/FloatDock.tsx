@@ -6,6 +6,8 @@ import {
   SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER,
 } from '../../data/symbology'
 import type { MapMode, SpaceMapMode } from '../../store'
+import { useFilterCriteria } from '../../hooks/useFilteredEvents'
+import { countByCategory } from '../../lib/eventFilter'
 import { useServiceHealth } from '../../hooks/useServiceHealth'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useSceneTime } from '../../hooks/useSceneTime'
@@ -243,15 +245,19 @@ export function FloatDock() {
     return bars.map((v) => v / peak)  // 0..1 normalised heights
   }, [events])
 
+  // The busiest categories right now, counted through the same rule as the feed
+  // rather than off the raw store — otherwise these shortcuts rank by a set the
+  // operator is not looking at. Hidden categories are dropped here, unlike on
+  // the filter chips: this is a jump list, and there is nothing to jump to in a
+  // category that is switched off.
+  const criteria = useFilterCriteria()
   const topCats = useMemo(() => {
     const hidden = new Set(hiddenCategories)
-    const counts: Record<string, number> = {}
-    for (const e of events) {
-      if (hidden.has(e.category)) continue
-      counts[e.category] = (counts[e.category] ?? 0) + 1
-    }
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4)
-  }, [events, hiddenCategories])
+    return Object.entries(countByCategory(events, criteria))
+      .filter(([cat]) => !hidden.has(cat))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+  }, [events, criteria, hiddenCategories])
 
   // Close brief when clicking outside
   useEffect(() => {
