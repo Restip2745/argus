@@ -68,7 +68,7 @@ describe('ListingChip', () => {
     const friday = new Date(2026, 7, 7, 20, 0)
     quotes.current = [
       quote({ symbol: '2330.TW', changePct: 3.48, asOf: today.toISOString() }),
-      quote({ symbol: 'TSM', changePct: -4.85, asOf: friday.toISOString() }),
+      quote({ symbol: 'TSM', currency: 'USD', changePct: -4.85, asOf: friday.toISOString() }),
     ]
     const { container } = renderChip()
     expect(container.textContent).toContain('08-10')
@@ -85,7 +85,7 @@ describe('ListingChip', () => {
   it('follows the reader\'s up-colour convention in both directions', () => {
     quotes.current = [
       quote({ symbol: '2330.TW', changePct: 2.59 }),
-      quote({ symbol: 'TSM', changePct: -4.85 }),
+      quote({ symbol: 'TSM', currency: 'USD', changePct: -4.85 }),
     ]
 
     renderChip()

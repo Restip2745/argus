@@ -20,58 +20,87 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][MEDIUM] Feature: Company market links on events
-  Description: The commodity half of this shipped (see the DONE entry below); the company half
-    did not. Extend `market_link` so the model can also name companies an article is about,
-    keeping the same rules that made commodities work: the model names *companies*, never
-    tickers, and symbol resolution stays with the deterministic Wikidata path in
-    `client/src/utils/listing.ts` — a hallucinated ticker renders as a perfectly normal price
-    for the wrong company. Cap at 3. Reuse `scripts/replay-market-link.ts` unchanged; it
-    already reports link rate, per-item review lines and drift against the stored category.
-    Harder than commodities was, and worth expecting: a commodity has six possible values and
-    strong geographic cues, whereas "which company is this about" is open-vocabulary, and the
-    model already fails at finer distinctions — the `relation` field had to be removed because
-    it could not tell SUBJECT from AFFECTED. Consider whether company links are better derived
-    from the `actors` array, which is already extracted and already flows through the entity
-    panel's Wikidata resolution.
-  Success Criteria: false-positive rate measured on a ≥200-article replay and recorded here,
-    judged against the commodity baseline of ~2 in 14; existing fields no worse than the noise
-    floor recorded below; no UI work in this task.
+[TODO][LOW] i18n: Chinese entity names arrive Simplified
+  Description: The entity panel and the new company rows render Chinese names in Simplified —
+    洛克希德·马丁 rather than 洛克希德·馬丁 — while the app is zh-TW throughout and the
+    analysis prompt explicitly asks for Taiwanese conventions. The cause is
+    `useWikiSummary`, which reads zh.wikipedia's REST summary; that endpoint serves the
+    Simplified variant and ignores `Accept-Language`, verified against `zh-tw` and
+    `zh-Hant-TW`. Fixing it means either moving the Chinese path to the action API, which
+    takes a `variant=zh-tw` parameter, or converting on the client, which is a dependency for
+    a display concern. Pre-existing and everywhere the panel shows a Chinese title, not
+    specific to the company rows.
+  Success Criteria: Chinese entity titles render in Traditional characters, with no extra
+    request per lookup.
   Retry Count: 0
   Source: USER REQUEST
 
 ---
-
-[TODO][LOW] Data: Thin foreign lines survive the one-per-country rule
-  Description: Toyota resolves to `TYT.L`, a London line quoted in JPY whose daily change
-    disagrees with Tokyo's (-2.80% against +2.14% on the same day). It is a real listing in a
-    country no other listing occupies, so neither the one-per-country cap nor the
-    `foreignSecondary` flag in `client/src/data/stockExchanges.ts` removes it. Frankfurt was
-    handled with that flag because it lists foreign receipts in bulk; London cannot be, since
-    it is the primary market for a great many companies. Possible approach: drop a listing
-    whose currency is not one the exchange normally trades in. Low frequency — one row in a
-    twelve-company sample — so weigh the added rule against leaving it.
-  Success Criteria: Either `TYT.L` no longer appears for Toyota with no regression to the
-    HSBC / TSMC / Shell / AstraZeneca cases, or a decision recorded here to accept it.
-  Retry Count: 0
-  Source: USER REQUEST
-
----
-
-[TODO][LOW] Data: Missing exchanges in the QID table
-  Description: `EXCHANGE_BY_QID` in `client/src/data/stockExchanges.ts` has no entry for
-    Tadawul, so Saudi Aramco resolves to no listing at all. The QID was not captured during the
-    original build because Wikidata's search API rate-limited the lookup loop. Same gap likely
-    applies to other venues never sampled. Resolve the QIDs with a throttled
-    `wbsearchentities` call (the earlier attempt failed at ~1 req/s; use 4s spacing) and add
-    the rows. Each entry needs code, Yahoo suffix, country QID, and `pad` where the venue uses
-    fixed-width numeric codes.
-  Success Criteria: `npx tsx ../scripts/check-listings.ts "Saudi Aramco"` returns a quote;
-    existing listing tests still pass.
-  Retry Count: 0
-  Source: USER REQUEST
 
 ## Completed Tasks
+
+---
+
+[DONE][MEDIUM] Feature: Company rows from an event's actors
+  Description: Listed companies named among an event's actors now price on the panel. Derived
+    from `actors` rather than from a new model field: "which company is this about" is open
+    vocabulary, and the model had already proved it cannot hold a finer distinction when the
+    commodity link's `relation` field had to be removed. The actors are extracted anyway, and
+    putting them through the same deterministic Wikidata path the entity panel uses costs no
+    model accuracy and needed no replay.
+    Measured before building, on fifteen real actor names from the corpus: three resolved —
+    Nvidia, Lockheed Martin, Northrop Grumman — and none resolved wrongly. "ICE" is the case
+    worth knowing: it shares a ticker with Intercontinental Exchange, and the language ladder
+    took it to the US law enforcement agency, which has no listing. Wikidata's own gaps are the
+    limit, not false positives; Rocket Lab and CoreWeave are public and carry no exchange claim.
+    Roughly 3-4% of events should show a row, against 6% for commodity links.
+    People are deliberately not filtered out of the candidates. `extractPersonNames` looks like
+    the tool for it and is its opposite — a residue after removing countries, descriptors and
+    names carrying an organisation word — so "Nvidia" and "Lockheed Martin" both come back as
+    people for want of a "corp". Nothing local separates a one-word company from a one-word
+    surname; a person costs one cached summary and then `useListing` sees the kind and never
+    calls Wikidata. Countries are filtered, being the largest group in the vocabulary.
+  Success Criteria: Met - verified in the running app on "U.S. expands missile production",
+    whose actors are United States, Northrop Grumman, Lockheed Martin and L3Harris: the
+    country is dropped and the other three render NOC 585.87, LMT 608.68 and LHX 291.82 with
+    exchange and ticker on the tooltip, unclipped. client 422 tests pass; typecheck clean.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][LOW] Data: Toyota's London line no longer duplicates Tokyo
+  Description: `TYT.L` is a London listing of Toyota quoted in yen. It is not a second market:
+    it prints the same 3020 JPY as Tokyo, so the row was the same price twice - and the two
+    disagreed whenever London's previous close went stale, once showing -2.80% against Tokyo's
+    +2.14% on the same day. Both symptoms, the duplicate and the contradiction, come from that
+    one fact.
+    `dropDuplicateCurrencies` keeps the best-ranked quote per currency. Currency is the signal
+    because it is what makes a listing a separate market: HSBC in London, New York and Hong
+    Kong is three currencies and three real prices, and every multi-listed company in the
+    sample worth showing has one currency per venue. It needs no per-exchange data, which
+    matters - an expected-currency column would be forty entries whose mistakes would drop
+    *legitimate* listings, a worse failure than the one being fixed. The input is already
+    ranked home-market first, so keeping the first of each currency keeps Tokyo.
+  Success Criteria: Met - Toyota renders TSE 7203 in JPY and NYSE TM in USD, with TYT.L gone;
+    HSBC, TSMC, Shell and AstraZeneca keep every row. Two ListingChip fixtures had quoted an
+    ADR in its home currency and were corrected to USD, which is what the real one pays in.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][LOW] Data: Gulf exchanges added to the QID table
+  Description: `EXCHANGE_BY_QID` had no Gulf venue, so Saudi Aramco - among the largest listed
+    companies on Earth - resolved to nothing. Added Tadawul (Q2006583, `.SR`, four-digit codes
+    zero-padded), Abu Dhabi (Q4119825, `.AD`), Dubai (Q1973019, `.DU`) and Qatar (Q1648198,
+    `.QA`). The QIDs were missed originally because the lookup loop was rate-limited; resolved
+    this time at four seconds' spacing, as the earlier note advised.
+  Success Criteria: Met - the entity panel renders Tadawul 2222 at 26.48 SAR for Saudi Aramco,
+    and `check-listings.ts` quotes it. Emaar resolves to a Dubai symbol the upstream will not
+    price, which renders as nothing, the same as before.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ---
 

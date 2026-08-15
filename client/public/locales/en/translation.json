@@ -91,7 +91,8 @@
       "tanker": "TANKER FREIGHT",
       "dryBulk": "DRY BULK FREIGHT"
     },
-    "freightHint": "Freight shown as a futures ETF, not the index itself — fund roll and tracking error drift it from the underlying rate."
+    "freightHint": "Freight shown as a futures ETF, not the index itself — fund roll and tracking error drift it from the underlying rate.",
+    "companies": "COMPANIES"
   },
   "region": {
     "overview": "OVERVIEW",

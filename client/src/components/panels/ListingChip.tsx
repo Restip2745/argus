@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuotes } from '../../hooks/useQuotes'
 import { useAppStore } from '../../store'
 import { quoteColor, formatChange, formatPrice, formatAsOf, isPriorSession } from '../../utils/quote'
+import { dropDuplicateCurrencies } from '../../utils/listing'
 import type { Listing } from '../../utils/listing'
 
 interface Props {
@@ -26,7 +27,11 @@ interface Props {
 export function ListingChip({ listings, accentColor }: Props) {
   const { t } = useTranslation()
   const upColor = useAppStore((s) => s.upColor)
-  const { quotes } = useQuotes(listings.map((l) => l.symbol))
+  const { quotes: fetched } = useQuotes(listings.map((l) => l.symbol))
+
+  // A second listing in a currency already shown is the same price twice — see
+  // `dropDuplicateCurrencies`, which exists for Toyota's London line.
+  const quotes = dropDuplicateCurrencies(fetched)
 
   if (quotes.length === 0) return null
 

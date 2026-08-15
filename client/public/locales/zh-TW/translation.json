@@ -91,7 +91,8 @@
       "tanker": "油輪運價",
       "dryBulk": "乾散貨運價"
     },
-    "freightHint": "運價以期貨 ETF 代表，非指數本身——換倉成本與追蹤誤差會使其偏離實際費率。"
+    "freightHint": "運價以期貨 ETF 代表，非指數本身——換倉成本與追蹤誤差會使其偏離實際費率。",
+    "companies": "相關企業"
   },
   "region": {
     "overview": "概覽",

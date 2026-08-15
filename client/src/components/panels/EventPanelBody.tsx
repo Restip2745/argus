@@ -12,6 +12,7 @@ import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { resolveCountryName } from '../../data/countryData'
 import { EventCommodities } from './EventCommodities'
+import { EventCompanies } from './EventCompanies'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import { useAppStore } from '../../store'
@@ -384,6 +385,11 @@ export function EventPanelBody({
             publishedAt={event.published_at}
             event={event}
           />
+        )}
+
+        {/* Listed companies among the actors — usually none */}
+        {event.actors?.length > 0 && (
+          <EventCompanies actors={event.actors} accentColor={accentColor} />
         )}
 
         {/* Source Reliability Badge */}

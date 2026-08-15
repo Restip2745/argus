@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractListings, normaliseTicker, type Claims } from '../listing'
+import { extractListings, normaliseTicker, dropDuplicateCurrencies, type Claims } from '../listing'
 import { EXCHANGE_BY_QID } from '../../data/stockExchanges'
 
 const NYSE = 'Q13677'
@@ -230,5 +230,32 @@ describe('extractListings', () => {
     expect(extractListings({} as Claims)).toEqual([])
     expect(extractListings(null)).toEqual([])
     expect(extractListings({ P17: country(TAIWAN) } as unknown as Claims)).toEqual([])
+  })
+})
+
+describe('dropDuplicateCurrencies', () => {
+  const q = (symbol: string, currency: string) => ({ symbol, currency })
+
+  it('drops a foreign line quoted in the home market currency', () => {
+    // Toyota: Tokyo and London both print yen, so the London row is the same
+    // price twice — and disagrees with Tokyo whenever its close goes stale.
+    const out = dropDuplicateCurrencies([q('7203.T', 'JPY'), q('TM', 'USD'), q('TYT.L', 'JPY')])
+    expect(out.map((x) => x.symbol)).toEqual(['7203.T', 'TM'])
+  })
+
+  it('keeps every listing of a company whose venues differ in currency', () => {
+    // HSBC in London, New York and Hong Kong is three real prices.
+    const out = dropDuplicateCurrencies([q('HSBA.L', 'GBp'), q('HSBC', 'USD'), q('0005.HK', 'HKD')])
+    expect(out).toHaveLength(3)
+  })
+
+  it('keeps the better-ranked of a pair, since the input is home-market first', () => {
+    const out = dropDuplicateCurrencies([q('HOME', 'JPY'), q('FOREIGN', 'JPY')])
+    expect(out.map((x) => x.symbol)).toEqual(['HOME'])
+  })
+
+  it('lets quotes with no currency through rather than collapsing them', () => {
+    const out = dropDuplicateCurrencies([q('A', ''), q('B', '')])
+    expect(out).toHaveLength(2)
   })
 })

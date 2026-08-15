@@ -198,6 +198,39 @@ export function extractListings(claims: Claims | null | undefined): Listing[] {
 }
 
 /**
+ * One quote per currency, keeping the best-ranked of each.
+ *
+ * Toyota resolves to Tokyo, New York and a London line, `TYT.L`, which London
+ * quotes in yen. It is not a second market: it prints the same 3020 JPY as
+ * Tokyo, so the row is the same price twice. Worse, the two disagree whenever
+ * London's previous close goes stale — it was once seen at -2.80% against
+ * Tokyo's +2.14% on the same day, which reads as a contradiction rather than
+ * the duplicate it is.
+ *
+ * Currency is the signal because it is the thing that makes a listing a
+ * separate market: HSBC in London, New York and Hong Kong is three currencies
+ * and three genuinely different prices, and every multi-listed company in the
+ * sample that is worth showing has one currency per venue. Filtering on it
+ * needs no per-exchange table, which matters — an expected-currency column
+ * would be forty entries of new data whose mistakes would drop *legitimate*
+ * listings, a worse failure than the one being fixed.
+ *
+ * Order carries the decision: the input is already ranked home-market first, so
+ * keeping the first of each currency keeps Tokyo and drops London.
+ */
+export function dropDuplicateCurrencies<T extends { currency: string }>(quotes: T[]): T[] {
+  const seen = new Set<string>()
+  return quotes.filter((q) => {
+    // A quote with no currency cannot be compared; let it through rather than
+    // collapse several unrelated ones into the first.
+    if (!q.currency) return true
+    if (seen.has(q.currency)) return false
+    seen.add(q.currency)
+    return true
+  })
+}
+
+/**
  * At most one listing per country, and at most `MAX_LISTINGS` in total.
  *
  * The panel shows every listing a company has, because a reader looking at

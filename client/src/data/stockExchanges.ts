@@ -56,6 +56,7 @@ const IN = 'Q668',  IT = 'Q38',  ES = 'Q29',  SE = 'Q34',   NO = 'Q20'
 const DK = 'Q35',   FI = 'Q33',  ZA = 'Q258', SG = 'Q334',  IL = 'Q801'
 const TH = 'Q869',  ID = 'Q252', AT = 'Q40',  PL = 'Q36',   TR = 'Q43'
 const MX = 'Q96',   NZ = 'Q664', MY = 'Q833', PH = 'Q928', BR = 'Q155'
+const SA = 'Q851',  AE = 'Q878', QA = 'Q846'
 
 export const EXCHANGE_BY_QID: Record<string, ExchangeInfo> = {
   // North America
@@ -109,6 +110,13 @@ export const EXCHANGE_BY_QID: Record<string, ExchangeInfo> = {
   // Middle East / Africa
   Q1507974: { code: 'TASE', suffix: '.TA', country: IL },
   Q627514:  { code: 'JSE',  suffix: '.JO', country: ZA },
+  // Gulf venues. Energy stories name these constantly and the table had none of
+  // them, so Saudi Aramco — the largest listed company on Earth by revenue —
+  // resolved to nothing at all.
+  Q2006583: { code: 'Tadawul', suffix: '.SR', country: SA, pad: 4 },
+  Q4119825: { code: 'ADX',     suffix: '.AD', country: AE },
+  Q1973019: { code: 'DFM',     suffix: '.DU', country: AE },
+  Q1648198: { code: 'QSE',     suffix: '.QA', country: QA },
 }
 
 /** Country QID of the United States, for the fallback ordering rule. */
