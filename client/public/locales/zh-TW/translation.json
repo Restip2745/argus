@@ -86,7 +86,12 @@
     },
     "commodities": "相關商品",
     "commoditiesHint": "本則報導所涉及的市場。標示「自」的變化以報導發表前的收盤價為基準，不代表由本事件造成。",
-    "since": "自"
+    "since": "自",
+    "freight": {
+      "tanker": "油輪運價",
+      "dryBulk": "乾散貨運價"
+    },
+    "freightHint": "運價以期貨 ETF 代表，非指數本身——換倉成本與追蹤誤差會使其偏離實際費率。"
   },
   "region": {
     "overview": "概覽",

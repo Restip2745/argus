@@ -3,14 +3,18 @@ import { useQuotes } from '../../hooks/useQuotes'
 import { useHistories } from '../../hooks/useHistories'
 import { useAppStore } from '../../store'
 import { COMMODITY_INSTRUMENT } from '../../data/commodities'
+import { freightFor } from '../../data/freight'
+import { isMaritimeEvent } from '../../hooks/useLayerAutoActivation'
 import { quoteColor, formatChange, formatPrice, formatAsOf, changeSince } from '../../utils/quote'
-import type { MarketCommodity } from '../../types'
+import type { ArgusEvent, MarketCommodity } from '../../types'
 
 interface Props {
   commodities: MarketCommodity[]
   accentColor: string
   /** When the story published — the instant a change is measured from. */
   publishedAt: string | null
+  /** The whole event, for the maritime test that gates the freight row. */
+  event: ArgusEvent
 }
 
 /**
@@ -29,12 +33,20 @@ interface Props {
  * reader a moment's confusion, which is the reason this shows a market and not
  * a conclusion.
  */
-export function EventCommodities({ commodities, accentColor, publishedAt }: Props) {
+export function EventCommodities({ commodities, accentColor, publishedAt, event }: Props) {
   const { t } = useTranslation()
   const upColor = useAppStore((s) => s.upColor)
 
   const instruments = commodities.map((c) => COMMODITY_INSTRUMENT[c]).filter(Boolean)
-  const symbols = instruments.map((i) => i.symbol)
+
+  // Freight is the price of routes, so a commodity link alone does not earn the
+  // row — the story has to be about the sea. It reads as confirmation rather
+  // than alarm and only says anything measured against the event's own date, so
+  // it is offered only where a baseline can exist.
+  const freight = isMaritimeEvent(event) ? freightFor(commodities) : null
+  const rows = freight ? [...instruments, freight] : instruments
+
+  const symbols = rows.map((i) => i.symbol)
   const { quotes } = useQuotes(symbols)
   const { histories } = useHistories(symbols)
 
@@ -43,6 +55,9 @@ export function EventCommodities({ commodities, accentColor, publishedAt }: Prop
   const seriesFor = (symbol: string) => histories.find((h) => h.symbol === symbol)?.points ?? []
 
   const labelOf = (symbol: string) => {
+    if (freight && symbol === freight.symbol) {
+      return t(`event.freight.${freight.key}`, freight.label)
+    }
     const inst = instruments.find((i) => i.symbol === symbol)
     return inst ? t(`statusBar.commodity.${inst.key}`, inst.label) : symbol
   }
@@ -78,7 +93,7 @@ export function EventCommodities({ commodities, accentColor, publishedAt }: Prop
               fontSize: '10px', lineHeight: 1.9, whiteSpace: 'nowrap',
             }}
           >
-            <span style={{ color: '#7a9ab0', flexShrink: 0, width: '62px', letterSpacing: '0.06em' }}>
+            <span style={{ color: '#7a9ab0', flexShrink: 0, width: '86px', letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {labelOf(q.symbol)}
             </span>
 
@@ -115,6 +130,13 @@ export function EventCommodities({ commodities, accentColor, publishedAt }: Prop
           )
         })}
       </div>
+
+      {freight && quotes.some((q) => q.symbol === freight.symbol) && (
+        <p style={{ color: '#2a4a63', fontSize: '10px', margin: '3px 0 0', lineHeight: 1.4 }}>
+          {t('event.freightHint',
+            'Freight shown as a futures ETF, not the index itself — fund roll and tracking error drift it from the underlying rate.')}
+        </p>
+      )}
 
       <p style={{ color: '#2a4a63', fontSize: '10px', margin: '3px 0 0', lineHeight: 1.4 }}>
         {t('event.commoditiesHint', 'Markets this story bears on. A change marked "since" is measured from the close before it published, not attributed to it.')}

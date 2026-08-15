@@ -382,6 +382,7 @@ export function EventPanelBody({
             commodities={event.market_link}
             accentColor={accentColor}
             publishedAt={event.published_at}
+            event={event}
           />
         )}
 

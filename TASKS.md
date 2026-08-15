@@ -42,29 +42,6 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] Feature: Freight as post-event confirmation
-  Description: Deferred out of the status bar after checking what is obtainable. The indices
-    themselves are not: BDI is licensed by the Baltic Exchange and absent from the quote
-    upstream, while SCFI and Drewry's WCI are weekly and published only as web pages. More to
-    the point, a weekly series in a bar whose unit is the daily change would read 0.00% six
-    days in seven — freight moves on a scale of weeks and ARGUS's windows are 6h and 24h.
-    What freight is actually good for is confirmation rather than alarm: crude and shipping
-    equities react to a strait closing within hours, freight takes two or three weeks and
-    answers the more valuable question of whether the disruption held. That form needs a
-    series, not a spot quote — a `/api/market/history` endpoint and a multi-week window on the
-    event panel — which is new infrastructure, not a table entry. `BDRY`, a dry bulk freight
-    ETF, does quote daily through the existing path and is the only free daily proxy found; if
-    it is ever used it must be labelled as the ETF it is, since fund roll and tracking error
-    drift it away from the index it stands in for.
-    NOTE: the series half is built. `GET /api/market/history` now serves daily closes, so what
-    remains here is choosing an instrument and a multi-week view, not new infrastructure.
-  Success Criteria: a multi-week freight view on the event panel that reads as "since this
-    event" rather than as a price.
-  Retry Count: 0
-  Source: USER REQUEST
-
----
-
 [TODO][LOW] Data: Thin foreign lines survive the one-per-country rule
   Description: Toyota resolves to `TYT.L`, a London line quoted in JPY whose daily change
     disagrees with Tokyo's (-2.80% against +2.14% on the same day). It is a real listing in a
@@ -95,6 +72,40 @@ Managed by the autonomous development agent. Follow strict format below.
   Source: USER REQUEST
 
 ## Completed Tasks
+
+---
+
+[DONE][MEDIUM] Feature: Freight as post-event confirmation
+  Description: A freight row now sits under the commodity rows on maritime events, measured
+    since the story published like the rows above it. It earns its place only where the story
+    is actually about the sea — freight is the price of routes, and a commodity link alone
+    does not make a story maritime.
+    The recorded plan named `BDRY` as the only free daily proxy. That was wrong twice over.
+    `BWET`, a tanker freight ETF, exists and quotes daily through the same path — and BDRY
+    covers dry bulk only, so building on it would have priced the Hormuz tanker disruptions
+    that motivated this feature off iron ore and coal. `client/src/data/freight.ts` now routes
+    crude and gas to tankers, wheat and copper to dry bulk, and metals to nothing at all, since
+    no shipping market prices bullion. Commodities that disagree about segment yield no row:
+    picking one would assert a focus the link does not have.
+    Both instruments are ETFs holding freight futures, and the row says so — fund roll and
+    tracking error drift them from the rate they stand in for. That caveat is the difference
+    between a proxy and a claim, and it is only rendered when a freight quote actually arrived.
+    PREREQUISITE FIXED: `isMaritimeEvent` matched keywords with `includes()`, so "port" fired
+    on report, support, export and important, and "ship" on relationship and championship.
+    Across 605 stored articles that classified 26.4% as maritime where 8.4% actually are — 109
+    false positives, and the ships layer auto-activating on roughly three times as many events
+    as it should. Now matched on word boundaries, the same guard `data/entityKind.ts` already
+    carries for "president" against "presidential". The `'leo '` and `'geo '` keywords lost
+    their trailing-space hack, which had also stopped them matching at the end of a sentence.
+  Success Criteria: Met — verified in the running app on the Strait of Hormuz event: Brent
+    -0.52% and gas -2.53% since publication while tanker freight reads +11.89%, which is the
+    reading the feature exists for — the commodity says little happened, the freight says
+    shipping repriced. Three rows, none clipped at 271px, each measured from its own market's
+    last close before the event. Unit tests cover segment routing, the metals and mixed-segment
+    refusals, the maritime gate and the ETF caveat appearing only with a quote. client 411
+    tests pass; typecheck clean.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ---
 

@@ -86,7 +86,12 @@
     },
     "commodities": "COMMODITY EXPOSURE",
     "commoditiesHint": "Markets this story bears on. A change marked \"since\" is measured from the close before it published, not attributed to it.",
-    "since": "since"
+    "since": "since",
+    "freight": {
+      "tanker": "TANKER FREIGHT",
+      "dryBulk": "DRY BULK FREIGHT"
+    },
+    "freightHint": "Freight shown as a futures ETF, not the index itself — fund roll and tracking error drift it from the underlying rate."
   },
   "region": {
     "overview": "OVERVIEW",
