@@ -106,13 +106,20 @@ async function parseFeedWithRetry(feedName: string, url: string) {
   throw lastErr
 }
 
+// Per-feed failures are already caught inside the loop; this catches what is
+// left — a config read or a SQLite write throwing — which would otherwise
+// reject into nobody's hands and take the process with it. A missed run is a
+// stale feed for 15 minutes; a crash is the whole server.
+const runFeeds = () => fetchAllFeeds().catch((err) =>
+  logger.error('[Scraper]', 'Feed run failed:', (err as Error).message))
+
 export function startScraper(): void {
   // Initial fetch on startup
-  void fetchAllFeeds()
+  void runFeeds()
 
   // Then every 15 minutes
   cron.schedule('*/15 * * * *', () => {
-    void fetchAllFeeds()
+    void runFeeds()
   })
 
   logger.info('[Scraper]', 'RSS scraper scheduled — every 15 min')

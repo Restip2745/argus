@@ -276,6 +276,13 @@ async function processPendingArticles(io: Server): Promise<void> {
   }
 }
 
+// The model's own failures are handled in `processOne`; what escapes to here is
+// a SQLite read or write throwing. Nobody awaits the poll, so an escape would
+// be an unhandled rejection and the process would go down with it — taking the
+// API port and every other worker along for a fault in one batch of articles.
+const runPending = (io: Server) => processPendingArticles(io).catch((err) =>
+  logger.error('[Ollama]', 'Worker run failed:', (err as Error).message))
+
 export function startOllamaWorker(io: Server): void {
   // On startup: reset failed articles so they get another chance
   const retried = resetFailedArticles()
@@ -285,11 +292,11 @@ export function startOllamaWorker(io: Server): void {
 
   // Poll every 30 seconds
   cron.schedule('*/30 * * * * *', () => {
-    void processPendingArticles(io)
+    void runPending(io)
   })
 
   // Also run once after a short delay
-  setTimeout(() => void processPendingArticles(io), 5000)
+  setTimeout(() => void runPending(io), 5000)
 
   logger.info('[Ollama]', 'Worker scheduled — polling every 30s')
 }

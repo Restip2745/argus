@@ -661,6 +661,30 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
+// ── Last-resort process guards ───────────────────────────
+// Most of the work here happens on timers nobody is awaiting — the scraper
+// cron, the Ollama poll, the summary brief. Without these handlers a single
+// rejected promise inside one of them takes the whole process down under
+// Node's default `--unhandled-rejections=throw`, and the API port goes with
+// it. The dev client keeps running when that happens, so the only symptom the
+// reader sees is every request turning into a Vite proxy ECONNREFUSED, with
+// the actual cause somewhere far up the terminal scrollback.
+//
+// A background job that failed is not a reason to stop serving events that are
+// already in the database, so a rejection is logged and the process carries
+// on. An uncaught exception is different: it unwound a real stack and left
+// state unknown, so that one still exits — but loudly, and with the stack.
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('[ARGUS]', 'Unhandled promise rejection (server kept running):',
+    reason instanceof Error ? reason.stack ?? reason.message : reason)
+})
+
+process.on('uncaughtException', (err) => {
+  logger.error('[ARGUS]', 'Uncaught exception — exiting:', err.stack ?? err.message)
+  process.exit(1)
+})
+
 // ── Bootstrap ────────────────────────────────────────────
 
 async function main() {
