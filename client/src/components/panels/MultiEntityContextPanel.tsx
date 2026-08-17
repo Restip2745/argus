@@ -5,6 +5,8 @@ import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery } from '../../hooks/useAgentQuery'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
+import { useCachedEntityKind } from '../../hooks/useEntityKind'
+import { EntityKindGlyph } from './EntityGlyph'
 import { Panel } from './Panel'
 import type { ContextEntity, ContextEntityType } from '../../types'
 
@@ -17,9 +19,13 @@ const H_PAD     = 20
 // card content width when single entity; multi-column cards match this
 const CARD_W    = SINGLE_W - H_PAD
 
-const TYPE_ICON: Record<ContextEntityType, string> = {
+/**
+ * `wiki` is absent on purpose: a card from the entity panel is whatever the
+ * entity turned out to be, so its glyph comes from `ENTITY_GLYPH` instead. The
+ * other three types are fixed by the panel that produced them.
+ */
+const TYPE_ICON: Record<Exclude<ContextEntityType, 'wiki'>, string> = {
   event:     '◉',
-  wiki:      '👤',
   region:    '⊙',
   celestial: '✦',
 }
@@ -33,6 +39,8 @@ const TYPE_COLOR: Record<ContextEntityType, string> = {
 
 export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemove: () => void }) {
   const color = TYPE_COLOR[entity.type]
+  // Looked up for wiki cards only, but the hook has to run either way.
+  const wikiKind = useCachedEntityKind(entity.type === 'wiki' ? entity.name : null)
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: '8px',
@@ -40,7 +48,9 @@ export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemo
       border: `1px solid ${color}20`, borderRadius: '3px',
     }}>
       <span style={{ color, fontSize: '10px', flexShrink: 0, marginTop: '1px' }}>
-        {TYPE_ICON[entity.type]}
+        {entity.type === 'wiki'
+          ? <EntityKindGlyph kind={wikiKind} />
+          : TYPE_ICON[entity.type]}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: '#c8dde8', fontSize: '11px', fontWeight: 600, lineHeight: 1.3 }}>

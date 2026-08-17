@@ -9,7 +9,7 @@
  * real name filtered out removes a link that worked.
  */
 import { describe, it, expect } from 'vitest'
-import { extractPersonNames, isGenericDescriptor } from '../entityLinker'
+import { linkableEntityNames, isGenericDescriptor } from '../entityLinker'
 
 describe('isGenericDescriptor', () => {
   it('recognises a category of people or firms', () => {
@@ -58,19 +58,19 @@ describe('isGenericDescriptor', () => {
   })
 })
 
-describe('extractPersonNames', () => {
+describe('linkableEntityNames', () => {
   it('drops descriptors while keeping the names beside them', () => {
     const actors = ['Elon Musk', 'Security Officials', 'SpaceX', 'Technology Providers']
-    expect(extractPersonNames(actors)).toEqual(['Elon Musk', 'SpaceX'])
+    expect(linkableEntityNames(actors)).toEqual(['Elon Musk', 'SpaceX'])
   })
 
   it('still drops countries and organisations', () => {
     const actors = ['Ukraine', 'NATO', 'Ministry of Defence', 'Tarun Tejpal']
-    expect(extractPersonNames(actors)).toEqual(['Tarun Tejpal'])
+    expect(linkableEntityNames(actors)).toEqual(['Tarun Tejpal'])
   })
 
   it('handles a missing or empty list', () => {
-    expect(extractPersonNames([])).toEqual([])
-    expect(extractPersonNames(undefined as unknown as string[])).toEqual([])
+    expect(linkableEntityNames([])).toEqual([])
+    expect(linkableEntityNames(undefined as unknown as string[])).toEqual([])
   })
 })

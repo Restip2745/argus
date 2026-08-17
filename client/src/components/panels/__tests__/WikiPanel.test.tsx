@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { extractPersonNames, LinkedText } from '../../../utils/entityLinker'
+import { linkableEntityNames, LinkedText } from '../../../utils/entityLinker'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 
-describe('extractPersonNames', () => {
-  it('returns person-like names, filtering out organizations', () => {
+describe('linkableEntityNames', () => {
+  it('returns lookup-worthy names, filtering out organizations', () => {
     const actors = [
       'Joe Biden',
       'United States Government',
@@ -14,7 +14,7 @@ describe('extractPersonNames', () => {
       'Ministry of Defense',
       'Angela Merkel',
     ]
-    const result = extractPersonNames(actors)
+    const result = linkableEntityNames(actors)
     expect(result).toContain('Joe Biden')
     expect(result).toContain('Xi Jinping')
     expect(result).toContain('Angela Merkel')
@@ -25,11 +25,11 @@ describe('extractPersonNames', () => {
   })
 
   it('returns empty array for empty input', () => {
-    expect(extractPersonNames([])).toEqual([])
+    expect(linkableEntityNames([])).toEqual([])
   })
 
   it('filters out short names', () => {
-    expect(extractPersonNames(['AB', 'X'])).toEqual([])
+    expect(linkableEntityNames(['AB', 'X'])).toEqual([])
   })
 })
 

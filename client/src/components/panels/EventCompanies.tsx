@@ -17,10 +17,10 @@ import { quoteColor, formatChange, formatPrice, formatAsOf } from '../../utils/q
  * of them will ever be a listed company.
  *
  * People are deliberately *not* filtered here, though they are the other large
- * group. `extractPersonNames` looks like the tool for it and is not: it returns
+ * group. `linkableEntityNames` looks like the tool for it and is not: it returns
  * the residue after removing countries, generic descriptors and names carrying
- * an organisation word, so "Nvidia" and "Lockheed Martin" both come back as
- * people, having no "corp" or "ltd" about them. Nothing local separates a
+ * an organisation word, so "Nvidia" and "Lockheed Martin" both survive it,
+ * having no "corp" or "ltd" about them. Nothing local separates a
  * one-word company from a one-word surname. The cost of letting people through
  * is one summary each, after which `classifyEntity` reads the description,
  * `useListing` sees a person and never touches Wikidata — and the summary cache
@@ -58,7 +58,7 @@ function CompanyRow({ name, onResolved }: RowProps) {
   const upColor = useAppStore((s) => s.upColor)
 
   const { data } = useWikiSummary(name)
-  const kind = classifyEntity(data?.description)
+  const kind = classifyEntity(data?.description, data?.title)
   const { listings } = useListing(data?.wikibase_item ?? null, kind)
 
   // The home listing only. An event panel is saying "this company is in the

@@ -14,8 +14,8 @@ describe('companyCandidates', () => {
   })
 
   it('lets people through, because nothing local tells them from companies', () => {
-    // extractPersonNames looks like the filter for this and is the opposite of
-    // it: a residue, so "Nvidia" comes back as a person for want of a "corp".
+    // linkableEntityNames looks like the filter for this and is not: it is a
+    // residue, so "Nvidia" survives it for want of a "corp" in the name.
     // Wikidata settles it a summary later, and never calls out for a person.
     expect(companyCandidates(['Donald Trump'])).toEqual(['Donald Trump'])
   })
