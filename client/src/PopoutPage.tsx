@@ -308,9 +308,9 @@ export default function PopoutPage() {
   // Whatever this window is currently following. The popout mirrors the main
   // window over BroadcastChannel, so navigating there swaps the subject out
   // from under a transcript that would otherwise stay on screen.
-  const agentSubject     = popoutType === 'context' ? contextEntities.map(e => e.id).join('|')
+  const agentSubject     = popoutType === 'context' ? contextEntities.map(e => ({ id: e.id, label: e.name }))
                          : popoutType === 'region'  ? (selectedCountry?.name ?? '')
-                         : popoutType === 'wiki'    ? selectedEntities.map(p => p.name).join('|')
+                         : popoutType === 'wiki'    ? selectedEntities.map(p => ({ id: p.name, label: p.name }))
                          : (activePanelId ?? '')
 
   return (
@@ -338,7 +338,7 @@ export default function PopoutPage() {
           agentContext={agentContext}
           suggestedQueries={suggestedQueries}
           label={agentLabel}
-          subjectKey={agentSubject}
+          subject={agentSubject}
         />
       </div>
     </div>

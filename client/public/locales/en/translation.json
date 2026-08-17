@@ -134,7 +134,11 @@
     "clearAll": "Clear all entities",
     "limitReached": "ENTITY LIMIT REACHED",
     "addToContext": "Add to context panel",
-    "inContext": "Already in context"
+    "inContext": "Already in context",
+    "empty": "Nothing collected yet — type @ below to name an entity."
+  },
+  "agent": {
+    "subjectAdded": "+ {{names}} — EARLIER ANSWERS DID NOT SEE IT"
   },
   "ui": {
     "solarSystem": "Solar System",

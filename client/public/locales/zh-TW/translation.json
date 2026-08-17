@@ -134,7 +134,11 @@
     "clearAll": "清除所有實體",
     "limitReached": "已達實體上限",
     "addToContext": "加入情境面板",
-    "inContext": "已在情境中"
+    "inContext": "已在情境中",
+    "empty": "尚未收集任何實體 — 在下方輸入 @ 指名"
+  },
+  "agent": {
+    "subjectAdded": "+ {{names}} — 以上回答未包含"
   },
   "ui": {
     "solarSystem": "太陽系",

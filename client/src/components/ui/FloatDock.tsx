@@ -626,19 +626,21 @@ export function FloatDock() {
           entity is collected, so closing the panel used to strand whatever had
           been gathered. The badge also makes the collection visible: without
           it there is nothing on screen saying you are holding anything. */}
-      {contextEntities.length > 0 && (
-        <DockBtn
-          // ⧉ reads as several things held together, which is what the
-          // collection is. Deliberately not ◈: that marks a panel/section
-          // throughout the app, and this button is a collection, not a panel.
-          icon="⧉"
-          label={`${t('context.title', 'MULTI-ENTITY CONTEXT')} (${contextEntities.length})`}
-          badge={contextEntities.length}
-          color="#00ffcc"
-          active={showContextPanel}
-          onClick={() => setShowContextPanel(!showContextPanel)}
-        />
-      )}
+      {/* Shown while empty too, now that the panel takes `@` mentions: opening
+          it is how you start a collection from a name rather than from a panel
+          that happens to be on screen. */}
+      <DockBtn
+        // ⧉ reads as several things held together, which is what the
+        // collection is. Deliberately not ◈: that marks a panel/section
+        // throughout the app, and this button is a collection, not a panel.
+        icon="⧉"
+        label={`${t('context.title', 'MULTI-ENTITY CONTEXT')} (${contextEntities.length})`}
+        badge={contextEntities.length || undefined}
+        color="#00ffcc"
+        active={showContextPanel}
+        onClick={() => setShowContextPanel(!showContextPanel)}
+      />
+
 
       {/* Intel brief */}
       {intelBrief && (

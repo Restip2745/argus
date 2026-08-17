@@ -6,7 +6,8 @@
  * has full situational awareness of the displayed data.
  */
 import { useRef, useState, useEffect } from 'react'
-import { useAgentQuery, type AgentEntry } from '../../hooks/useAgentQuery'
+import { useAgentQuery, awaitingFirstToken, type AgentEntry, type AgentSubject } from '../../hooks/useAgentQuery'
+import { SubjectAddedNote } from './SubjectAddedNote'
 
 interface Props {
   /** Contextual summary passed to the agent (event or region data). */
@@ -18,12 +19,17 @@ interface Props {
   /**
    * What the conversation is about. The popout follows the main window, so its
    * subject changes underneath it when the operator navigates there; without
-   * this the transcript would outlive the thing it was about.
+   * this the transcript would outlive the thing it was about. Collections are
+   * passed entity by entity so that one joining the set reads as growth rather
+   * than as a different subject entirely.
    */
-  subjectKey?: string
+  subject?: string | readonly AgentSubject[]
 }
 
 function AgentEntry({ entry }: { entry: AgentEntry }) {
+  if (entry.kind === 'subject-added') {
+    return <SubjectAddedNote labels={entry.labels} accentColor="#00d4ff" />
+  }
   return (
     <div style={{ marginBottom: '10px' }}>
       <div style={{ color: '#00d4ff', fontSize: '10px', letterSpacing: '0.08em', marginBottom: '4px', opacity: 0.7 }}>
@@ -45,8 +51,8 @@ function AgentEntry({ entry }: { entry: AgentEntry }) {
   )
 }
 
-export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'INTELLIGENCE AGENT', subjectKey }: Props) {
-  const { history, loading, error, ask, clear } = useAgentQuery(subjectKey)
+export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'INTELLIGENCE AGENT', subject }: Props) {
+  const { history, loading, error, ask, clear } = useAgentQuery(subject)
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -129,7 +135,7 @@ export function PopoutAIPanel({ agentContext, suggestedQueries = [], label = 'IN
           </div>
         )}
         {history.map((entry) => <AgentEntry key={entry.id} entry={entry} />)}
-        {loading && history.length > 0 && history[history.length - 1]?.html === '' && (
+        {loading && awaitingFirstToken(history) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>ANALYZING</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>

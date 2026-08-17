@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { entityQueries } from '../../lib/suggestedQueries'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
-import { useAgentQuery } from '../../hooks/useAgentQuery'
+import { useAgentQuery, awaitingFirstToken } from '../../hooks/useAgentQuery'
+import { SubjectAddedNote } from './SubjectAddedNote'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { getCachedWikiSummary, useWikiCacheVersion } from '../../hooks/useWikiSummary'
 import { Panel } from './Panel'
 import { WikiPanelBody } from './WikiPanelBody'
-import type { ContextEntity } from '../../types'
+import { wikiContextEntity } from '../../lib/contextEntity'
 
 const ACCENT = '#c084fc'
 
@@ -87,7 +88,7 @@ export function WikiPanel() {
   // reasoned over whichever entities were collected at the time, so adding or
   // removing one makes the standing transcript describe a different question.
   const { history, loading: agentLoading, error: agentError, ask } =
-    useAgentQuery(selectedEntities.map(p => p.name).join('|'))
+    useAgentQuery(selectedEntities.map(p => ({ id: p.name, label: p.name })))
   const { open: popoutOpen, isPopped } = usePopoutWindow('wiki')
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)
@@ -154,13 +155,7 @@ export function WikiPanel() {
                     // The actual encyclopedia text, not a label. This used to
                     // send `Wikipedia: <name>`, so the cross-entity agent was
                     // asked to relate people it had been told nothing about.
-                    const ce: ContextEntity = {
-                      id: `wiki-${p.name}`,
-                      type: 'wiki',
-                      name: p.name,
-                      summary: wikiExtract(p.wikiTitle ?? p.name) ?? p.name,
-                    }
-                    addContextEntity(ce)
+                    addContextEntity(wikiContextEntity(p.name, wikiExtract(p.wikiTitle ?? p.name)))
                   }
                 }}
                 aria-label={allInContext ? 'Already in context' : 'Add to context panel'}
@@ -319,7 +314,9 @@ export function WikiPanel() {
               marginBottom: '7px', maxHeight: '180px', overflowY: 'auto',
               scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent',
             }}>
-              {history.map(entry => (
+              {history.map(entry => entry.kind === 'subject-added' ? (
+                <SubjectAddedNote key={entry.id} labels={entry.labels} accentColor={ACCENT} />
+              ) : (
                 <div key={entry.id} style={{ marginBottom: '7px' }}>
                   <div style={{ color: ACCENT, fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
                     ▸ {entry.question}
@@ -342,7 +339,7 @@ export function WikiPanel() {
             </div>
           )}
 
-          {agentLoading && history.length > 0 && history[history.length - 1]?.html === '' && (
+          {agentLoading && awaitingFirstToken(history) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
               <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>
                 {t('event.labels.analyzing', 'ANALYZING')}

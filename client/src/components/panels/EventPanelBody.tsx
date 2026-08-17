@@ -16,7 +16,8 @@ import { EventCompanies } from './EventCompanies'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import { useAppStore } from '../../store'
-import type { AgentEntry } from '../../hooks/useAgentQuery'
+import { awaitingFirstToken, type AgentEntry } from '../../hooks/useAgentQuery'
+import { SubjectAddedNote } from './SubjectAddedNote'
 import { linkableEntityNames, LinkedText } from '../../utils/entityLinker'
 import { EntityGlyph } from './EntityGlyph'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
@@ -608,7 +609,9 @@ export function EventPanelBody({
         {agentOpen && <>
         {agentHistory.length > 0 && (
           <div className="mb-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
-            {agentHistory.map((entry) => (
+            {agentHistory.map((entry) => entry.kind === 'subject-added' ? (
+              <SubjectAddedNote key={entry.id} labels={entry.labels} accentColor={accentColor} />
+            ) : (
               <div key={entry.id} className="mb-2">
                 <div className="text-[10px] mb-1 opacity-70" style={{ color: accentColor }}>▸ {entry.question}</div>
                 {entry.streaming ? (
@@ -629,7 +632,7 @@ export function EventPanelBody({
           </div>
         )}
 
-        {agentLoading && agentHistory.length > 0 && agentHistory[agentHistory.length - 1].html === '' && (
+        {agentLoading && awaitingFirstToken(agentHistory) && (
           <div className="mb-2 flex items-center gap-2">
             <span className="text-[10px] text-[#2a4060] tracking-widest">{t('event.labels.analyzing', 'ANALYZING')}</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>

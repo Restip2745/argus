@@ -150,6 +150,26 @@ async function resolveSummary(title: string, signal: AbortSignal): Promise<WikiS
 }
 
 /**
+ * The summary for `title`, fetched if nobody has yet.
+ *
+ * For callers that are not a component rendering the entity — picking an `@`
+ * mention has to hand the collection a real extract, and there is no panel open
+ * on that name to have fetched one. Fills the same cache, so a later panel on
+ * the same name renders from it instead of asking again.
+ */
+export async function ensureWikiSummary(title: string): Promise<WikiSummary | null> {
+  const cached = summaryCache.get(cacheKey(title))
+  if (cached) return cached
+
+  const data = await resolveSummary(title, new AbortController().signal)
+  if (!data) return null
+
+  summaryCache.set(cacheKey(title), data)
+  publishCacheChange()
+  return data
+}
+
+/**
  * Fetch the Wikipedia summary for `title`, resolving loosely-worded names.
  * Uses AbortController to cancel stale requests.
  * Pass null to skip fetching.
