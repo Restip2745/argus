@@ -1,12 +1,13 @@
 /**
  * What `@` can name.
  *
- * Every candidate comes from data already on the client — the events in the
+ * Most candidates come from data already on the client — the events in the
  * feed, the actors those events name, the countries this app holds figures for.
  * Nothing here asks the network, because a list that arrives 300 ms after the
- * keystroke is a list the operator has already typed past. The one thing that
- * does need fetching is an actor's encyclopedia text, and that is deferred to
- * the moment a candidate is actually picked.
+ * keystroke is a list the operator has already typed past. Two things are
+ * fetched, and both are deferred past the keystroke: an actor's encyclopedia
+ * text, which waits for the pick, and the search results that cover names the
+ * feed never mentioned, which arrive late and rank below everything local.
  */
 import type { ArgusEvent, ContextEntity, ContextEntityType } from '../types'
 import { countriesWithData } from '../data/countryData'
@@ -21,6 +22,8 @@ export interface MentionCandidate {
   name: string
   /** The spelling that matched, when it was not the name itself. */
   via?: string
+  /** True when this came from a Wikipedia search rather than from local data. */
+  fromSearch?: boolean
   /**
    * Ready to add. Null for an actor, whose summary is the Wikipedia extract and
    * is not known until someone fetches it.
@@ -183,4 +186,47 @@ export function candidateEntity(
   extract?: string | null,
 ): ContextEntity {
   return candidate.entity ?? wikiContextEntity(candidate.name, extract)
+}
+
+/**
+ * Candidates for names the feed has never mentioned.
+ *
+ * The local list can only offer what is already on the client, which is a
+ * closed world: an operator asking about someone this hour's headlines happen
+ * not to name would type the name and be told there is no such thing. These
+ * come from a Wikipedia title search, so they are guesses rather than data —
+ * marked as such, and placed under the local matches.
+ */
+export function searchedCandidates(titles: string[]): MentionCandidate[] {
+  return titles.map(title => ({
+    id:         `wiki-${title}`,
+    type:       'wiki' as const,
+    name:       title,
+    entity:     null,
+    fromSearch: true,
+  }))
+}
+
+/**
+ * Local matches first, then whatever the search turned up that they did not
+ * already cover.
+ *
+ * Local before searched on purpose: a country this app holds figures for is a
+ * better answer than an article about that country, and it is the one that
+ * costs no fetch.
+ */
+export function withSearchResults(
+  local: MentionCandidate[],
+  searched: MentionCandidate[],
+  limit = 8,
+): MentionCandidate[] {
+  const seen = new Set(local.map(c => c.id))
+  const out  = [...local]
+  for (const c of searched) {
+    if (out.length >= limit) break
+    if (seen.has(c.id)) continue
+    seen.add(c.id)
+    out.push(c)
+  }
+  return out
 }

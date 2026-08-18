@@ -148,3 +148,52 @@ describe('MentionInput', () => {
     expect(onPick).not.toHaveBeenCalled()
   })
 })
+
+describe('MentionInput — search results', () => {
+  const searched: MentionCandidate[] = [
+    { id: 'wiki-Jane Roe', type: 'wiki', name: 'Jane Roe', entity: null, fromSearch: true },
+  ]
+
+  it('reports the token being typed so the panel can search for it', async () => {
+    const onQuery = vi.fn()
+    const user = userEvent.setup()
+    render(<Harness onQuery={onQuery} />)
+
+    await user.type(screen.getByPlaceholderText('ask'), '@Jane')
+    expect(onQuery).toHaveBeenLastCalledWith('Jane')
+
+    await user.keyboard('{Escape}')
+    // Nothing is being typed any more, so nothing should still be searched for.
+    expect(onQuery).toHaveBeenLastCalledWith(null)
+  })
+
+  it('shows search hits under the local matches, marked as such', async () => {
+    const user = userEvent.setup()
+    render(<Harness extra={searched} />)
+
+    await user.type(screen.getByPlaceholderText('ask'), '@Jane')
+    const options = screen.getAllByRole('option')
+    expect(options[options.length - 1]).toHaveTextContent('Jane Roe')
+    expect(screen.getByText('WIKIPEDIA')).toBeInTheDocument()
+  })
+
+  it('opens on the search alone when nothing local matches', async () => {
+    const user = userEvent.setup()
+    render(<Harness extra={searched} />)
+    await user.type(screen.getByPlaceholderText('ask'), '@Jane')
+    expect(screen.getByRole('option', { name: /Jane Roe/ })).toBeInTheDocument()
+  })
+
+  it('says it is searching, and Enter does not send while it is', async () => {
+    const onSubmit = vi.fn()
+    const user = userEvent.setup()
+    render(<Harness onSubmit={onSubmit} searching />)
+
+    await user.type(screen.getByPlaceholderText('ask'), '@zzzznope')
+    expect(screen.getByText('SEARCHING WIKIPEDIA…')).toBeInTheDocument()
+    // An empty list is still a list: sending the half-typed mention as the
+    // question is the one thing that must not happen here.
+    await user.keyboard('{Enter}')
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+  })
+})

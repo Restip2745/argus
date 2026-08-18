@@ -135,7 +135,9 @@
     "limitReached": "ENTITY LIMIT REACHED",
     "addToContext": "Add to context panel",
     "inContext": "Already in context",
-    "empty": "Nothing collected yet — type @ below to name an entity."
+    "empty": "Nothing collected yet — type @ below to name an entity.",
+    "fromWikipedia": "WIKIPEDIA",
+    "mentionSearching": "SEARCHING WIKIPEDIA…"
   },
   "agent": {
     "subjectAdded": "+ {{names}} — EARLIER ANSWERS DID NOT SEE IT"

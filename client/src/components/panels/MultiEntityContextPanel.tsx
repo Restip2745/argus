@@ -5,7 +5,8 @@ import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
 import { useAgentQuery, awaitingFirstToken } from '../../hooks/useAgentQuery'
 import { ensureWikiSummary, getCachedWikiSummary } from '../../hooks/useWikiSummary'
-import { mentionCandidates, candidateEntity, type MentionCandidate } from '../../lib/mentionCandidates'
+import { mentionCandidates, searchedCandidates, candidateEntity, type MentionCandidate } from '../../lib/mentionCandidates'
+import { useWikiSearch } from '../../hooks/useWikiSearch'
 import { MentionInput } from '../ui/MentionInput'
 import { SubjectAddedNote } from './SubjectAddedNote'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
@@ -156,6 +157,21 @@ export function MultiEntityContextPanel() {
   const collected = useMemo(
     () => new Set(contextEntities.map(e => e.id)),
     [contextEntities],
+  )
+
+  // The mention token currently being typed, which the input reports up so the
+  // search can run here rather than inside a text field.
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  // The query was typed in the interface language, so ask that Wikipedia first
+  // and fall through to en, which has far more articles.
+  const searchLangs = useMemo(
+    () => i18n.language?.startsWith('zh') ? ['zh', 'en'] : ['en'],
+    [i18n.language],
+  )
+  const { results: searchHits, loading: searching } = useWikiSearch(mentionQuery ?? '', searchLangs)
+  const searched = useMemo(
+    () => searchedCandidates(searchHits.map(h => h.title)),
+    [searchHits],
   )
 
   if (!showContextPanel) return null
@@ -351,6 +367,9 @@ export function MultiEntityContextPanel() {
               onChange={setAgentInput}
               onSubmit={handleSend}
               candidates={candidates}
+              extra={searched}
+              searching={searching}
+              onQuery={setMentionQuery}
               collected={collected}
               onPick={handlePick}
               full={atLimit}

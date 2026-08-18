@@ -7,16 +7,22 @@
  * the network and the collection limit come in, and neither belongs in a text
  * field.
  */
-import { useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MentionCandidate } from '../../lib/mentionCandidates'
-import { matchMentions } from '../../lib/mentionCandidates'
+import { matchMentions, withSearchResults } from '../../lib/mentionCandidates'
 
 interface Props {
   value:       string
   onChange:    (v: string) => void
   onSubmit:    () => void
   candidates:  MentionCandidate[]
+  /** Late arrivals from a search, shown under the local matches. */
+  extra?:      MentionCandidate[]
+  /** True while that search is in flight, so the list can say so. */
+  searching?:  boolean
+  /** The active `@…` token, reported so the panel can search for it. */
+  onQuery?:    (query: string | null) => void
   /** Ids already collected. Those candidates are shown, but cannot be picked. */
   collected:   Set<string>
   onPick:      (candidate: MentionCandidate) => void
@@ -59,7 +65,8 @@ export function activeMention(text: string, caret: number): { start: number; que
 
 export function MentionInput({
   value, onChange, onSubmit,
-  candidates, collected, onPick, full = false,
+  candidates, extra = [], searching = false, onQuery,
+  collected, onPick, full = false,
   placeholder, disabled = false, accentColor,
 }: Props) {
   const { t } = useTranslation()
@@ -69,8 +76,16 @@ export function MentionInput({
   const [dismissed, setDismissed] = useState(false)
 
   const mention = dismissed ? null : activeMention(value, caret)
-  const shown   = mention ? matchMentions(candidates, mention.query) : []
-  const open    = mention !== null && shown.length > 0
+  const shown   = mention
+    ? withSearchResults(matchMentions(candidates, mention.query), extra)
+    : []
+  const open = mention !== null && (shown.length > 0 || searching)
+
+  // Reported from an effect rather than from the render that derived it: the
+  // panel turns this into a fetch and a setState, and neither may happen while
+  // this component is still rendering.
+  const query = mention?.query ?? null
+  useEffect(() => { onQuery?.(query) }, [query, onQuery])
 
   // Caret only. Reopening a dismissed list is the business of typing, not of
   // the keyup that follows the Escape which closed it.
@@ -97,12 +112,15 @@ export function MentionInput({
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (open) {
+    // The list can be open with nothing in it while a search is still out.
+    if (open && shown.length > 0) {
       if (e.key === 'ArrowDown') { e.preventDefault(); setActive(i => (i + 1) % shown.length); return }
       if (e.key === 'ArrowUp')   { e.preventDefault(); setActive(i => (i - 1 + shown.length) % shown.length); return }
       if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(shown[Math.min(active, shown.length - 1)]); return }
-      if (e.key === 'Escape')    { e.preventDefault(); setDismissed(true); return }
     }
+    // Not gated on the list being open: a query with no local matches is still
+    // being searched for, and Escape has to stop that too.
+    if (mention && e.key === 'Escape') { e.preventDefault(); setDismissed(true); return }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit() }
   }
 
@@ -152,14 +170,25 @@ export function MentionInput({
                   {c.name}
                   {c.via && <span style={{ color: '#4a6070' }}> · {c.via}</span>}
                 </span>
-                {already && (
+                {already ? (
                   <span style={{ color: '#4a6070', fontSize: '10px', letterSpacing: '0.08em' }}>
                     {t('context.inContext', 'Already in context')}
+                  </span>
+                ) : c.fromSearch && (
+                  // Marked because it is a guess from a title search, where
+                  // everything above it is something this app holds data for.
+                  <span style={{ color: '#4a6070', fontSize: '10px', letterSpacing: '0.08em' }}>
+                    {t('context.fromWikipedia', 'WIKIPEDIA')}
                   </span>
                 )}
               </button>
             )
           })}
+          {searching && (
+            <div style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em', padding: '4px 8px' }}>
+              {t('context.mentionSearching', 'SEARCHING WIKIPEDIA…')}
+            </div>
+          )}
         </div>
       )}
       <input

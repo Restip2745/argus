@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mentionCandidates, matchMentions, candidateEntity } from '../mentionCandidates'
+import { mentionCandidates, matchMentions, candidateEntity, searchedCandidates, withSearchResults } from '../mentionCandidates'
 import { eventContextEntity, regionContextEntity, wikiContextEntity } from '../contextEntity'
 import type { ArgusEvent } from '../../types'
 
@@ -117,5 +117,34 @@ describe('candidateEntity', () => {
   it('uses the ready-made entity when there is one', () => {
     const region = mentionCandidates([], 'en').find(c => c.name === 'Japan')!
     expect(candidateEntity(region)).toBe(region.entity)
+  })
+})
+
+describe('withSearchResults', () => {
+  const local = mentionCandidates([evt({ id: 'e', actors: ['Nvidia'] })], 'en')
+    .filter(c => c.name === 'Nvidia' || c.name === 'Japan')
+
+  it('keeps local matches above searched ones', () => {
+    const merged = withSearchResults(local, searchedCandidates(['Jane Roe']))
+    expect(named(merged).slice(0, local.length)).toEqual(named(local))
+    expect(merged[merged.length - 1].fromSearch).toBe(true)
+  })
+
+  it('drops a search hit the local list already covers', () => {
+    // Same name means the same id means the same card; offering it twice would
+    // let the operator pick the one with no data behind it.
+    const merged = withSearchResults(local, searchedCandidates(['Nvidia', 'Jane Roe']))
+    expect(named(merged).filter(n => n === 'Nvidia')).toHaveLength(1)
+  })
+
+  it('stops at the limit', () => {
+    const many = searchedCandidates(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+    expect(withSearchResults(local, many, 5)).toHaveLength(5)
+  })
+
+  it('marks searched candidates as needing their summary fetched', () => {
+    const [hit] = searchedCandidates(['Jane Roe'])
+    expect(hit.entity).toBeNull()
+    expect(hit.id).toBe(wikiContextEntity('Jane Roe').id)
   })
 })
