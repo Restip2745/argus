@@ -101,10 +101,28 @@ function isPlausibleMatch(requested: string, returned: string): boolean {
   return a === b || a.includes(b) || b.includes(a)
 }
 
+/**
+ * The script variant to ask zh.wikipedia for.
+ *
+ * Chinese Wikipedia stores one article and converts it on request. Ask for no
+ * variant and what comes back is neither script but both at once, the
+ * conversion having been applied to whichever fragments carried markup and to
+ * nothing else — one sentence of the Marie Curie summary arrives half
+ * Traditional and half Simplified. A browser sends its own Accept-Language and
+ * hides this, which is the problem rather than the fix: the reader chose zh-TW
+ * in this app, not in their browser, and a Chinese interface read through an
+ * English browser was getting the mixture. So the app states the variant.
+ */
+function variantHeaders(lang: string): Record<string, string> {
+  if (lang !== 'zh') return {}
+  const ui = (i18next.language ?? '').toLowerCase()
+  return ui.startsWith('zh-') ? { 'Accept-Language': ui } : {}
+}
+
 async function fetchSummary(lang: string, title: string, signal: AbortSignal): Promise<WikiSummary | null> {
   const encoded = encodeURIComponent(title.replace(/ /g, '_'))
   const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encoded}`, {
-    signal, headers: { Accept: 'application/json' },
+    signal, headers: { Accept: 'application/json', ...variantHeaders(lang) },
   })
   if (!res.ok) return null
   const data = await res.json() as WikiSummary

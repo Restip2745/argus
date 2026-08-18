@@ -115,3 +115,41 @@ describe('useWikiSummary resolution', () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 })
+
+/**
+ * Chinese Wikipedia converts one stored article into the script asked for.
+ * Nothing asked means neither script but both at once, and a browser sending
+ * its own Accept-Language hides that from whoever developed on a Chinese
+ * machine — so the app has to state what the reader chose in the app.
+ */
+describe('useWikiSummary script variant', () => {
+  const headersOf = (i: number) =>
+    (vi.mocked(fetch).mock.calls[i][1] as RequestInit).headers as Record<string, string>
+
+  it('asks zh.wikipedia for the variant the interface is in', async () => {
+    i18next.language = 'zh-TW'
+    route((u) => (u === summaryUrl('zh', 'Marie Curie') ? page('Marie Curie') : missing()))
+    const { result } = renderHook(() => useWikiSummary('Marie Curie'))
+    await waitFor(() => expect(result.current.data).not.toBeNull())
+    expect(headersOf(0)['Accept-Language']).toBe('zh-tw')
+  })
+
+  it('asks en.wikipedia for no variant at all', async () => {
+    // en has none to convert between, and sending zh-tw there would be asking
+    // the wrong question of the wrong encyclopedia.
+    i18next.language = 'zh-TW'
+    route((u) => (u === summaryUrl('en', 'Ada Lovelace') ? page('Ada Lovelace') : missing()))
+    const { result } = renderHook(() => useWikiSummary('Ada Lovelace'))
+    await waitFor(() => expect(result.current.data).not.toBeNull())
+    const en = vi.mocked(fetch).mock.calls.findIndex(c => String(c[0]).includes('en.wikipedia'))
+    expect(headersOf(en)['Accept-Language']).toBeUndefined()
+  })
+
+  it('sends no variant when the interface language names none', async () => {
+    i18next.language = 'zh'
+    route((u) => (u === summaryUrl('zh', 'Grace Hopper') ? page('Grace Hopper') : missing()))
+    const { result } = renderHook(() => useWikiSummary('Grace Hopper'))
+    await waitFor(() => expect(result.current.data).not.toBeNull())
+    expect(headersOf(0)['Accept-Language']).toBeUndefined()
+  })
+})

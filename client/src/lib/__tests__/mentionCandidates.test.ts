@@ -148,3 +148,22 @@ describe('withSearchResults', () => {
     expect(hit.id).toBe(wikiContextEntity('Jane Roe').id)
   })
 })
+
+describe('Chinese coverage', () => {
+  // The interface is Chinese and the data is keyed in English, so a country
+  // with no alias cannot be reached by typing its name — which is the whole
+  // point of the feature. This fails when a country is added without one.
+  it('gives every country with data a Chinese name to be found by', () => {
+    const regions = mentionCandidates([], 'zh-TW').filter(c => c.type === 'region')
+    const unreachable = regions
+      .filter(c => matchMentions(regions, c.via ?? '', 3).length === 0 || !c.via)
+      .map(c => c.name)
+    expect(unreachable).toEqual([])
+  })
+
+  it('finds each of them by that name', () => {
+    const regions = mentionCandidates([], 'zh-TW').filter(c => c.type === 'region')
+    const misses = regions.filter(c => matchMentions(regions, c.via!, 8)[0]?.name !== c.name)
+    expect(misses.map(c => `${c.via} -> ${c.name}`)).toEqual([])
+  })
+})
