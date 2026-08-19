@@ -174,8 +174,8 @@ describe('EventPanelBody agent section', () => {
     useAppStore.setState({ agentSectionOpen: false })
     const { getByText } = renderWithAgent({
       agentHistory: [
-        { id: '1', question: 'q1', html: 'a1', streaming: false },
-        { id: '2', question: 'q2', html: 'a2', streaming: false },
+        { kind: 'answer', id: '1', question: 'q1', html: 'a1', streaming: false },
+        { kind: 'answer', id: '2', question: 'q2', html: 'a2', streaming: false },
       ],
     })
     expect(getByText('2')).toBeTruthy()

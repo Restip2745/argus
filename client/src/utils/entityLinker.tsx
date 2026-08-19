@@ -1,7 +1,7 @@
 import type { SelectedEntity } from '../store'
 import { resolveCountryName } from '../data/countryData'
 
-const PERSON_LINK_STYLE: React.CSSProperties = {
+const ENTITY_LINK_STYLE: React.CSSProperties = {
   color: '#c084fc',
   cursor: 'pointer',
   borderBottom: '1px dotted #c084fc66',
@@ -16,12 +16,12 @@ const PERSON_LINK_STYLE: React.CSSProperties = {
 interface EntityLinkProps {
   text: string
   knownEntities: string[]
-  onEntityClick: (person: SelectedEntity) => void
+  onEntityClick: (entity: SelectedEntity) => void
   style?: React.CSSProperties
 }
 
 /**
- * Renders text with detected person names as clickable links.
+ * Renders text with detected entity names as clickable links.
  * `knownEntities` is the list of names to detect (e.g. event actors).
  * Names are matched case-insensitively as whole words.
  */
@@ -47,8 +47,8 @@ export function LinkedText({ text, knownEntities, onEntityClick, style }: Entity
             <button
               key={i}
               onClick={(e) => { e.stopPropagation(); onEntityClick({ name: matched, wikiTitle: matched }) }}
-              style={PERSON_LINK_STYLE}
-              title={`View person: ${matched}`}
+              style={ENTITY_LINK_STYLE}
+              title={`View entity: ${matched}`}
               onMouseEnter={e => { e.currentTarget.style.color = '#d8b4fe' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#c084fc' }}
             >
@@ -99,10 +99,22 @@ export function isGenericDescriptor(name: string): boolean {
 }
 
 /**
- * Extract likely person names from event actors list.
- * Filters out obvious non-person entries (organizations, countries, etc.).
+ * The actors worth offering as a link into the entity panel.
+ *
+ * Named for what it returns, which is not what it was called for a long time.
+ * `extractPersonNames` promised people and delivered the residue after removing
+ * countries, generic descriptors and anything carrying an organisation word —
+ * so "Nvidia" and "Lockheed Martin" both came back, having no "corp" or "ltd"
+ * about them. Nothing local separates a one-word company from a one-word
+ * surname, and the callers were putting a 👤 beside every result on the strength
+ * of that promise.
+ *
+ * The filter itself is right for the question actually being asked — does this
+ * name plausibly have an encyclopedia entry behind it — so only the name and the
+ * claim its callers made about the answer have changed. What each name turns out
+ * to be is settled later, by `classifyEntity`, once a summary exists.
  */
-export function extractPersonNames(actors: string[]): string[] {
+export function linkableEntityNames(actors: string[]): string[] {
   if (!actors?.length) return []
 
   const orgPatterns = [

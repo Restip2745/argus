@@ -19,7 +19,8 @@ import type { CountryInfo } from '../../data/countryData'
 import { useAppStore } from '../../store'
 import type { SelectedCountry } from '../../store'
 import type { ArgusEvent } from '../../types'
-import { extractPersonNames } from '../../utils/entityLinker'
+import { linkableEntityNames } from '../../utils/entityLinker'
+import { EntityGlyph } from './EntityGlyph'
 import { eventTitle } from '../../lib/eventText'
 
 export type RegionTab = 'overview' | 'events' | 'profile'
@@ -99,16 +100,20 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ── Key Figures section ───────────────────────────────────────────────────────
+// ── Key actors section ────────────────────────────────────────────────────────
+//
+// "Key figures" was a claim about the contents that the filter behind it never
+// made: these are the region's recurring actors, and a recurring actor is as
+// often a ministry or a company as a person.
 
-function RegionKeyFigures({ regionEvents, addSelectedEntity }: {
+function RegionKeyActors({ regionEvents, addSelectedEntity }: {
   regionEvents: ArgusEvent[]
   addSelectedEntity: (p: import('../../store').SelectedEntity) => void
 }) {
   const entities = useMemo(() => {
     const counts = new Map<string, number>()
     for (const ev of regionEvents) {
-      for (const name of extractPersonNames(ev.actors ?? [])) {
+      for (const name of linkableEntityNames(ev.actors ?? [])) {
         counts.set(name, (counts.get(name) ?? 0) + 1)
       }
     }
@@ -121,13 +126,13 @@ function RegionKeyFigures({ regionEvents, addSelectedEntity }: {
 
   return (
     <div style={{ borderTop: '1px solid rgba(0,180,255,0.07)', padding: '8px 12px 6px' }}>
-      <SectionLabel>KEY FIGURES</SectionLabel>
+      <SectionLabel>KEY ACTORS</SectionLabel>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
         {entities.map(([name, count]) => (
           <button
             key={name}
             onClick={() => addSelectedEntity({ name, wikiTitle: name })}
-            title={`View person: ${name}`}
+            title={`View entity: ${name}`}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '3px',
               background: '#c084fc08', border: '1px solid #c084fc22',
@@ -139,7 +144,7 @@ function RegionKeyFigures({ regionEvents, addSelectedEntity }: {
             onMouseEnter={e => { e.currentTarget.style.background = '#c084fc18'; e.currentTarget.style.color = '#c084fc' }}
             onMouseLeave={e => { e.currentTarget.style.background = '#c084fc08'; e.currentTarget.style.color = '#c084fccc' }}
           >
-            👤 {name}
+            <EntityGlyph name={name} /> {name}
             {count > 1 && <span style={{ opacity: 0.6, fontSize: '10px' }}>×{count}</span>}
           </button>
         ))}
@@ -404,7 +409,7 @@ export function RegionPanelTabContent({
             })
           )}
         </div>
-        <RegionKeyFigures regionEvents={regionEvents} addSelectedEntity={addSelectedEntity} />
+        <RegionKeyActors regionEvents={regionEvents} addSelectedEntity={addSelectedEntity} />
       </>
     )
   }

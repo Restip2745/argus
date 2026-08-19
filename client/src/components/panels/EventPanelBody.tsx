@@ -16,8 +16,10 @@ import { EventCompanies } from './EventCompanies'
 import type { ArgusEvent } from '../../types'
 import type { SelectedCountry } from '../../store'
 import { useAppStore } from '../../store'
-import type { AgentEntry } from '../../hooks/useAgentQuery'
-import { extractPersonNames, LinkedText } from '../../utils/entityLinker'
+import { awaitingFirstToken, type AgentEntry } from '../../hooks/useAgentQuery'
+import { SubjectAddedNote } from './SubjectAddedNote'
+import { linkableEntityNames, LinkedText } from '../../utils/entityLinker'
+import { EntityGlyph } from './EntityGlyph'
 import { relativeTime, heatColor } from '../../utils/eventUtils'
 import { eventTitle, eventSummary } from '../../lib/eventText'
 import { highlightText } from '../../utils/highlightText'
@@ -106,7 +108,7 @@ export function EventPanelBody({
     setNoteOpen(false)
   }
   const addSelectedEntity = useAppStore((s) => s.addSelectedEntity)
-  const personNames = extractPersonNames(event.actors ?? [])
+  const linkableNames = linkableEntityNames(event.actors ?? [])
 
   // ── Agent section: collapsed / expanded ────────────────────────────────────
   //
@@ -294,7 +296,7 @@ export function EventPanelBody({
           <p className="text-[#8aabbf] text-[11px] leading-relaxed">
             <LinkedText
               text={summary}
-              knownEntities={personNames}
+              knownEntities={linkableNames}
               onEntityClick={addSelectedEntity}
             />
           </p>
@@ -304,7 +306,7 @@ export function EventPanelBody({
         {event.actors?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {event.actors.map(a => {
-              const isPerson = personNames.includes(a)
+              const isLinkable = linkableNames.includes(a)
               return (
                 <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: '1px' }}>
                   <button
@@ -317,17 +319,17 @@ export function EventPanelBody({
                       color: accentColor + 'cc',
                       cursor: 'pointer',
                       fontFamily: 'JetBrains Mono, monospace',
-                      borderRadius: isPerson ? '2px 0 0 2px' : '2px',
+                      borderRadius: isLinkable ? '2px 0 0 2px' : '2px',
                     }}
                     onMouseEnter={e => { const el = e.currentTarget; el.style.background = `${accentColor}22`; el.style.borderColor = `${accentColor}70`; el.style.color = accentColor }}
                     onMouseLeave={e => { const el = e.currentTarget; el.style.background = `${accentColor}10`; el.style.borderColor = `${accentColor}30`; el.style.color = accentColor + 'cc' }}
                   >
                     {a}
                   </button>
-                  {isPerson && (
+                  {isLinkable && (
                     <button
                       onClick={() => addSelectedEntity({ name: a, wikiTitle: a })}
-                      title={`View person: ${a}`}
+                      title={`View entity: ${a}`}
                       className="py-0.5 text-[10px] transition-all"
                       style={{
                         background: '#c084fc10',
@@ -342,7 +344,7 @@ export function EventPanelBody({
                       onMouseEnter={e => { e.currentTarget.style.background = '#c084fc22'; e.currentTarget.style.color = '#c084fc' }}
                       onMouseLeave={e => { e.currentTarget.style.background = '#c084fc10'; e.currentTarget.style.color = '#c084fccc' }}
                     >
-                      👤
+                      <EntityGlyph name={a} />
                     </button>
                   )}
                 </span>
@@ -607,7 +609,9 @@ export function EventPanelBody({
         {agentOpen && <>
         {agentHistory.length > 0 && (
           <div className="mb-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent' }}>
-            {agentHistory.map((entry) => (
+            {agentHistory.map((entry) => entry.kind === 'subject-added' ? (
+              <SubjectAddedNote key={entry.id} labels={entry.labels} accentColor={accentColor} />
+            ) : (
               <div key={entry.id} className="mb-2">
                 <div className="text-[10px] mb-1 opacity-70" style={{ color: accentColor }}>▸ {entry.question}</div>
                 {entry.streaming ? (
@@ -628,7 +632,7 @@ export function EventPanelBody({
           </div>
         )}
 
-        {agentLoading && agentHistory.length > 0 && agentHistory[agentHistory.length - 1].html === '' && (
+        {agentLoading && awaitingFirstToken(agentHistory) && (
           <div className="mb-2 flex items-center gap-2">
             <span className="text-[10px] text-[#2a4060] tracking-widest">{t('event.labels.analyzing', 'ANALYZING')}</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>

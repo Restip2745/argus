@@ -3,8 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { contextQueries } from '../../lib/suggestedQueries'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
-import { useAgentQuery } from '../../hooks/useAgentQuery'
+import { useAgentQuery, awaitingFirstToken } from '../../hooks/useAgentQuery'
+import { ensureWikiSummary, getCachedWikiSummary } from '../../hooks/useWikiSummary'
+import { mentionCandidates, searchedCandidates, candidateEntity, type MentionCandidate } from '../../lib/mentionCandidates'
+import { useWikiSearch } from '../../hooks/useWikiSearch'
+import { MentionInput } from '../ui/MentionInput'
+import { SubjectAddedNote } from './SubjectAddedNote'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
+import { useCachedEntityKind } from '../../hooks/useEntityKind'
+import { EntityKindGlyph } from './EntityGlyph'
 import { Panel } from './Panel'
 import type { ContextEntity, ContextEntityType } from '../../types'
 
@@ -17,9 +24,13 @@ const H_PAD     = 20
 // card content width when single entity; multi-column cards match this
 const CARD_W    = SINGLE_W - H_PAD
 
-const TYPE_ICON: Record<ContextEntityType, string> = {
+/**
+ * `wiki` is absent on purpose: a card from the entity panel is whatever the
+ * entity turned out to be, so its glyph comes from `ENTITY_GLYPH` instead. The
+ * other three types are fixed by the panel that produced them.
+ */
+const TYPE_ICON: Record<Exclude<ContextEntityType, 'wiki'>, string> = {
   event:     '◉',
-  wiki:      '👤',
   region:    '⊙',
   celestial: '✦',
 }
@@ -33,6 +44,8 @@ const TYPE_COLOR: Record<ContextEntityType, string> = {
 
 export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemove: () => void }) {
   const color = TYPE_COLOR[entity.type]
+  // Looked up for wiki cards only, but the hook has to run either way.
+  const wikiKind = useCachedEntityKind(entity.type === 'wiki' ? entity.name : null)
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: '8px',
@@ -40,7 +53,9 @@ export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemo
       border: `1px solid ${color}20`, borderRadius: '3px',
     }}>
       <span style={{ color, fontSize: '10px', flexShrink: 0, marginTop: '1px' }}>
-        {TYPE_ICON[entity.type]}
+        {entity.type === 'wiki'
+          ? <EntityKindGlyph kind={wikiKind} />
+          : TYPE_ICON[entity.type]}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: '#c8dde8', fontSize: '11px', fontWeight: 600, lineHeight: 1.3 }}>
@@ -77,19 +92,23 @@ export function EntityCard({ entity, onRemove }: { entity: ContextEntity; onRemo
 }
 
 export function MultiEntityContextPanel() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const contextEntities     = useAppStore(s => s.contextEntities)
   const showContextPanel    = useAppStore(s => s.showContextPanel)
   const removeContextEntity = useAppStore(s => s.removeContextEntity)
   const clearContextEntities = useAppStore(s => s.clearContextEntities)
+  const addContextEntity    = useAppStore(s => s.addContextEntity)
+  const events              = useAppStore(s => s.events)
 
   const { panelRef, pos, setPos, dragging, onHeaderMouseDown, zIndex, handleBringToFront, uiScale } =
     usePanelDrag({ panelKey: 'context', defaultPos: { x: 100, y: 160 } })
 
   const { open: popoutOpen, isPopped } = usePopoutWindow('context')
-  // Same rule as the entity panel: the collection is the subject.
+  // Same rule as the entity panel: the collection is the subject. Passed as the
+  // entities themselves, not a joined key, so the hook can tell a card being
+  // added from the collection being replaced.
   const { history, loading: agentLoading, error: agentError, ask } =
-    useAgentQuery(contextEntities.map(e => e.id).join('|'))
+    useAgentQuery(contextEntities.map(e => ({ id: e.id, label: e.name })))
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)
 
@@ -131,10 +150,50 @@ export function MultiEntityContextPanel() {
     [contextEntities, t],
   )
 
-  if (!showContextPanel || contextEntities.length === 0) return null
+  const candidates = useMemo(
+    () => mentionCandidates(events, i18n.language),
+    [events, i18n.language],
+  )
+  const collected = useMemo(
+    () => new Set(contextEntities.map(e => e.id)),
+    [contextEntities],
+  )
+
+  // The mention token currently being typed, which the input reports up so the
+  // search can run here rather than inside a text field.
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  // The query was typed in the interface language, so ask that Wikipedia first
+  // and fall through to en, which has far more articles.
+  const searchLangs = useMemo(
+    () => i18n.language?.startsWith('zh') ? ['zh', 'en'] : ['en'],
+    [i18n.language],
+  )
+  const { results: searchHits, loading: searching } = useWikiSearch(mentionQuery ?? '', searchLangs)
+  const searched = useMemo(
+    () => searchedCandidates(searchHits.map(h => h.title)),
+    [searchHits],
+  )
+
+  if (!showContextPanel) return null
 
   const handleSend = () => {
     if (agentInput.trim()) { ask(agentInput, agentContext); setAgentInput('') }
+  }
+
+  /**
+   * An actor is a name, and the collection wants the encyclopedia text behind
+   * it — the same text the entity panel would have fetched had the operator
+   * gone the long way round. So the card lands when that resolves, not when the
+   * key is pressed. Regions and events carry their summary already and appear
+   * at once.
+   */
+  const handlePick = (candidate: MentionCandidate) => {
+    if (candidate.entity) { addContextEntity(candidate.entity); return }
+    const cached = getCachedWikiSummary(candidate.name)
+    if (cached) { addContextEntity(candidateEntity(candidate, cached.extract)); return }
+    ensureWikiSummary(candidate.name)
+      .then(s => addContextEntity(candidateEntity(candidate, s?.extract)))
+      .catch(() => addContextEntity(candidateEntity(candidate)))
   }
 
   const atLimit = contextEntities.length >= LIMIT
@@ -201,6 +260,18 @@ export function MultiEntityContextPanel() {
           />
         ))}
 
+        {/* The panel used to refuse to render while empty, which left the
+            mention box — the one way in that does not start from something
+            already on screen — with nowhere to be typed. */}
+        {contextEntities.length === 0 && (
+          <div style={{
+            color: '#4a6070', fontSize: '10px', lineHeight: 1.6,
+            letterSpacing: '0.06em', padding: '10px 2px', textAlign: 'center',
+          }}>
+            {t('context.empty', 'Nothing collected yet — type @ below to name an entity.')}
+          </div>
+        )}
+
         {atLimit && (
           <div style={{
             color: '#ff9c2a', fontSize: '10px', letterSpacing: '0.1em',
@@ -252,7 +323,9 @@ export function MultiEntityContextPanel() {
               marginBottom: '7px', maxHeight: '180px', overflowY: 'auto',
               scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,255,204,0.15) transparent',
             }}>
-              {history.map(entry => (
+              {history.map(entry => entry.kind === 'subject-added' ? (
+                <SubjectAddedNote key={entry.id} labels={entry.labels} accentColor={ACCENT} />
+              ) : (
                 <div key={entry.id} style={{ marginBottom: '7px' }}>
                   <div style={{ color: ACCENT, fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
                     ▸ {entry.question}
@@ -275,7 +348,7 @@ export function MultiEntityContextPanel() {
             </div>
           )}
 
-          {agentLoading && history.length > 0 && history[history.length - 1]?.html === '' && (
+          {agentLoading && awaitingFirstToken(history) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
               <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>
                 {t('event.labels.analyzing', 'ANALYZING')}
@@ -289,18 +362,20 @@ export function MultiEntityContextPanel() {
           )}
 
           <div style={{ display: 'flex', gap: '5px' }}>
-            <input
+            <MentionInput
               value={agentInput}
-              onChange={e => setAgentInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+              onChange={setAgentInput}
+              onSubmit={handleSend}
+              candidates={candidates}
+              extra={searched}
+              searching={searching}
+              onQuery={setMentionQuery}
+              collected={collected}
+              onPick={handlePick}
+              full={atLimit}
               placeholder={t('context.askAgent', '詢問跨實體情報分析…')}
               disabled={agentLoading}
-              style={{
-                flex: 1, background: 'rgba(0,255,204,0.05)', border: `1px solid ${ACCENT}25`,
-                borderRadius: '3px', color: '#a8c4d8', fontSize: '11px', padding: '5px 8px',
-                fontFamily: 'JetBrains Mono, monospace', outline: 'none',
-                opacity: agentLoading ? 0.5 : 1,
-              }}
+              accentColor={ACCENT}
             />
             <button
               onClick={handleSend}

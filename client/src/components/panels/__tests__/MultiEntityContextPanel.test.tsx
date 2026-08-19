@@ -116,10 +116,20 @@ describe('Context entity store logic', () => {
 describe('MultiEntityContextPanel rendering', () => {
   beforeEach(resetStore)
 
-  it('does not render when no entities', async () => {
+  it('does not render when closed', async () => {
     const { MultiEntityContextPanel } = await import('../MultiEntityContextPanel')
     const { container } = render(<MultiEntityContextPanel />)
     expect(container.innerHTML).toBe('')
+  })
+
+  // It used to refuse to render while empty, which left the mention box — the
+  // one way in that does not start from something already on screen — nowhere
+  // to be typed.
+  it('renders open and empty, inviting a mention', async () => {
+    useAppStore.setState({ contextEntities: [], showContextPanel: true })
+    const { MultiEntityContextPanel } = await import('../MultiEntityContextPanel')
+    render(<MultiEntityContextPanel />)
+    expect(screen.getByText(/type @ below/)).toBeInTheDocument()
   })
 
   it('renders entity cards when entities exist', async () => {

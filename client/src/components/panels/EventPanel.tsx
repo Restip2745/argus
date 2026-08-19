@@ -13,7 +13,7 @@ import { useTranslation }     from 'react-i18next'
 
 import { useAppStore }        from '../../store'
 import { categoryQueries }    from '../../lib/suggestedQueries'
-import type { ContextEntity } from '../../types'
+import { eventContextEntity } from '../../lib/contextEntity'
 import { useAgentQuery }      from '../../hooks/useAgentQuery'
 import { usePopoutWindow }    from '../../hooks/usePopoutWindow'
 import { useRelatedEvents }   from '../../hooks/useRelatedEvents'
@@ -24,7 +24,7 @@ import { EventTimeline }      from './EventTimeline'
 import { EventPanelBody }     from './EventPanelBody'
 import { Panel }              from './Panel'
 import { PanelTail }          from './PanelTail'
-import { eventTitle, eventSummary } from '../../lib/eventText'
+import { eventSummary }       from '../../lib/eventText'
 import type { ArgusEvent }    from '../../types'
 
 
@@ -287,20 +287,7 @@ export function EventPanel() {
                 const inContext = contextEntities.some(e => e.id === displayedEvent.id)
                 return (
                   <button
-                    onClick={() => {
-                      // The generated summary in the reader's language, with
-                      // the raw RSS snippet only as a fallback for rows
-                      // ingested before summaries existed.
-                      const ce: ContextEntity = {
-                        id: displayedEvent.id,
-                        type: 'event',
-                        name: eventTitle(displayedEvent, i18n.language),
-                        summary: eventSummary(displayedEvent, i18n.language)
-                          || displayedEvent.content
-                          || displayedEvent.title,
-                      }
-                      addContextEntity(ce)
-                    }}
+                    onClick={() => addContextEntity(eventContextEntity(displayedEvent, i18n.language))}
                     title={inContext ? 'Already in context' : 'Add to context panel'}
                     disabled={inContext}
                     style={{

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useAgentQuery } from '../useAgentQuery'
+import { useAgentQuery, type AgentAnswer, type AgentEntry } from '../useAgentQuery'
+
+const answers = (h: AgentEntry[]) => h.filter((e): e is AgentAnswer => e.kind === 'answer')
 
 function makeStream(chunks: string[]): ReadableStream<Uint8Array> {
   const enc = new TextEncoder()
@@ -79,7 +81,7 @@ describe('useAgentQuery', () => {
     const { result } = renderHook(() => useAgentQuery())
     await act(async () => { await result.current.ask('q', '') })
     expect(result.current.history).toHaveLength(1)
-    expect(result.current.history[0].streaming).toBe(false)
+    expect(answers(result.current.history)[0].streaming).toBe(false)
   })
 
   it('appends stream-interrupted-notice when [DONE] not received', async () => {
@@ -90,7 +92,7 @@ describe('useAgentQuery', () => {
 
     const { result } = renderHook(() => useAgentQuery())
     await act(async () => { await result.current.ask('q', '') })
-    expect(result.current.history[0].html).toContain('stream-interrupted-notice')
+    expect(answers(result.current.history)[0].html).toContain('stream-interrupted-notice')
   })
 })
 
@@ -148,6 +150,98 @@ describe('useAgentQuery — subject isolation', () => {
     await act(async () => { await result.current.ask('q', 'ctx') })
     rerender()
     expect(result.current.history).toHaveLength(1)
+  })
+
+  it('keeps the transcript when an entity joins the collection', async () => {
+    answered()
+    const { result, rerender } = renderHook(({ s }) => useAgentQuery(s), {
+      initialProps: { s: [{ id: 'wiki-USA', label: 'United States' }] },
+    })
+    await act(async () => { await result.current.ask('q', 'ctx') })
+
+    act(() => { rerender({ s: [
+      { id: 'wiki-USA',   label: 'United States' },
+      { id: 'wiki-Trump', label: 'Donald Trump' },
+    ] }) })
+
+    expect(answers(result.current.history)).toHaveLength(1)
+    const note = result.current.history[result.current.history.length - 1]
+    expect(note.kind).toBe('subject-added')
+    // Named, so the operator can see which answers were written without it.
+    expect(note.kind === 'subject-added' && note.labels).toEqual(['Donald Trump'])
+  })
+
+  it('discards the transcript when an entity leaves the collection', async () => {
+    answered()
+    const { result, rerender } = renderHook(({ s }) => useAgentQuery(s), {
+      initialProps: { s: [
+        { id: 'wiki-USA',   label: 'United States' },
+        { id: 'wiki-Trump', label: 'Donald Trump' },
+      ] },
+    })
+    await act(async () => { await result.current.ask('q', 'ctx') })
+
+    act(() => { rerender({ s: [{ id: 'wiki-USA', label: 'United States' }] }) })
+    expect(result.current.history).toHaveLength(0)
+  })
+
+  it('marks nothing when the collection is only reordered', async () => {
+    answered()
+    const a = { id: 'wiki-USA',   label: 'United States' }
+    const b = { id: 'wiki-Trump', label: 'Donald Trump' }
+    const { result, rerender } = renderHook(({ s }) => useAgentQuery(s), {
+      initialProps: { s: [a, b] },
+    })
+    await act(async () => { await result.current.ask('q', 'ctx') })
+
+    act(() => { rerender({ s: [b, a] }) })
+    expect(result.current.history).toHaveLength(1)
+  })
+
+  it('marks nothing when growth precedes every answer', () => {
+    const { result, rerender } = renderHook(({ s }) => useAgentQuery(s), {
+      initialProps: { s: [{ id: 'wiki-USA', label: 'United States' }] },
+    })
+    act(() => { rerender({ s: [
+      { id: 'wiki-USA',   label: 'United States' },
+      { id: 'wiki-Trump', label: 'Donald Trump' },
+    ] }) })
+    // A note above an empty transcript would be marking nothing.
+    expect(result.current.history).toHaveLength(0)
+  })
+
+  it('lets an in-flight answer finish when an entity joins mid-stream', async () => {
+    let push!: (chunk: string) => void
+    let close!: () => void
+    const enc = new TextEncoder()
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      body: new ReadableStream<Uint8Array>({
+        start(ctrl) {
+          push  = (c) => ctrl.enqueue(enc.encode(c))
+          close = () => ctrl.close()
+        },
+      }),
+    } as unknown as Response)
+
+    const { result, rerender } = renderHook(({ s }) => useAgentQuery(s), {
+      initialProps: { s: [{ id: 'wiki-USA', label: 'United States' }] },
+    })
+    let asking!: Promise<void>
+    act(() => { asking = result.current.ask('q', 'ctx') as unknown as Promise<void> })
+    await act(async () => { await Promise.resolve() })
+
+    act(() => { rerender({ s: [
+      { id: 'wiki-USA',   label: 'United States' },
+      { id: 'wiki-Trump', label: 'Donald Trump' },
+    ] }) })
+
+    // The question was asked about the old collection and is still a fair
+    // question about it, so aborting it would throw away a valid answer.
+    await act(async () => { push(sseChunk('answer')); push(sseDone()); close(); await asking })
+    expect(answers(result.current.history)).toHaveLength(1)
+    expect(answers(result.current.history)[0].streaming).toBe(false)
+    expect(answers(result.current.history)[0].html).toContain('answer')
   })
 
   it('does not leave loading stuck when the subject changes mid-request', async () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import Database from 'better-sqlite3'
+import { PENDING_ORDER_BY } from '../db/sqlite'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -182,5 +183,67 @@ describe('SQLite integration', () => {
       expect(deleted.changes).toBe(0)
       expect(db.prepare("SELECT * FROM articles WHERE id = 'fresh-1'").get()).toBeTruthy()
     })
+  })
+})
+
+/**
+ * What the classifier reaches for next.
+ *
+ * The client is served analysed rows alone and the feed shows at most a 24-hour
+ * window, so the order this query returns decides whether a backlog is worked
+ * through from the end the operator can see or the end they cannot.
+ */
+describe('pending article order', () => {
+  let db: Database.Database
+
+  const iso = (msAgo: number) => new Date(Date.now() - msAgo).toISOString()
+  const HOUR = 3600_000
+
+  function insertPending(id: string, publishedIso: string | null, fetchedAgoMs: number) {
+    db.prepare(
+      `INSERT INTO articles (id, source, title, url, published_at, fetched_at, is_analyzed)
+       VALUES (?, 'rss', ?, ?, ?, ?, 0)`
+    ).run(id, `Title ${id}`, `https://example.com/${id}`, publishedIso,
+          toSqliteDt(new Date(Date.now() - fetchedAgoMs)))
+  }
+
+  const pendingIds = () =>
+    (db.prepare(`SELECT id FROM articles WHERE is_analyzed = 0 ${PENDING_ORDER_BY}`)
+       .all() as { id: string }[]).map(r => r.id)
+
+  beforeEach(() => { db = createTestDb() })
+
+  it('puts articles the feed could show ahead of ones it could not', () => {
+    insertPending('stale',  iso(50 * HOUR), 40 * HOUR)   // fetched first, unshowable
+    insertPending('fresh',  iso(2 * HOUR),  1 * HOUR)
+    expect(pendingIds()).toEqual(['fresh', 'stale'])
+  })
+
+  it('stays first-in-first-out inside each class', () => {
+    insertPending('fresh-older', iso(5 * HOUR),  4 * HOUR)
+    insertPending('fresh-newer', iso(1 * HOUR),  1 * HOUR)
+    insertPending('stale-older', iso(60 * HOUR), 50 * HOUR)
+    insertPending('stale-newer', iso(30 * HOUR), 20 * HOUR)
+    // Nothing is starved: the tail is still analysed, just after the material
+    // that has somewhere to go.
+    expect(pendingIds()).toEqual(['fresh-older', 'fresh-newer', 'stale-older', 'stale-newer'])
+  })
+
+  // The bug the datetime() call exists to prevent. published_at is stored ISO
+  // with a T and a Z; compared as text against SQLite's own format, a row from
+  // 05:00 today reads as newer than 09:38 yesterday and jumps the queue.
+  it('does not read a same-day article as in-window when it is 28 hours old', () => {
+    insertPending('older-than-a-day', iso(28 * HOUR), 2 * HOUR)
+    insertPending('within-the-day',   iso(20 * HOUR), 1 * HOUR)
+    expect(pendingIds()).toEqual(['within-the-day', 'older-than-a-day'])
+  })
+
+  it('does not lose a row whose date is missing or unparseable', () => {
+    insertPending('no-date',  null,        3 * HOUR)
+    insertPending('bad-date', 'not a date', 2 * HOUR)
+    insertPending('fresh',    iso(1 * HOUR), 1 * HOUR)
+    // Behind the showable ones, but still in the queue rather than dropped.
+    expect(pendingIds()[0]).toBe('fresh')
+    expect(pendingIds()).toHaveLength(3)
   })
 })

@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppStore } from '../../store'
-import type { ContextEntity } from '../../types'
+import { regionContextEntity } from '../../lib/contextEntity'
 import { useTranslation } from 'react-i18next'
 import { useSceneTime } from '../../hooks/useSceneTime'
 import { getCountryInfo, getDynamicTags } from '../../data/countryData'
@@ -252,17 +252,7 @@ export function RegionPanel() {
               const inContext = contextEntities.some(e => e.id === regionId)
               return (
                 <button
-                  onClick={() => {
-                    const ce: ContextEntity = {
-                      id: regionId,
-                      type: 'region',
-                      name: displayedCountry.name,
-                      summary: info
-                        ? `${info.capital} · Pop ${formatPop(info.populationM)} · GDP ${formatGdp(info.gdpB)} · Stability ${info.stability}/100`
-                        : displayedCountry.name,
-                    }
-                    addContextEntity(ce)
-                  }}
+                  onClick={() => addContextEntity(regionContextEntity(displayedCountry.name))}
                   aria-label={inContext ? 'Already in context' : 'Add to context panel'}
                   title={inContext ? 'Already in context' : 'Add to context panel'}
                   disabled={inContext}

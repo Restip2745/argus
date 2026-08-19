@@ -385,6 +385,17 @@ export function getCountryInfo(name: string): CountryInfo | null {
   return COUNTRY_DATA[name] ?? null
 }
 
+/**
+ * Every country this file holds real figures for.
+ *
+ * `PLACE_NAMES` below is a longer list and the wrong one to offer: it exists to
+ * recognise a place when the model names one, so most of its entries are cities
+ * and Chinese spellings that carry no data at all.
+ */
+export function countriesWithData(): string[] {
+  return Object.keys(COUNTRY_DATA)
+}
+
 // ── Recognised place names ───────────────────────────────────────────────────
 //
 // Names only — the coordinates that used to sit here now live in the server

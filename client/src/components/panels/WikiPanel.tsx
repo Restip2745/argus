@@ -3,20 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { entityQueries } from '../../lib/suggestedQueries'
 import { useAppStore } from '../../store'
 import { usePanelDrag } from '../../hooks/usePanelDrag'
-import { useAgentQuery } from '../../hooks/useAgentQuery'
+import { useAgentQuery, awaitingFirstToken } from '../../hooks/useAgentQuery'
+import { SubjectAddedNote } from './SubjectAddedNote'
 import { usePopoutWindow } from '../../hooks/usePopoutWindow'
 import { getCachedWikiSummary, useWikiCacheVersion } from '../../hooks/useWikiSummary'
+import { useWikiSearch } from '../../hooks/useWikiSearch'
 import { Panel } from './Panel'
 import { WikiPanelBody } from './WikiPanelBody'
-import type { ContextEntity } from '../../types'
+import { wikiContextEntity } from '../../lib/contextEntity'
 
 const ACCENT = '#c084fc'
-
-interface WikiSearchResult {
-  title: string
-  description?: string
-  thumbnail?: { source: string }
-}
 
 /** Encyclopedia text for an entity, trimmed to something a prompt can carry. */
 function wikiExtract(title: string | null | undefined): string | null {
@@ -25,46 +21,8 @@ function wikiExtract(title: string | null | undefined): string | null {
   return extract.length > 400 ? extract.slice(0, 400).replace(/\s+\S*$/, '') + '…' : extract
 }
 
-function useWikiSearch(query: string) {
-  const [results, setResults] = useState<WikiSearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const abortRef = useRef<AbortController | null>(null)
-
-  useEffect(() => {
-    if (!query.trim() || query.length < 2) { setResults([]); return }
-
-    abortRef.current?.abort()
-    const ctrl = new AbortController()
-    abortRef.current = ctrl
-    setLoading(true)
-
-    const encoded = encodeURIComponent(query)
-    // A request to page/related used to go out alongside this one with nothing
-    // attached to read it — one wasted round trip per keystroke.
-    fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encoded}&srnamespace=0&srlimit=8&format=json&origin=*`,
-      { signal: ctrl.signal },
-    )
-      .then(r => r.json())
-      .then((data: { query?: { search?: Array<{ title: string; snippet: string }> } }) => {
-        if (ctrl.signal.aborted) return
-        const items = (data.query?.search ?? []).map(s => ({
-          title: s.title,
-          description: s.snippet.replace(/<[^>]*>/g, '').slice(0, 100),
-        }))
-        setResults(items)
-      })
-      .catch(() => {})
-      .finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
-
-    return () => ctrl.abort()
-  }, [query])
-
-  return { results, loading }
-}
-
 export function WikiPanel() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const selectedEntities = useAppStore(s => s.selectedEntities)
   const addSelectedEntity = useAppStore(s => s.addSelectedEntity)
   const removeSelectedEntity = useAppStore(s => s.removeSelectedEntity)
@@ -78,7 +36,13 @@ export function WikiPanel() {
 
   const [searchInput, setSearchInput] = useState('')
   const [showSearch, setShowSearch] = useState(true)
-  const { results: searchResults, loading: searchLoading } = useWikiSearch(searchInput)
+  // Same ladder the mention list uses: the query is typed in the language the
+  // interface is in, and en is the fallback because it has far more articles.
+  const searchLangs = useMemo(
+    () => i18n.language?.startsWith('zh') ? ['zh', 'en'] : ['en'],
+    [i18n.language],
+  )
+  const { results: searchResults, loading: searchLoading } = useWikiSearch(searchInput, searchLangs, 8)
   // Extracts are fetched by the body components below; this re-renders us when
   // they arrive so the prompt text is built from the real thing.
   const wikiFetchGen = useWikiCacheVersion()
@@ -87,7 +51,7 @@ export function WikiPanel() {
   // reasoned over whichever entities were collected at the time, so adding or
   // removing one makes the standing transcript describe a different question.
   const { history, loading: agentLoading, error: agentError, ask } =
-    useAgentQuery(selectedEntities.map(p => p.name).join('|'))
+    useAgentQuery(selectedEntities.map(p => ({ id: p.name, label: p.name })))
   const { open: popoutOpen, isPopped } = usePopoutWindow('wiki')
   const [agentInput, setAgentInput] = useState('')
   const agentScrollRef = useRef<HTMLDivElement>(null)
@@ -154,13 +118,7 @@ export function WikiPanel() {
                     // The actual encyclopedia text, not a label. This used to
                     // send `Wikipedia: <name>`, so the cross-entity agent was
                     // asked to relate people it had been told nothing about.
-                    const ce: ContextEntity = {
-                      id: `wiki-${p.name}`,
-                      type: 'wiki',
-                      name: p.name,
-                      summary: wikiExtract(p.wikiTitle ?? p.name) ?? p.name,
-                    }
-                    addContextEntity(ce)
+                    addContextEntity(wikiContextEntity(p.name, wikiExtract(p.wikiTitle ?? p.name)))
                   }
                 }}
                 aria-label={allInContext ? 'Already in context' : 'Add to context panel'}
@@ -238,7 +196,7 @@ export function WikiPanel() {
                 const isSelected = selectedEntities.some(p => p.name === r.title)
                 return (
                   <button
-                    key={r.title}
+                    key={r.pageid}
                     onClick={() => {
                       if (!isSelected) addSelectedEntity({ name: r.title, wikiTitle: r.title })
                       setSearchInput('')
@@ -256,8 +214,10 @@ export function WikiPanel() {
                     onMouseLeave={e => { e.currentTarget.style.background = isSelected ? `${ACCENT}0a` : 'transparent' }}
                   >
                     <div style={{ color: '#c8dde8', fontSize: '11px', fontWeight: 600 }}>{r.title}</div>
-                    {r.description && (
-                      <div style={{ color: '#4a6070', fontSize: '10px', marginTop: '1px', lineHeight: 1.3 }}>{r.description}</div>
+                    {r.snippet && (
+                      <div style={{ color: '#4a6070', fontSize: '10px', marginTop: '1px', lineHeight: 1.3 }}>
+                        {r.snippet.length > 100 ? r.snippet.slice(0, 100) + '…' : r.snippet}
+                      </div>
                     )}
                   </button>
                 )
@@ -319,7 +279,9 @@ export function WikiPanel() {
               marginBottom: '7px', maxHeight: '180px', overflowY: 'auto',
               scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent',
             }}>
-              {history.map(entry => (
+              {history.map(entry => entry.kind === 'subject-added' ? (
+                <SubjectAddedNote key={entry.id} labels={entry.labels} accentColor={ACCENT} />
+              ) : (
                 <div key={entry.id} style={{ marginBottom: '7px' }}>
                   <div style={{ color: ACCENT, fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
                     ▸ {entry.question}
@@ -342,7 +304,7 @@ export function WikiPanel() {
             </div>
           )}
 
-          {agentLoading && history.length > 0 && history[history.length - 1]?.html === '' && (
+          {agentLoading && awaitingFirstToken(history) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
               <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>
                 {t('event.labels.analyzing', 'ANALYZING')}

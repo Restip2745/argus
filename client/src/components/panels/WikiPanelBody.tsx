@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { useWikiSummary } from '../../hooks/useWikiSummary'
 import { useListing } from '../../hooks/useListing'
 import { ListingChip } from './ListingChip'
-import { classifyEntity, ENTITY_GLYPH, ENTITY_KIND_LABEL } from '../../data/entityKind'
+import { classifyEntity, ENTITY_KIND_LABEL } from '../../data/entityKind'
+import { EntityKindGlyph } from './EntityGlyph'
 import type { SelectedEntity } from '../../store'
 
 interface Props {
@@ -25,7 +26,7 @@ export function WikiPanelBody({ entity, accentColor, onRemove }: Props) {
   // What kind of thing this is, derived from Wikidata's short description.
   // The panel used to assert PERSON regardless; entities pulled out of news
   // copy are just as often organisations, places or events.
-  const kind = classifyEntity(data?.description)
+  const kind = classifyEntity(data?.description, data?.title)
 
   // Listed companies get their closing prices. The lookup answers "none" for
   // almost every entity that reaches this panel, and the section simply does
@@ -64,7 +65,9 @@ export function WikiPanelBody({ entity, accentColor, onRemove }: Props) {
           </div>
           {data && (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginTop: '2px', minWidth: 0 }}>
-              <span style={{ fontSize: '10px' }}>{ENTITY_GLYPH[kind]}</span>
+              {/* The kind is spelled out immediately to the right, so the mark
+                  itself is decorative here. */}
+              <EntityKindGlyph kind={kind} decorative />
               <span style={{
                 color: accentColor, fontSize: '10px', letterSpacing: '0.08em',
                 opacity: 0.8, flexShrink: 0,

@@ -153,15 +153,15 @@ function RegionPopoutContent() {
   )
 }
 
-// ── Person popout ──────────────────────────────────────────────────────────────
+// ── Entity popout ──────────────────────────────────────────────────────────────
 
-function PersonPopoutContent() {
+function EntityPopoutContent() {
   const selectedEntities = useAppStore((s) => s.selectedEntities)
 
   if (selectedEntities.length === 0) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2a4060', fontSize: '10px', letterSpacing: '0.1em' }}>
-        NO PERSON SELECTED
+        NO ENTITY SELECTED
       </div>
     )
   }
@@ -277,7 +277,7 @@ export default function PopoutPage() {
     return (info?.queries ?? []).slice(0, 4)
   }, [selectedCountry])
 
-  const personAgentContext = useMemo(() => {
+  const entityAgentContext = useMemo(() => {
     if (selectedEntities.length === 0) return ''
     return selectedEntities.map(p =>
       `Person: ${p.name}${p.wikiTitle && p.wikiTitle !== p.name ? ` (Wikipedia: ${p.wikiTitle})` : ''}`
@@ -301,16 +301,16 @@ export default function PopoutPage() {
     [contextEntities, t],
   )
 
-  const agentContext     = popoutType === 'context' ? contextAgentContext : popoutType === 'region' ? regionAgentContext  : popoutType === 'wiki' ? personAgentContext : eventAgentContext
+  const agentContext     = popoutType === 'context' ? contextAgentContext : popoutType === 'region' ? regionAgentContext  : popoutType === 'wiki' ? entityAgentContext : eventAgentContext
   const suggestedQueries = popoutType === 'context' ? contextQueriesList  : popoutType === 'region' ? regionQueries       : popoutType === 'wiki' ? entityQueriesList : eventQueries
   const agentLabel       = popoutType === 'context' ? 'CONTEXT AGENT'    : popoutType === 'region' ? 'REGION AGENT'      : popoutType === 'wiki' ? 'ENTITY AGENT'    : 'EVENT AGENT'
 
   // Whatever this window is currently following. The popout mirrors the main
   // window over BroadcastChannel, so navigating there swaps the subject out
   // from under a transcript that would otherwise stay on screen.
-  const agentSubject     = popoutType === 'context' ? contextEntities.map(e => e.id).join('|')
+  const agentSubject     = popoutType === 'context' ? contextEntities.map(e => ({ id: e.id, label: e.name }))
                          : popoutType === 'region'  ? (selectedCountry?.name ?? '')
-                         : popoutType === 'wiki'    ? selectedEntities.map(p => p.name).join('|')
+                         : popoutType === 'wiki'    ? selectedEntities.map(p => ({ id: p.name, label: p.name }))
                          : (activePanelId ?? '')
 
   return (
@@ -326,10 +326,10 @@ export default function PopoutPage() {
         {/* Column header */}
         <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(0,180,255,0.1)', background: 'linear-gradient(90deg, rgba(0,212,255,0.04) 0%, transparent 100%)', flexShrink: 0 }}>
           <span style={{ color: popoutType === 'context' ? '#00ffcc' : '#00d4ff', fontSize: '11px', letterSpacing: '0.15em' }}>
-            {popoutType === 'context' ? '◈ CONTEXT INTEL' : popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'wiki' ? '◈ PERSON INTEL' : '◈ EVENT INTEL'}
+            {popoutType === 'context' ? '◈ CONTEXT INTEL' : popoutType === 'region' ? '◈ REGION INTEL' : popoutType === 'wiki' ? '◈ ENTITY INTEL' : '◈ EVENT INTEL'}
           </span>
         </div>
-        {popoutType === 'context' ? <ContextPopoutContent /> : popoutType === 'region' ? <RegionPopoutContent /> : popoutType === 'wiki' ? <PersonPopoutContent /> : <EventPopoutContent />}
+        {popoutType === 'context' ? <ContextPopoutContent /> : popoutType === 'region' ? <RegionPopoutContent /> : popoutType === 'wiki' ? <EntityPopoutContent /> : <EventPopoutContent />}
       </div>
 
       {/* ── Right column: AI agent (40%) ── */}
@@ -338,7 +338,7 @@ export default function PopoutPage() {
           agentContext={agentContext}
           suggestedQueries={suggestedQueries}
           label={agentLabel}
-          subjectKey={agentSubject}
+          subject={agentSubject}
         />
       </div>
     </div>

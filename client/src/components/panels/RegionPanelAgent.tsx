@@ -4,7 +4,8 @@
  */
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AgentEntry } from '../../hooks/useAgentQuery'
+import { awaitingFirstToken, type AgentEntry } from '../../hooks/useAgentQuery'
+import { SubjectAddedNote } from './SubjectAddedNote'
 
 interface Props {
   history:          AgentEntry[]
@@ -65,7 +66,9 @@ export function RegionPanelAgent({
             marginBottom: '7px', maxHeight: '180px', overflowY: 'auto',
             scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,180,255,0.15) transparent',
           }}>
-            {history.map((entry) => (
+            {history.map((entry) => entry.kind === 'subject-added' ? (
+              <SubjectAddedNote key={entry.id} labels={entry.labels} accentColor="#00d4ff" />
+            ) : (
               <div key={entry.id} style={{ marginBottom: '7px' }}>
                 <div style={{ color: '#00d4ff', fontSize: '10px', letterSpacing: '0.08em', marginBottom: '3px', opacity: 0.7 }}>
                   ▸ {entry.question}
@@ -88,7 +91,7 @@ export function RegionPanelAgent({
           </div>
         )}
 
-        {loading && history.length > 0 && (history[history.length - 1]?.html === '') && (
+        {loading && awaitingFirstToken(history) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
             <span style={{ color: '#2a4060', fontSize: '10px', letterSpacing: '0.15em' }}>ANALYZING</span>
             <span className="agent-loading-dots"><span /><span /><span /></span>

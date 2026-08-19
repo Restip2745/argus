@@ -20,24 +20,200 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
-[TODO][LOW] i18n: Chinese entity names arrive Simplified
-  Description: The entity panel and the new company rows render Chinese names in Simplified —
-    洛克希德·马丁 rather than 洛克希德·馬丁 — while the app is zh-TW throughout and the
-    analysis prompt explicitly asks for Taiwanese conventions. The cause is
-    `useWikiSummary`, which reads zh.wikipedia's REST summary; that endpoint serves the
-    Simplified variant and ignores `Accept-Language`, verified against `zh-tw` and
-    `zh-Hant-TW`. Fixing it means either moving the Chinese path to the action API, which
-    takes a `variant=zh-tw` parameter, or converting on the client, which is a dependency for
-    a display concern. Pre-existing and everywhere the panel shows a Chinese title, not
-    specific to the company rows.
-  Success Criteria: Chinese entity titles render in Traditional characters, with no extra
-    request per lookup.
+[TODO][LOW] i18n: Chinese entity titles arrive Simplified
+  Description: Half of this is now fixed and the other half needs a different approach from the
+    one recorded here first, both by measurement rather than reading.
+    Fixed: the summary text. This entry said the REST summary endpoint "ignores
+    `Accept-Language`, verified against `zh-tw` and `zh-Hant-TW`". It does not. Sending
+    `Accept-Language: zh-tw` converts the extract, and converts it fully — the default with no
+    header is the state worth naming, which is neither script but both at once, the conversion
+    applied to whichever fragments carried markup and to nothing else: 玛丽·居里 comes back as
+    瑪麗亞·薩洛梅婭·斯克沃多夫斯卡-居里，通称居禮夫人，波兰裔法国物理学家. A browser sends
+    its own Accept-Language, which is why a zh-TW machine never saw this. `fetchSummary` now
+    states the variant the interface language names, so the reader's choice in this app decides
+    it rather than the reader's choice of browser.
+    Still Simplified: the title on the card, e.g. 玛丽·居里 above a Traditional extract. The
+    other suggestion here — "moving the Chinese path to the action API, which takes a
+    `variant=zh-tw` parameter" — does not work either. Measured on `action=query&list=search`
+    with `variant=zh-tw` and with `uselang=zh-tw`: both return the titles exactly as stored, and
+    they are stored mixed across articles — 玛丽·居里 sits beside 居禮夫人：放射永恆 in one
+    result set. Search converts nothing.
+    The converted title does arrive, in `titles.display` of the summary already fetched when a
+    mention is picked. Taking it is what the remaining work is blocked on: `ContextEntity.id` is
+    derived from `name`, so naming a card by its display title would change the id it is keyed
+    on and split one person into two cards depending on which route collected them — the exact
+    duplication `lib/contextEntity.ts` was created to prevent. Identity and label have to come
+    apart before the display title can be used, which is why this stays open rather than being
+    finished alongside the variant header.
+  Success Criteria: An entity collected through any route renders its title in the script the
+    interface is in, and the same entity reached two ways is still one card. No extra request
+    per lookup — the display title is already in the summary response.
   Retry Count: 0
   Source: USER REQUEST
 
 ---
 
 ## Completed Tasks
+
+---
+
+[DONE][HIGH] Fix: Classify what the feed can show before what it cannot
+  Description: The feed had been empty for a day and a half with 460 articles in the database,
+    and nothing was broken. The client is served analysed rows alone, the feed shows a window
+    of at most 24 hours, and `getPendingArticles` took the queue oldest-fetched first — so the
+    backlog a restart builds, every source re-read at once, was worked through from the end
+    that could no longer appear anywhere.
+    Measured rather than argued: 224 pending against 236 analysed, the newest analysed article
+    32.6 hours old and the newest pending one twelve minutes old, 136 of the pending inside the
+    feed window and 87 already outside any of them. The worker log put a batch of 20 at 26
+    minutes — 78 seconds an article, 46 an hour — so the feed had about five more hours of
+    articles ahead of it whose only remaining destination was the retention worker. Applying
+    the window rule to the served rows gave 0 for each of 6h, 12h and 24h and 234 for all,
+    which is the client filter behaving exactly as specified and is why the fix is on the
+    server.
+    Two classes now, FIFO within each: nothing is starved, the tail is analysed after the
+    material that has somewhere to go, and a row with no usable date sorts into the second
+    class rather than out of the result. The `datetime()` call is the part that would have been
+    wrong written by eye — published_at is stored ISO with a T and a Z, SQLite renders a space
+    and no suffix, and comparing them as text reads any same-day article as newer than the
+    cutoff because T sorts above space. Against the live rows that misfiled four out-of-window
+    articles into the priority class. The ORDER BY is exported so the test binds to the same
+    string the query uses.
+  Success Criteria: Met — 4 new cases in `server/src/__tests__/sqlite.test.ts` cover window
+    priority, FIFO inside each class, the 28-hour same-day article, and the null/unparseable
+    date; 169 server tests pass. Not claimed: that the live system looks healthier today. The
+    backlog had all night to drain on its own. What is verified is the ordering, including on
+    the live queue, whose head is now an in-window article rather than the oldest fetched.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][LOW] Refactor: Give the entity panel the wiki search everyone else uses
+  Description: WikiPanel carried its own copy of the Wikipedia title search, written before
+    there was a shared one and never reconciled with it. The copy fired a request per keystroke
+    and was hardwired to en.wikipedia, so the entity search box — in an interface that is
+    otherwise Chinese — answered Chinese queries out of the English encyclopedia. Both were
+    already fixed in `hooks/useWikiSearch`, which had no importers at all until the mention
+    list needed it. The copy is gone and the panel calls the shared hook with the same ladder
+    the mention list uses. It asks for 8 results, which is what its own copy asked for. The
+    result shapes differed — the local one pre-truncated a de-tagged snippet into a
+    `description` field — so the truncation moved to the render site and the rows read the
+    same. Keys move from title to pageid.
+  Success Criteria: Met — net 35 lines removed, no reference to the local type remains,
+    typecheck clean, 484 client tests pass. Not exercised in a browser: the entity panel needs
+    an entity selected and every route to one starts from the feed, which was empty at the time
+    for the reason recorded in the queue-ordering task above.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][MEDIUM] i18n: State the script variant, and let @ find the other 22 countries
+  Description: Two gaps in the Chinese half of the mention work. The alias table covered 39 of
+    the 61 countries the app holds figures for, so `@` answered nothing at all for the
+    Netherlands, Kenya, Kazakhstan or the DRC — an emptiness indistinguishable from the feature
+    being broken. The remaining 22 are in, both scripts each, and a test now walks every country
+    with data and fails if one cannot be reached by the name it is offered under. The gap
+    existed because the first table was written from the countries that came to mind rather
+    than from the list itself.
+    The variant was measured. zh.wikipedia stores one article and converts it on request; ask
+    for nothing and what comes back is neither script but both at once, the conversion applied
+    to whichever fragments carried markup and to nothing else. That this was invisible during
+    development is the point: a browser sends its own Accept-Language, so a zh-TW machine hid
+    it completely, while a reader who chose zh-TW in this app through an English browser got
+    the mixture. `fetchSummary` now states the variant. en asks for none, having nothing to
+    convert between.
+  Success Criteria: Met — verified in the running app, `@荷蘭` puts Netherlands above the
+    encyclopedia hits and adds it with its real figures; 3 new cases assert the zh header, the
+    absence of one on en, and the absence of one when the interface language names no variant;
+    484 client tests pass.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][MEDIUM] Feature: Let @ reach past the feed, through the encyclopedia
+  Description: The mention list could only offer what was already on the client — the countries
+    with figures, the actors this hour's headlines happen to name, the events themselves. Ask
+    about anyone else and typing the name returned nothing, which reads as though no such thing
+    exists rather than as though this app has not heard of it. A Wikipedia title search fills
+    the gap, and everything about where it sits follows from its being slower and less certain
+    than the local list: it runs in the panel rather than the text field, on the token the input
+    reports up; it is debounced, so a name typed at speed costs one round trip rather than one
+    per character; its hits rank below every local match and carry a WIKIPEDIA mark, because a
+    country the app has figures for is a better answer than an article about that country and
+    is the one that costs no fetch. Picking one resolves its summary exactly as an actor's does,
+    so what reaches the collection is the article rather than the name.
+    The hook it uses was dead code — `hooks/useWikiSearch` had no importers at all — so it could
+    be made a language ladder rather than a language without touching anything: the interface's
+    Wikipedia first, en as the fallback, the same order the summary fetch already uses.
+  Success Criteria: Met — verified against a running client with the API down, which is the
+    isolation that matters: no events, so no local candidates beyond the countries. `@居禮夫人`
+    returned six zh.wikipedia titles, all marked, and picking the first put 玛丽·居里 on a card
+    carrying the full Chinese extract. The debounce, the ladder and the fallthrough to en are
+    covered by tests against a mocked fetch, on real timers.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][HIGH] Feature: Name entities with @, and stop wiping the transcript to add one
+  Description: Collecting entities one button at a time means finding each one on screen first,
+    which is the wrong way round when the operator already knows the two names they want
+    compared. `@` in the cross-entity question box is the other route in. It needed the
+    transcript rule fixed first: the panel keyed its conversation on the joined ids of the
+    collection and discarded the whole thing whenever that string changed, so mentioning an
+    entity mid-conversation — the exact thing the feature is for — wiped the conversation.
+    The old rule was right about what it defended. The agent sees one system prompt and one user
+    message per request, so a transcript surviving a switch of subject claims a continuity that
+    never existed. Growth is not that case: when every earlier subject is still present and one
+    has joined them, no answer above has been contradicted. `useAgentQuery` now takes the
+    subjects rather than a key and compares them as a set — superset keeps the transcript,
+    anything else still aborts and clears — and an in-flight stream is no longer aborted on
+    growth. A `subject-added` entry keeps the honest half of the old rule.
+    Candidates are local: the 61 countries with figures, the actors named by loaded events, and
+    the events themselves. Nothing asks the network per keystroke; an actor's encyclopedia text
+    is deferred to the pick. Ids had to match or the collection would hold the same subject
+    twice, so building a ContextEntity moved into one module and the three collect buttons go
+    through it too.
+    Two things only running it against the real feed could show. Ranking by prefix put six
+    headlines above the country, articles being named after what they are about, so `@美國` came
+    back with six stories about America and no America; scoring is whole-name, then prefix, then
+    anywhere. And requiring whitespace before the `@` cannot work in the language the interface
+    is in, Chinese being written without spaces between words — only the latin word characters
+    of an address are excluded now.
+  Success Criteria: Met — verified in the running app: `@美國` puts the country above the
+    headlines, picking it writes the name into the question and the figures onto the card,
+    `@Trump` lands with the Chinese Wikipedia extract, and `再加上@烏克蘭` adds a fourth entity
+    while the previous answer stays put under its `+ Ukraine` mark. 466 client tests passed at
+    the time of the change; typecheck clean.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
+[DONE][MEDIUM] Feature: Draw each entity kind, and stop calling everything a person
+  Description: The kind classifier landed with PersonPanel becoming WikiPanel and was wired to
+    exactly one place: the kind line inside the entity card. Every other route into that panel
+    still hardcoded a person emoji — the actor chips on the event panel, the region panel's
+    recurring names, the context panel's card icon — so an organisation, a country and a treaty
+    all reached the panel behind a person glyph. Those three now read the kind, and the popout's
+    PERSON INTEL heading goes with them. They cannot fetch to find out: an event with eight
+    actors would fire eight Wikipedia requests for eight glyphs, so `useCachedEntityKind` reads
+    the shared summary cache and never asks for anything.
+    `extractPersonNames` became `linkableEntityNames`, which is what it always returned. The
+    Chinese half could not work at all before this: the word lists were English while a zh-TW
+    interface resolves against zh.wikipedia first, so every entity fell through to `unknown`.
+    Word boundaries do not exist in Chinese, so head-final word order replaces them — every kind
+    is tested against the final word before any is tested against the body.
+  Success Criteria: Met — measured against the live API rather than fixtures, on twenty real
+    entities: nineteen right on the first pass, twenty after stripping a trailing bracket.
+    Marks render at 16px, sized by measurement rather than choice. 435 tests passed at the time.
+    Not verified in a browser: the chips need backend data and a click on a globe marker, and
+    the preview pane does not run the render loop.
+  Retry Count: 0
+  Source: USER REQUEST
 
 ---
 
