@@ -127,9 +127,30 @@ export function insertWebhookEvent(e: WebhookEventInput): void {
 
 // ── Query helpers ───────────────────────────────────────
 
+/**
+ * The next articles to classify, feed window first.
+ *
+ * Oldest-fetched-first is the obvious order and it starves the only thing the
+ * operator can see. The client is served analysed rows alone, and the feed
+ * shows a window of at most 24 hours, so a backlog — a restart re-reads every
+ * source at once and builds one — is worked through from the end that can no
+ * longer appear anywhere. Measured on a real one: 224 pending, 87 of them
+ * already outside the widest window, and the model taking 78 seconds each, so
+ * the feed would have stayed empty for about five hours while the queue
+ * chewed through articles whose only destination was the retention worker.
+ *
+ * Two classes, FIFO within each, so nothing is starved — the tail is still
+ * analysed, just after the material that has somewhere to go. The datetime()
+ * call is not decoration: published_at is stored ISO with a T and a Z, and
+ * comparing it to SQLite's own format as text reads 2026-08-17T05:00Z as newer
+ * than 2026-08-17 09:38, putting four out-of-window rows in the wrong class.
+ */
+export const PENDING_ORDER_BY =
+  "ORDER BY (datetime(published_at) >= datetime('now','-24 hours')) DESC, fetched_at ASC"
+
 export function getPendingArticles(limit = 10): Article[] {
   return getDb()
-    .prepare('SELECT * FROM articles WHERE is_analyzed = 0 ORDER BY fetched_at ASC LIMIT ?')
+    .prepare('SELECT * FROM articles WHERE is_analyzed = 0 ' + PENDING_ORDER_BY + ' LIMIT ?')
     .all(limit) as Article[]
 }
 
