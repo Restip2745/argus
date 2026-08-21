@@ -27,11 +27,14 @@ interface Props {
  * cause. That is also why the price carries its own date — the close shown may
  * be from before the event, and a reader comparing the two deserves to see it.
  *
- * The links are not always right. The pass that produces them tags roughly six
- * events in a hundred and gets one in seven of those wrong, usually by
- * associating a market commentary piece with oil. A wrong row here costs a
- * reader a moment's confusion, which is the reason this shows a market and not
- * a conclusion.
+ * The links are not always right, and how often is a property of whichever
+ * model the operator has configured rather than of this component. Replaying
+ * 200 stored articles through `gemma4:e4b` tagged about six in a hundred and
+ * misfired on one or two of those, usually by associating a market commentary
+ * piece with oil; a larger model would presumably do better. A wrong row here
+ * costs a reader a moment's confusion, which is the reason this shows a market
+ * and not a conclusion — the restraint has to hold at any accuracy, so it does
+ * not depend on that figure.
  */
 export function EventCommodities({ commodities, accentColor, publishedAt, event }: Props) {
   const { t } = useTranslation()
