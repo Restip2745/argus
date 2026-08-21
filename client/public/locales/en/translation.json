@@ -108,7 +108,8 @@
       "conflict": "Current conflict posture",
       "economic": "Economic risk assessment",
       "political": "Political stability analysis"
-    }
+    },
+    "indices": "MARKET INDICES"
   },
   "canvas": {
     "toggle": "ANNOTATION CANVAS",

@@ -137,6 +137,21 @@ describe('isValidSymbol', () => {
     expect(isValidSymbol('HG=F')).toBe(true)
   })
 
+  it('accepts index symbols, which lead with a caret', () => {
+    // Left out at first for the same reason '=' was, and it would have failed
+    // the same silent way: every index request dropped with nothing logged.
+    expect(isValidSymbol('^GSPC')).toBe(true)
+    expect(isValidSymbol('^TWII')).toBe(true)
+    expect(isValidSymbol('^TA125.TA')).toBe(true)
+    expect(isValidSymbol('FTSEMIB.MI')).toBe(true)
+    expect(isValidSymbol('000001.SS')).toBe(true)
+  })
+
+  it('allows the caret only where the upstream puts it', () => {
+    expect(isValidSymbol('GS^PC')).toBe(false)
+    expect(isValidSymbol('^^GSPC')).toBe(false)
+  })
+
   it('rejects anything that could steer the outbound URL', () => {
     expect(isValidSymbol('../../quote')).toBe(false)
     expect(isValidSymbol('TSM?foo=1')).toBe(false)
