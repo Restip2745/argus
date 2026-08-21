@@ -78,14 +78,13 @@ Managed by the autonomous development agent. Follow strict format below.
     table is short because every symbol in it was fetched and confirmed first — a guessed one
     either fails silently or prices something else, the same rule the exchange table follows.
     Hong Kong and Singapore resolve but have no key in `countryData.ts` to hang them on.
-  Success Criteria: Met for the data and the logic; the in-app render was not verified. All
-    five of ^DJI, ^GSPC, ^IXIC, ^TWII and ^KS11 return through the proxy, dated 08-20 for the
-    US and 08-21 for Asia, which is the difference the date column exists for. Ten unit tests
-    cover the country-key mapping, the absence of any sector index, the no-currency rule and
-    the empty cases. The panel itself could not be opened: the only reachable dev client
-    proxies to a server in another session that had not reloaded the symbol fix, and
-    restarting someone else's process to see a layout was not worth it. Row widths sum to
-    roughly 246px against the panel's 271px, so clipping is unlikely but unconfirmed.
+  Success Criteria: Met. All five of ^DJI, ^GSPC, ^IXIC, ^TWII and ^KS11 return through the
+    proxy, dated 08-20 for the US and 08-21 for Asia, which is the difference the date column
+    exists for. Ten unit tests cover the country-key mapping, the absence of any sector index,
+    the no-currency rule and the empty cases. The panel render was checked by hand by the
+    author of the request and reported correct — it could not be checked here, the only
+    reachable dev client proxying to a server in another session that had not reloaded the
+    symbol fix.
     client 496 tests pass; typecheck clean.
   Retry Count: 0
   Source: USER REQUEST
