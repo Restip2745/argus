@@ -144,9 +144,13 @@ export function parseChart(body: unknown, symbol: string, now: number = Date.now
  * `CL=F`, `GC=F`. Without it every commodity request was dropped silently, the
  * proxy being unable to tell a malformed symbol from one it simply had no rule
  * for.
+ *
+ * `^` is here for indices — `^GSPC`, `^TWII` — and only in first position,
+ * where the upstream puts it. It was left out for the same reason `=` was, and
+ * would have failed the same silent way.
  */
 export function isValidSymbol(s: string): boolean {
-  return /^[A-Z0-9][A-Z0-9.\-=]{0,11}$/.test(s)
+  return /^[\^A-Z0-9][A-Z0-9.\-=]{0,11}$/.test(s)
 }
 
 // ── History ──────────────────────────────────────────────────────────────────

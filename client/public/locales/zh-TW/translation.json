@@ -108,7 +108,8 @@
       "conflict": "目前衝突態勢分析",
       "economic": "經濟風險評估",
       "political": "政治穩定性分析"
-    }
+    },
+    "indices": "股市指數"
   },
   "canvas": {
     "toggle": "標記畫布",

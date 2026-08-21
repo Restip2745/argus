@@ -57,6 +57,41 @@ Managed by the autonomous development agent. Follow strict format below.
 
 ---
 
+[DONE][MEDIUM] Feature: National indices on the region panel
+  Description: A country's stock index now sits with its GDP and stability score, which is
+    where it belongs — the panel already answers "what is the state of this place", and a
+    market level is one more instrument on the same dashboard rather than a fact about an
+    entity someone clicked. `client/src/data/indices.ts` maps the country names
+    `countryData.ts` resolves to; `RegionIndices` renders them.
+    National indices only. The Philadelphia Semiconductor index was considered and left out:
+    it is a sector index that happens to be listed in the United States, so filing it under a
+    country is a category error. It belongs to a "related indices" idea that does not exist
+    yet, and would arguably matter more to a Taiwanese reader than an American one.
+    Two traps, both found by checking rather than by reasoning. The proxy's `isValidSymbol`
+    required an alphanumeric first character, so every index symbol — they all lead with a
+    caret — would have been dropped with nothing logged, exactly as `=` was for futures before
+    it. And the upstream reports a currency for an index: "USD" for the S&P. An index is
+    points, not money, and the S&P is not seven thousand dollars, so this is the one market row
+    in the app with no currency column.
+    Twenty-one countries, several with more than one index because they genuinely have more
+    than one headline: three for the United States, two for India, one everywhere else. The
+    table is short because every symbol in it was fetched and confirmed first — a guessed one
+    either fails silently or prices something else, the same rule the exchange table follows.
+    Hong Kong and Singapore resolve but have no key in `countryData.ts` to hang them on.
+  Success Criteria: Met for the data and the logic; the in-app render was not verified. All
+    five of ^DJI, ^GSPC, ^IXIC, ^TWII and ^KS11 return through the proxy, dated 08-20 for the
+    US and 08-21 for Asia, which is the difference the date column exists for. Ten unit tests
+    cover the country-key mapping, the absence of any sector index, the no-currency rule and
+    the empty cases. The panel itself could not be opened: the only reachable dev client
+    proxies to a server in another session that had not reloaded the symbol fix, and
+    restarting someone else's process to see a layout was not worth it. Row widths sum to
+    roughly 246px against the panel's 271px, so clipping is unlikely but unconfirmed.
+    client 496 tests pass; typecheck clean.
+  Retry Count: 0
+  Source: USER REQUEST
+
+---
+
 [DONE][HIGH] Fix: Classify what the feed can show before what it cannot
   Description: The feed had been empty for a day and a half with 460 articles in the database,
     and nothing was broken. The client is served analysed rows alone, the feed shows a window
