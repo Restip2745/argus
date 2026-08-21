@@ -3,21 +3,20 @@
  * Used by DOM panels to project lat/lng → screen coordinates each rAF tick.
  */
 import * as THREE from 'three'
-import { gastToRotY, getGAST } from './useGAST'
+import { latLngToWorld, isAboveHorizon } from '../lib/coordinates'
 
-const AXIAL_TILT_RAD = (23.44 * Math.PI) / 180
+/** Marker altitude and Earth radius — the same numbers EventMarkers uses, so a
+ *  tail hides on exactly the frame its marker does. */
+const MARKER_R     = 1.025
+const EARTH_RADIUS = 1.0
 
 // Singleton state — written by the Canvas component, read by DOM panels
 let _camera: THREE.Camera | null = null
 const _earthPos = new THREE.Vector3()
 
 // Pre-allocated temporaries (avoids per-call GC pressure)
-const _local      = new THREE.Vector3()
-const _camToEarth = new THREE.Vector3()
-const _worldPos   = new THREE.Vector3()
-const _ndc        = new THREE.Vector3()
-const _egast      = new THREE.Euler(0, 0, 0, 'XYZ')
-const _etilt      = new THREE.Euler(0, 0, AXIAL_TILT_RAD, 'XYZ')
+const _worldPos = new THREE.Vector3()
+const _ndc      = new THREE.Vector3()
 
 /** Called every frame from inside the Canvas (GlobeProjectorSetup). */
 export function updateGlobeProjection(
@@ -37,33 +36,24 @@ export interface ScreenPos {
 
 /**
  * Project a geographic coordinate to viewport pixels.
- * Uses the same coordinate math as EventMarkers (GeoMarker.useFrame).
+ * Runs the marker pipeline itself — latLngToWorld for the position, and the
+ * same horizon test GeoMarker applies — rather than a second copy of the math
+ * that can drift out of step with it.
  * Returns null if the camera hasn't been set yet.
  */
 export function projectLatLng(lat: number, lng: number): ScreenPos | null {
   if (!_camera) return null
 
-  const latR = (lat * Math.PI) / 180
-  const lngR = (lng * Math.PI) / 180
+  // World position (1.025 * radius = just above surface, like the markers):
+  // GAST rotation, then axial tilt, then the Earth's own offset.
+  latLngToWorld(lat, lng, MARKER_R, _earthPos, _worldPos)
 
-  // Local position on unit sphere (same formula as GeoMarker)
-  _local.set(
-    Math.cos(latR) * Math.cos(lngR),
-    Math.sin(latR),
-    -Math.cos(latR) * Math.sin(lngR),
-  )
-
-  // Check visibility: if surface normal faces away from camera → occluded
-  _camToEarth.subVectors(_camera.position, _earthPos).normalize()
-  const behind = _local.dot(_camToEarth) < 0
-
-  // Apply Earth's rotation (GAST) then axial tilt — same order as EventMarkers
-  _egast.set(0, gastToRotY(getGAST()), 0)
-  _local.applyEuler(_egast)
-  _local.applyEuler(_etilt)
-
-  // World position (1.025 * radius = just above surface, like the markers)
-  _worldPos.copy(_local).multiplyScalar(1.025).add(_earthPos)
+  // Occlusion is decided on that finished world position. Testing the local
+  // pre-rotation normal against the world-space camera instead — as this did
+  // before — leaves the day's Earth rotation out of the comparison, so tails
+  // vanished over visible markers and lingered over hidden ones depending on
+  // the time of day and the target's longitude.
+  const behind = !isAboveHorizon(_worldPos, _earthPos, _camera.position, EARTH_RADIUS)
 
   // NDC → viewport pixels (canvas fills the full viewport)
   _ndc.copy(_worldPos).project(_camera)
